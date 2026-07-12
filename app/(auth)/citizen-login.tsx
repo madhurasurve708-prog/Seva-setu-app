@@ -14,22 +14,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Image,
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
+import { useCitizen } from '@/providers/citizen-provider';
 
 const COLORS = {
   navyDeep: '#071D30',
@@ -45,13 +46,11 @@ const COLORS = {
   danger: '#D64545',
 };
 
-// TODO: replace with the real lookup result from your backend after OTP verification
-const MOCK_IS_NEW_USER = true;
-
 type Step = 1 | 2 | 3 | 4;
 
 export default function CitizenLoginScreen() {
   const router = useRouter();
+  const { profile } = useCitizen();
   const [step, setStep] = useState<Step>(1);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -103,11 +102,7 @@ export default function CitizenLoginScreen() {
     // TODO: call your FastAPI endpoint, e.g. POST /auth/citizen/verify-otp
     setTimeout(() => {
       setVerifying(false);
-      if (MOCK_IS_NEW_USER) {
-        animateStep(4);
-      } else {
-        Alert.alert('Welcome back', 'Login successful.');
-      }
+      router.replace(profile ? '/dashboard' : '/complete-profile');
     }, 900);
   };
 
@@ -138,7 +133,7 @@ export default function CitizenLoginScreen() {
       >
         {/* Hero header */}
         <ImageBackground
-          source={require('../assets/images/shivaji.png')}
+          source={require('../../assets/images/shivaji.png')}
           style={styles.hero}
           resizeMode="cover"
         >
@@ -152,7 +147,7 @@ export default function CitizenLoginScreen() {
             <View style={styles.heroContent}>
               <View style={styles.logoRing}>
                 <Image
-                  source={require('../assets/images/logo.png')}
+                  source={require('../../assets/images/logo.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />

@@ -1,17 +1,39 @@
 import React from "react";
+import { Image, StyleSheet } from "react-native";
 import Animated, {
   FadeIn,
   ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
-import { Image, StyleSheet } from "react-native";
 
 export default function AnimatedLogo() {
+  const scale = useSharedValue(1);
+
+  React.useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1800 }),
+        withTiming(1, { duration: 1800 })
+      ),
+      -1,
+      false
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Animated.View
-      entering={FadeIn.duration(900)}
-      style={styles.container}
-    >
-      <Animated.View entering={ZoomIn.duration(900)}>
+    <Animated.View entering={FadeIn.duration(800)} style={styles.container}>
+      <Animated.View
+        entering={ZoomIn.duration(900)}
+        style={animatedStyle}
+      >
         <Image
           source={require("../../assets/images/logo.png")}
           style={styles.logo}
@@ -28,7 +50,7 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 170,
-    height: 170,
+    width: 165,
+    height: 165,
   },
 });

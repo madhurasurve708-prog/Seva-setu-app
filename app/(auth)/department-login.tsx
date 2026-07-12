@@ -1,27 +1,28 @@
-// app/admin-login.tsx
+// app/department-login.tsx
 //
-// SEVA SETU — Main Admin Login (Nagaradhyaksha)
-// Fields: Admin ID, Password
-// UI-only — wire "Login" to your FastAPI auth endpoint.
+// SEVA SETU — Department Login
+// Fields: Department ID, Password, plus a Department selector
+// (Water / Road / Garbage / Other) since departments route complaints
+// by category. UI-only — wire "Login" to your FastAPI auth endpoint.
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Pressable,
-  ImageBackground,
-  SafeAreaView,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
 
 const COLORS = {
   navyDeep: '#071D30',
@@ -36,19 +37,33 @@ const COLORS = {
   white: '#FFFFFF',
 };
 
-export default function AdminLoginScreen() {
+type DeptOption = {
+  key: string;
+  label: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+};
+
+const DEPARTMENTS: DeptOption[] = [
+  { key: 'water', label: 'Water', icon: 'water-outline' },
+  { key: 'road', label: 'Road', icon: 'road-variant' },
+  { key: 'garbage', label: 'Garbage', icon: 'delete-outline' },
+  { key: 'other', label: 'Other', icon: 'dots-horizontal-circle-outline' },
+];
+
+export default function DepartmentLoginScreen() {
   const router = useRouter();
-  const [adminId, setAdminId] = useState('');
+  const [department, setDepartment] = useState<string>('water');
+  const [departmentId, setDepartmentId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const canSubmit = adminId.trim().length > 0 && password.length > 0;
+  const canSubmit = departmentId.trim().length > 0 && password.length > 0;
 
   const handleLogin = () => {
     if (!canSubmit) return;
     setLoading(true);
-    // TODO: call your FastAPI endpoint, e.g. POST /auth/admin/login
+    // TODO: call your FastAPI endpoint, e.g. POST /auth/department/login
     setTimeout(() => setLoading(false), 900);
   };
 
@@ -58,11 +73,11 @@ export default function AdminLoginScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ImageBackground
-          source={require('../assets/images/shivaji.png')}
+          source={require('../../assets/images/shivaji.png')}
           style={styles.hero}
           resizeMode="cover"
         >
-          <View style={styles.heroOverlayDeep} />
+          <View style={styles.heroOverlay} />
           <SafeAreaView>
             <View style={styles.heroTopRow}>
               <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
@@ -71,12 +86,10 @@ export default function AdminLoginScreen() {
             </View>
             <View style={styles.heroContent}>
               <View style={styles.logoRing}>
-                <MaterialCommunityIcons name="shield-crown-outline" size={32} color={COLORS.navyDeep} />
+                <MaterialCommunityIcons name="domain" size={30} color={COLORS.saffron} />
               </View>
-              <Text style={styles.heroTitle}>Main Admin Login</Text>
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleBadgeText}>NAGARADHYAKSHA</Text>
-              </View>
+              <Text style={styles.heroTitle}>Department Login</Text>
+              <Text style={styles.heroSubtitle}>Complaint Resolution Access</Text>
             </View>
           </SafeAreaView>
         </ImageBackground>
@@ -85,17 +98,36 @@ export default function AdminLoginScreen() {
           <View style={styles.sheetHandle} />
 
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Text style={styles.stepTitle}>Restricted access</Text>
-            <Text style={styles.stepHint}>
-              This portal is for the Main Administrator of Seva Setu only.
-            </Text>
+            <Text style={styles.stepTitle}>Select your department</Text>
+
+            <View style={styles.deptRow}>
+              {DEPARTMENTS.map((d) => {
+                const active = department === d.key;
+                return (
+                  <Pressable
+                    key={d.key}
+                    onPress={() => setDepartment(d.key)}
+                    style={[styles.deptChip, active && styles.deptChipActive]}
+                  >
+                    <MaterialCommunityIcons
+                      name={d.icon}
+                      size={18}
+                      color={active ? COLORS.white : COLORS.navy}
+                    />
+                    <Text style={[styles.deptChipText, active && styles.deptChipTextActive]}>
+                      {d.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <View style={styles.inputRow}>
-              <MaterialCommunityIcons name="account-key-outline" size={20} color={COLORS.textMuted} />
+              <MaterialCommunityIcons name="card-account-details-outline" size={20} color={COLORS.textMuted} />
               <TextInput
-                value={adminId}
-                onChangeText={setAdminId}
-                placeholder="Admin ID"
+                value={departmentId}
+                onChangeText={setDepartmentId}
+                placeholder="Department ID"
                 placeholderTextColor="#A6ADB8"
                 autoCapitalize="none"
                 style={styles.input}
@@ -127,20 +159,15 @@ export default function AdminLoginScreen() {
 
             <Pressable onPress={handleLogin} disabled={!canSubmit} style={{ marginTop: 22 }}>
               <LinearGradient
-                colors={!canSubmit ? ['#C7CEDA', '#C7CEDA'] : [COLORS.navyDeep, COLORS.navy]}
+                colors={!canSubmit ? ['#C7CEDA', '#C7CEDA'] : [COLORS.navy, COLORS.blue]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientBtn}
               >
                 {loading && <ActivityIndicator size="small" color={COLORS.white} style={{ marginRight: 8 }} />}
-                <Text style={styles.gradientBtnText}>{loading ? 'Verifying…' : 'Login'}</Text>
+                <Text style={styles.gradientBtnText}>{loading ? 'Signing in…' : 'Login'}</Text>
               </LinearGradient>
             </Pressable>
-
-            <View style={styles.badgeRow}>
-              <MaterialCommunityIcons name="shield-lock-outline" size={16} color={COLORS.textMuted} />
-              <Text style={styles.badgeText}>All access attempts are logged</Text>
-            </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -151,7 +178,7 @@ export default function AdminLoginScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.navyDeep },
   hero: { height: 210 },
-  heroOverlayDeep: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(7,29,48,0.78)' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(7,29,48,0.68)' },
   heroTopRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 6 },
   backBtn: {
     width: 36,
@@ -172,20 +199,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroTitle: { fontSize: 20, fontWeight: '800', color: COLORS.white, letterSpacing: 1 },
-  roleBadge: {
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(242,153,74,0.2)',
-    borderWidth: 1,
-    borderColor: COLORS.saffron,
-  },
-  roleBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: COLORS.saffron,
-    letterSpacing: 1.4,
+  heroSubtitle: {
+    marginTop: 4,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.85)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   sheet: {
     flex: 1,
@@ -205,8 +225,24 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: -8,
   },
-  stepTitle: { fontSize: 19, fontWeight: '800', color: COLORS.textDark },
-  stepHint: { marginTop: 6, fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
+  stepTitle: { fontSize: 19, fontWeight: '800', color: COLORS.textDark, marginBottom: 14 },
+  deptRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  deptChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+  deptChipActive: {
+    backgroundColor: COLORS.navy,
+    borderColor: COLORS.navy,
+  },
+  deptChipText: { marginLeft: 6, fontSize: 13, fontWeight: '600', color: COLORS.navy },
+  deptChipTextActive: { color: COLORS.white },
   linkText: { color: COLORS.blue, fontWeight: '600', fontSize: 12.5 },
   inputRow: {
     flexDirection: 'row',
@@ -228,12 +264,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   gradientBtnText: { color: COLORS.white, fontSize: 15.5, fontWeight: '700', letterSpacing: 0.3 },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 22,
-    marginBottom: 30,
-  },
-  badgeText: { marginLeft: 6, fontSize: 11.5, color: COLORS.textMuted },
 });
