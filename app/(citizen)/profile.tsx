@@ -1,2 +1,390 @@
-import * as ImagePicker from 'expo-image-picker'; import { MaterialCommunityIcons } from '@expo/vector-icons'; import { useState } from 'react'; import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'; import { CITIZEN_COLORS as C } from '@/constants/citizen'; import { CitizenShell } from '@/components/citizen/citizen-shell'; import { useCitizen } from '@/providers/citizen-provider';
-export default function Profile(){const{profile,saveProfile}=useCitizen();const[name,setName]=useState(profile?.name||'');const[phone,setPhone]=useState(profile?.phone||'');const[address,setAddress]=useState(profile?.address||'');const[photoUri,setPhotoUri]=useState(profile?.photoUri);const photo=async()=>{const p=await ImagePicker.requestMediaLibraryPermissionsAsync();if(!p.granted)return;const r=await ImagePicker.launchImageLibraryAsync({mediaTypes:['images'],quality:.7});if(!r.canceled)setPhotoUri(r.assets[0].uri)};const save=()=>profile&&saveProfile({...profile,name,phone,address,photoUri});return <CitizenShell title="My profile"><ScrollView contentContainerStyle={s.content}><Pressable onPress={photo} style={s.photo}>{photoUri?<Image source={{uri:photoUri}} style={s.image}/>:<MaterialCommunityIcons name="camera-plus-outline" size={34} color={C.blue}/>}</Pressable><Text style={s.change}>Tap to change profile photo</Text><Field label="Name" value={name} onChangeText={setName}/><Field label="Phone number" value={phone} onChangeText={setPhone} keyboardType="phone-pad"/><Read label="Ward" value={profile?.ward||''}/><Read label="Locality" value={profile?.locality||''}/><Field label="Address" value={address} onChangeText={setAddress}/><Pressable style={s.button} onPress={save}><Text style={s.buttonText}>Save changes</Text></Pressable></ScrollView></CitizenShell>};function Field({label,...props}:{label:string;value:string;onChangeText:(x:string)=>void;keyboardType?:'phone-pad'}){return <><Text style={s.label}>{label}</Text><TextInput {...props} style={s.input}/></>};function Read({label,value}:{label:string;value:string}){return <><Text style={s.label}>{label}</Text><View style={s.read}><Text>{value}</Text></View></>};const s=StyleSheet.create({content:{padding:20},photo:{width:90,height:90,borderRadius:45,backgroundColor:'#EAF3FF',alignSelf:'center',alignItems:'center',justifyContent:'center',overflow:'hidden'},image:{height:'100%',width:'100%'},change:{textAlign:'center',color:C.blue,fontWeight:'700',fontSize:12,marginTop:8},label:{fontWeight:'800',color:C.text,marginTop:19,marginBottom:7},input:{height:52,borderRadius:13,borderWidth:1,borderColor:C.border,backgroundColor:C.card,paddingHorizontal:13},read:{height:52,borderRadius:13,backgroundColor:'#EEF1F5',justifyContent:'center',paddingHorizontal:13,color:C.muted},button:{height:54,borderRadius:14,backgroundColor:C.navy,alignItems:'center',justifyContent:'center',marginTop:29},buttonText:{color:C.white,fontWeight:'800',fontSize:16}});
+// app/(citizen)/profile.tsx
+import { CitizenScreen } from '@/components/citizen/CitizenScreen';
+import CustomTextInput from '@/components/common/CustomTextInput';
+import GlassCard from '@/components/common/GlassCard';
+import PrimaryButton from '@/components/common/PrimaryButton';
+import { useCitizen } from '@/providers/citizen-provider';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
+
+const splitName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/);
+  return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
+};
+
+export default function Profile() {
+  const router = useRouter();
+  const { profile, saveProfile, logout } = useCitizen();
+  const [fullName, setFullName] = useState(profile?.fullName || profile?.name || '');
+  const [mobile, setMobile] = useState(profile?.mobile || profile?.phone || '');
+  const [locality, setLocality] = useState(profile?.locality || '');
+  const [photoUri, setPhotoUri] = useState(profile?.profileImage || profile?.avatar);
+  const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    setFullName(profile.fullName || profile.name || '');
+    setMobile(profile.mobile || profile.phone || '');
+    setLocality(profile.locality || '');
+    setPhotoUri(profile.profileImage || profile.avatar);
+  }, [profile]);
+
+  const displayFirstName = useMemo(() => {
+    if (profile?.firstName) return profile.firstName;
+    if (fullName) return fullName.split(' ')[0];
+    return 'Citizen';
+  }, [profile, fullName]);
+
+  const pickPhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!profile) return;
+    if (!fullName.trim()) {
+      Alert.alert('Error', 'Full name is required.');
+      return;
+    }
+    if (!mobile.trim() || !/^\d{10}$/.test(mobile.replace(/[^0-9]/g, ''))) {
+      Alert.alert('Error', 'Valid 10-digit mobile number is required.');
+      return;
+    }
+    if (!locality.trim()) {
+      Alert.alert('Error', 'Locality is required.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { firstName, lastName } = splitName(fullName);
+      await saveProfile({
+        ...profile,
+        fullName: fullName.trim(),
+        firstName,
+        lastName,
+        mobile: mobile.trim(),
+        locality: locality.trim(),
+        profileImage: photoUri,
+        name: fullName.trim(),
+        phone: mobile.trim(),
+        avatar: photoUri,
+      });
+      setSaving(false);
+      Alert.alert('Success', 'Profile updated successfully.');
+    } catch {
+      setSaving(false);
+      Alert.alert('Error', 'Failed to update profile.');
+    }
+  };
+
+  const doLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch (e) {
+      console.warn('Logout error:', e);
+    }
+    try {
+      if (typeof router.canDismiss === 'function' && router.canDismiss()) {
+        router.dismissAll();
+      }
+    } catch {
+      // nothing to dismiss, ignore
+    }
+    router.replace('/role-selection');
+    setLoggingOut(false);
+  };
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to logout?') : true;
+      if (confirmed) {
+        void doLogout();
+      }
+      return;
+    }
+
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: () => {
+          void doLogout();
+        },
+      },
+    ]);
+  };
+
+  const menuItems: {
+    label: string;
+    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    onPress: () => void;
+    value?: string;
+  }[] = [
+      { label: 'Settings', icon: 'cog-outline', onPress: () => router.push('/settings') },
+      { label: 'Help & FAQs', icon: 'help-circle-outline', onPress: () => router.push('/help') },
+      { label: 'Privacy Policy', icon: 'file-document-outline', onPress: () => router.push('/privacy-policy') },
+      { label: 'Terms & Conditions', icon: 'handshake-outline', onPress: () => router.push('/terms-conditions') },
+      { label: 'About Seva Setu', icon: 'information-outline', onPress: () => router.push('/about') },
+      { label: 'App Version', icon: 'cellphone', onPress: () => { }, value: '1.0.0' },
+    ];
+
+  return (
+    <CitizenScreen title="My Profile">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
+      >
+        <View style={styles.avatarSection}>
+          <Pressable onPress={pickPhoto} style={styles.avatarPressable}>
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitials}>
+                  {displayFirstName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.cameraBadge}>
+              <MaterialCommunityIcons name="camera" size={16} color={COLORS.white} />
+            </View>
+          </Pressable>
+          <Text style={styles.avatarLabel}>Tap to change profile picture</Text>
+        </View>
+
+        <GlassCard style={styles.formCard}>
+          <CustomTextInput
+            icon="account-outline"
+            label="Full Name"
+            placeholder="Enter your name"
+            value={fullName}
+            onChangeText={setFullName}
+          />
+
+          <CustomTextInput
+            icon="phone-outline"
+            label="Mobile Number"
+            placeholder="e.g. 9876543210"
+            keyboardType="phone-pad"
+            value={mobile}
+            onChangeText={setMobile}
+            maxLength={10}
+          />
+
+          <CustomTextInput
+            icon="home-outline"
+            label="Locality / Area / Street"
+            placeholder="e.g. Wayari Bazaar"
+            value={locality}
+            onChangeText={setLocality}
+          />
+
+          <Text style={styles.readOnlyHeading}>Official Demographics</Text>
+          <Text style={styles.readOnlySubtext}>
+            Ward info is attached from your municipal registrations record.
+          </Text>
+
+          <View style={styles.row}>
+            <View style={styles.readOnlyContainer}>
+              <View style={styles.rowLabelGroup}>
+                <MaterialCommunityIcons name="map-marker-outline" size={14} color={COLORS.textMuted} />
+                <Text style={styles.readOnlyLabel}>WARD</Text>
+              </View>
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>{profile?.ward || 'General'}</Text>
+                <MaterialCommunityIcons name="lock-outline" size={14} color={COLORS.textMuted} />
+              </View>
+            </View>
+
+            <View style={styles.readOnlyContainer}>
+              <View style={styles.rowLabelGroup}>
+                <MaterialCommunityIcons name="home-city-outline" size={14} color={COLORS.textMuted} />
+                <Text style={styles.readOnlyLabel}>MUNICIPALITY</Text>
+              </View>
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>Malvan</Text>
+                <MaterialCommunityIcons name="lock-outline" size={14} color={COLORS.textMuted} />
+              </View>
+            </View>
+          </View>
+        </GlassCard>
+
+        <PrimaryButton
+          label={saving ? 'Saving changes…' : 'Save Changes'}
+          loading={saving}
+          onPress={handleSave}
+          style={styles.saveBtn}
+        />
+
+        <Pressable
+          onPress={handleLogout}
+          disabled={loggingOut}
+          style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed, loggingOut && styles.logoutButtonDisabled]}
+        >
+          <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
+          <Text style={styles.logoutButtonText}>{loggingOut ? 'Logging out…' : 'Logout'}</Text>
+        </Pressable>
+
+        <Text style={styles.menuHeading}>App Menu</Text>
+        <GlassCard style={styles.menuCard}>
+          {menuItems.map((item, idx) => (
+            <Pressable
+              key={item.label}
+              onPress={item.onPress}
+              style={({ pressed }) => [
+                styles.menuRow,
+                idx === menuItems.length - 1 && styles.menuRowLast,
+                pressed && styles.menuRowPressed,
+              ]}
+            >
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconCircle}>
+                  <MaterialCommunityIcons name={item.icon} size={18} color={COLORS.primaryLight} />
+                </View>
+                <Text style={styles.menuLabel}>{item.label}</Text>
+              </View>
+              {item.value ? (
+                <Text style={styles.menuValue}>{item.value}</Text>
+              ) : (
+                <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
+              )}
+            </Pressable>
+          ))}
+        </GlassCard>
+      </ScrollView>
+    </CitizenScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: 18, paddingBottom: 120 },
+  avatarSection: { alignItems: 'center', marginVertical: 18 },
+  avatarPressable: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    ...SHADOWS.medium,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+  },
+  avatarImage: { width: '100%', height: '100%', borderRadius: 48 },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 48,
+    backgroundColor: COLORS.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitials: { color: COLORS.white, fontWeight: '800', fontSize: 34 },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primaryLight,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: COLORS.white,
+  },
+  avatarLabel: { fontSize: 12.5, color: COLORS.accent, fontWeight: '700', marginTop: 8 },
+  formCard: { padding: 16, marginBottom: 20 },
+  readOnlyHeading: { ...TYPOGRAPHY.captionBold, color: COLORS.primary, marginTop: 14 },
+  readOnlySubtext: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    fontSize: 11.5,
+    lineHeight: 16,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  row: { flexDirection: 'row', gap: 10 },
+  readOnlyContainer: { flex: 1 },
+  rowLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+  readOnlyLabel: { fontSize: 10, fontWeight: '700', color: COLORS.textMuted },
+  readOnlyField: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  readOnlyValue: { fontSize: 14, fontWeight: '600', color: COLORS.textMuted },
+  saveBtn: { width: '100%', marginBottom: 14 },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    minHeight: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    marginBottom: 28,
+  },
+  logoutButtonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
+  logoutButtonDisabled: {
+    opacity: 0.6,
+  },
+  logoutButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.danger,
+  },
+  menuHeading: { ...TYPOGRAPHY.h3, color: COLORS.primary, marginBottom: 12 },
+  menuCard: { padding: 0, overflow: 'hidden' },
+  menuRow: {
+    minHeight: 56,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  menuRowLast: { borderBottomWidth: 0 },
+  menuRowPressed: { backgroundColor: 'rgba(15, 23, 42, 0.03)' },
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  menuIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuLabel: { fontSize: 14, color: COLORS.text, fontWeight: '600' },
+  menuValue: { fontSize: 14, color: COLORS.textMuted, fontWeight: '700' },
+});

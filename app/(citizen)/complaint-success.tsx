@@ -1,2 +1,160 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons'; import { useLocalSearchParams, useRouter } from 'expo-router'; import { Pressable, StyleSheet, Text, View } from 'react-native'; import { CITIZEN_COLORS as C } from '@/constants/citizen';
-export default function ComplaintSuccess(){const{id}=useLocalSearchParams<{id:string}>();const router=useRouter();return <View style={s.root}><View style={s.circle}><MaterialCommunityIcons name="check" size={58} color={C.white}/></View><Text style={s.title}>Complaint submitted</Text><Text style={s.text}>Your complaint has been recorded and sent to the relevant municipal team.</Text><View style={s.card}><Text style={s.label}>Complaint ID</Text><Text style={s.id}>{id}</Text><Text style={s.pending}>● Pending</Text></View><Pressable onPress={()=>router.replace('/dashboard')} style={s.button}><Text style={s.buttonText}>Return to dashboard</Text></Pressable></View>};const s=StyleSheet.create({root:{flex:1,backgroundColor:C.bg,alignItems:'center',justifyContent:'center',padding:26},circle:{width:120,height:120,borderRadius:60,backgroundColor:C.success,alignItems:'center',justifyContent:'center'},title:{fontSize:25,fontWeight:'800',color:C.text,marginTop:25},text:{color:C.muted,textAlign:'center',lineHeight:21,marginTop:9},card:{backgroundColor:C.card,borderWidth:1,borderColor:C.border,borderRadius:17,padding:20,width:'100%',marginTop:25,alignItems:'center'},label:{color:C.muted,fontSize:12},id:{color:C.navy,fontSize:23,fontWeight:'800',marginTop:6},pending:{color:C.saffron,fontWeight:'800',marginTop:11},button:{width:'100%',height:55,borderRadius:14,backgroundColor:C.navy,alignItems:'center',justifyContent:'center',marginTop:28},buttonText:{color:C.white,fontWeight:'800',fontSize:16}});
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View, StatusBar } from 'react-native';
+import { CITIZEN_COLORS as C } from '@/constants/citizen';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
+import Animated, { ZoomIn, FadeInUp } from 'react-native-reanimated';
+import PrimaryButton from '@/components/common/PrimaryButton';
+import GlassCard from '@/components/common/GlassCard';
+
+export default function ComplaintSuccess() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+
+      {/* Pulsing Check Circle */}
+      <Animated.View entering={ZoomIn.duration(600)} style={styles.circle}>
+        <MaterialCommunityIcons name="check" size={54} color={COLORS.white} />
+      </Animated.View>
+
+      <Animated.Text entering={FadeInUp.duration(500).delay(200)} style={styles.title}>
+        Complaint Registered
+      </Animated.Text>
+      <Animated.Text entering={FadeInUp.duration(500).delay(350)} style={styles.subtitle}>
+        Your ticket has been logged in the system and forwarded to the municipal grievance desk.
+      </Animated.Text>
+
+      {/* ID Detail Card */}
+      <Animated.View entering={FadeInUp.duration(600).delay(500)} style={styles.cardContainer}>
+        <GlassCard style={styles.card}>
+          <Text style={styles.cardLabel}>OFFICIAL COMPLAINT ID</Text>
+          <Text style={styles.complaintId}>{id}</Text>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Initial Status</Text>
+            <View style={styles.statusBadge}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>PENDING ACTION</Text>
+            </View>
+          </View>
+        </GlassCard>
+      </Animated.View>
+
+      <Animated.View entering={FadeInUp.duration(500).delay(650)} style={styles.btnWrapper}>
+        <PrimaryButton
+          label="Back to Dashboard"
+          onPress={() => router.replace('/dashboard')}
+          style={styles.button}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  circle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.medium,
+    marginBottom: 24,
+  },
+  title: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...TYPOGRAPHY.caption,
+    textAlign: 'center',
+    lineHeight: 20,
+    color: COLORS.textMuted,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    marginBottom: 30,
+  },
+  cardContainer: {
+    width: '100%',
+    marginBottom: 36,
+  },
+  card: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    letterSpacing: 1,
+  },
+  complaintId: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.primary,
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    width: '100%',
+    marginVertical: 16,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  statusLabel: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.warning,
+  },
+  statusText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: COLORS.warning,
+    letterSpacing: 0.5,
+  },
+  btnWrapper: {
+    width: '100%',
+  },
+  button: {
+    width: '100%',
+  },
+});

@@ -19,7 +19,7 @@ export default function GradientOverlay({ children }: Props) {
           "rgba(10,35,66,0.82)",
           "rgba(4,14,28,0.92)",
         ]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {children}

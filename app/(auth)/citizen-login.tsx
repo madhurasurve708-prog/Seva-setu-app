@@ -1,421 +1,529 @@
-// app/citizen-login.tsx
-//
-// SEVA SETU — Citizen Login
-// Step 1: Enter mobile number
-// Step 2: Send OTP (loading transition)
-// Step 3: Enter OTP
-// Step 4: If new user — Full Name, Ward, Locality
-//
-// This screen is UI-only. Wire STEP 2/3 up to your FastAPI OTP endpoints,
-// and replace MOCK_IS_NEW_USER with the real "user exists?" response.
-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
-  Image,
-  ImageBackground,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
+  UIManager,
   View,
+  Modal,
+  Dimensions,
 } from 'react-native';
+import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffold';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import { useCitizen } from '@/providers/citizen-provider';
+import type { CitizenProfile } from '@/types/citizen';
 
-const COLORS = {
-  navyDeep: '#071D30',
-  navy: '#0A2A43',
-  blue: '#1E6FD9',
-  saffron: '#F2994A',
-  bg: '#F5F7FA',
-  card: '#FFFFFF',
-  textDark: '#101826',
-  textMuted: '#5B6472',
-  border: '#E7ECF2',
-  white: '#FFFFFF',
-  danger: '#D64545',
-};
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type Step = 1 | 2 | 3 | 4;
 
+const OTP_LENGTH = 6;
+const RESEND_COOLDOWN = 30; // seconds
+
+const generateId = (): string => `cit_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+const splitName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/);
+  return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
+};
+
+const WARDS = Array.from({ length: 10 }, (_, index) => `Ward ${index + 1}`);
+
 export default function CitizenLoginScreen() {
   const router = useRouter();
-  const { profile } = useCitizen();
+  const { saveProfile, getStoredProfile } = useCitizen();
+
   const [step, setStep] = useState<Step>(1);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [checkingUser, setCheckingUser] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
   const [fullName, setFullName] = useState('');
   const [ward, setWard] = useState('');
   const [locality, setLocality] = useState('');
 
-  const fade = useRef(new Animated.Value(1)).current;
-  const otpRefs = useRef<Array<TextInput | null>>([]);
+  const [mobileError, setMobileError] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [wardError, setWardError] = useState('');
+  const [localityError, setLocalityError] = useState('');
 
-  const animateStep = (next: Step) => {
-    Animated.sequence([
-      Animated.timing(fade, { toValue: 0, duration: 140, useNativeDriver: true }),
+  const [countdown, setCountdown] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+  const [showWardModal, setShowWardModal] = useState(false);
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const otpRefs = useRef<Array<TextInput | null>>(Array(OTP_LENGTH).fill(null));
+  const countdownRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    setCountdown(RESEND_COOLDOWN);
+    setCanResend(false);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000) as unknown as number;
+  }, []);
+
+  const isMobileValid = useMemo(() => /^[6-9]\d{9}$/.test(mobile), [mobile]);
+  const isOtpComplete = useMemo(() => otp.every((d) => d.length === 1), [otp]);
+
+  const animateToStep = useCallback((next: Step) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: -20, duration: 120, useNativeDriver: true }),
     ]).start(() => {
       setStep(next);
-      Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+      slideAnim.setValue(20);
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
+      ]).start();
     });
-  };
+  }, [fadeAnim, slideAnim]);
 
-  const isMobileValid = /^[6-9]\d{9}$/.test(mobile);
-  const isOtpComplete = otp.every((d) => d.length === 1);
+  const playSuccessAnimation = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 1.04, duration: 160, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+    ]).start();
+  }, [scaleAnim]);
 
-  const handleSendOtp = () => {
-    if (!isMobileValid) return;
+  const handleSendOtp = useCallback(() => {
+    if (!isMobileValid) {
+      setMobileError('Please enter a valid 10-digit mobile number starting with 6-9');
+      return;
+    }
+    setMobileError('');
     setSendingOtp(true);
-    // TODO: call your FastAPI endpoint, e.g. POST /auth/citizen/send-otp
+
     setTimeout(() => {
       setSendingOtp(false);
-      animateStep(2);
-      setTimeout(() => animateStep(3), 400);
+      animateToStep(2);
+      setTimeout(() => {
+        animateToStep(3);
+        startCountdown();
+        setTimeout(() => otpRefs.current[0]?.focus(), 150);
+      }, 350);
     }, 900);
-  };
+  }, [isMobileValid, animateToStep, startCountdown]);
 
-  const handleOtpChange = (value: string, index: number) => {
-    const digits = [...otp];
-    digits[index] = value.replace(/[^0-9]/g, '').slice(-1);
-    setOtp(digits);
-    if (value && index < 5) {
+  const handleOtpChange = useCallback((value: string, index: number) => {
+    const sanitized = value.replace(/[^0-9]/g, '');
+    if (!sanitized) {
+      setOtp((prev) => {
+        const copy = [...prev];
+        copy[index] = '';
+        return copy;
+      });
+      return;
+    }
+
+    if (sanitized.length > 1) {
+      const chars = sanitized.slice(0, OTP_LENGTH).split('');
+      const next = Array(OTP_LENGTH).fill('');
+      chars.forEach((c, i) => (next[i] = c));
+      setOtp(next);
+      const lastIndex = Math.min(chars.length - 1, OTP_LENGTH - 1);
+      otpRefs.current[lastIndex]?.focus();
+      return;
+    }
+
+    setOtp((prev) => {
+      const copy = [...prev];
+      copy[index] = sanitized.slice(-1);
+      return copy;
+    });
+
+    if (index < OTP_LENGTH - 1) {
       otpRefs.current[index + 1]?.focus();
     }
-  };
+  }, []);
 
-  const handleVerifyOtp = () => {
-    if (!isOtpComplete) return;
+  const handleOtpKeyPress = useCallback((e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace') {
+      if (otp[index] === '' && index > 0) {
+        setOtp((prev) => {
+          const copy = [...prev];
+          copy[index - 1] = '';
+          return copy;
+        });
+        otpRefs.current[index - 1]?.focus();
+      }
+    }
+  }, [otp]);
+
+  const checkUserExists = useCallback(async (mobileNumber: string) => {
+    await new Promise((r) => setTimeout(r, 700));
+    // For demo/design verification, if the number ends with 2, 4, 6, 8, 0, treat as existing user.
+    const lastDigit = Number(mobileNumber.slice(-1));
+    return lastDigit % 2 === 0;
+  }, []);
+
+  const handleVerifyOtp = useCallback(async () => {
+    if (!isOtpComplete) {
+      setOtpError('Enter the 6-digit OTP');
+      return;
+    }
+    setOtpError('');
     setVerifying(true);
-    // TODO: call your FastAPI endpoint, e.g. POST /auth/citizen/verify-otp
-    setTimeout(() => {
+
+    setTimeout(async () => {
       setVerifying(false);
-      router.replace(profile ? '/dashboard' : '/complete-profile');
+      playSuccessAnimation();
+      setCheckingUser(true);
+      const exists = await checkUserExists(mobile);
+      setCheckingUser(false);
+
+      if (exists) {
+        const storedUser = await getStoredProfile(mobile);
+        if (storedUser) {
+          await saveProfile({ ...storedUser, mobile, phone: mobile });
+          router.replace('/dashboard' as any);
+        } else {
+          animateToStep(4);
+        }
+      } else {
+        animateToStep(4);
+      }
     }, 900);
-  };
+  }, [isOtpComplete, playSuccessAnimation, checkUserExists, mobile, animateToStep, router, saveProfile, getStoredProfile]);
 
-  const handleCompleteRegistration = () => {
-    if (!fullName.trim() || !ward.trim() || !locality.trim()) return;
-    // TODO: call your FastAPI endpoint, e.g. POST /auth/citizen/register
-    Alert.alert('Welcome to Seva Setu', 'Your account has been created.');
-  };
+  const handleResend = useCallback(() => {
+    if (!canResend) return;
+    setOtp(Array(OTP_LENGTH).fill(''));
+    startCountdown();
+    setTimeout(() => otpRefs.current[0]?.focus(), 150);
+  }, [canResend, startCountdown]);
 
-  const goBackStep = () => {
+  const validateRegistration = useCallback(() => {
+    let ok = true;
+    setNameError('');
+    setWardError('');
+    setLocalityError('');
+    if (!fullName.trim()) {
+      setNameError('Full name is required');
+      ok = false;
+    }
+    if (!ward.trim()) {
+      setWardError('Ward selection is required');
+      ok = false;
+    }
+    if (!locality.trim()) {
+      setLocalityError('Locality is required');
+      ok = false;
+    }
+    return ok;
+  }, [fullName, ward, locality]);
+
+  const handleCompleteRegistration = useCallback(async () => {
+    if (!validateRegistration()) return;
+    setRegistering(true);
+    setTimeout(async () => {
+      const { firstName, lastName } = splitName(fullName);
+      const user: CitizenProfile = {
+        id: generateId(),
+        firstName,
+        lastName,
+        fullName: fullName.trim(),
+        mobile,
+        ward: ward.trim(),
+        locality: locality.trim(),
+        profileImage: '',
+        name: fullName.trim(),
+        phone: mobile,
+        avatar: '',
+      };
+      await saveProfile(user);
+      setRegistering(false);
+      playSuccessAnimation();
+      setTimeout(() => router.replace('/dashboard' as any), 450);
+    }, 900);
+  }, [validateRegistration, fullName, mobile, ward, locality, playSuccessAnimation, router, saveProfile]);
+
+  const goBackStep = useCallback(() => {
     if (step === 1) {
       router.back();
     } else if (step === 4) {
-      animateStep(3);
+      animateToStep(3);
     } else {
-      animateStep(1);
-      setOtp(['', '', '', '', '', '']);
+      animateToStep(1);
+      setOtp(Array(OTP_LENGTH).fill(''));
     }
-  };
+  }, [step, router, animateToStep]);
 
   return (
-    <View style={styles.root}>
+    <View style={authStyles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <KeyboardAvoidingView style={authStyles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}>
+        <AuthHero compact title="Citizen Login" subtitle="Seva Setu - Malvan" showLogo={false} icon="account-circle-outline" onBack={goBackStep} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        {/* Hero header */}
-        <ImageBackground
-          source={require('../../assets/images/shivaji.png')}
-          style={styles.hero}
-          resizeMode="cover"
-        >
-          <View style={styles.heroOverlay} />
-          <SafeAreaView>
-            <View style={styles.heroTopRow}>
-              <Pressable onPress={goBackStep} style={styles.backBtn} hitSlop={10}>
-                <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.white} />
-              </Pressable>
-            </View>
-            <View style={styles.heroContent}>
-              <View style={styles.logoRing}>
-                <Image
-                  source={require('../../assets/images/logo.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.heroTitle}>Citizen Login</Text>
-              <Text style={styles.heroSubtitle}>Report. Send. Solve.</Text>
-            </View>
-          </SafeAreaView>
-        </ImageBackground>
+        <AuthSheet>
+          <View style={styles.dotsRow}>
+            {[1, 2, 3, 4].map((n) => (
+              <View key={n} style={[styles.dot, n === step && styles.dotActive, n < step && styles.dotDone]} />
+            ))}
+          </View>
 
-        {/* Form sheet */}
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={authStyles.scrollContent} overScrollMode="never">
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
 
-          <StepDots current={step} />
-
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 32 }}
-          >
-            <Animated.View style={{ opacity: fade }}>
               {step === 1 && (
                 <View>
-                  <Text style={styles.stepTitle}>Enter your mobile number</Text>
-                  <Text style={styles.stepHint}>
-                    We'll send a one-time password to verify it's you.
-                  </Text>
+                  <Text style={authStyles.screenTitle}>Enter your mobile number</Text>
+                  <Text style={authStyles.screenHint}>We will send a one-time passcode to verify your account securely.</Text>
 
-                  <View style={styles.inputRow}>
-                    <MaterialCommunityIcons
-                      name="cellphone"
-                      size={20}
-                      color={COLORS.textMuted}
-                    />
-                    <Text style={styles.countryCode}>+91</Text>
+                  <View style={[styles.phoneInputContainer, mobileError ? { borderColor: COLORS.danger } : null]}>
+                    <MaterialCommunityIcons name="cellphone" size={20} color={mobileError ? COLORS.danger : COLORS.primaryLight} style={styles.phoneIcon} />
+                    <View style={styles.indiaWrap}>
+                      <Text style={styles.indiaCode}>+91</Text>
+                    </View>
+                    <View style={styles.divider} />
                     <TextInput
-                      value={mobile}
-                      onChangeText={(t) => setMobile(t.replace(/[^0-9]/g, '').slice(0, 10))}
-                      placeholder="98765 43210"
-                      placeholderTextColor="#A6ADB8"
-                      keyboardType="number-pad"
+                      placeholder="Enter 10-digit number"
+                      placeholderTextColor={COLORS.textPlaceholder}
+                      keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
                       maxLength={10}
-                      style={styles.input}
+                      value={mobile}
+                      onChangeText={(text) => {
+                        const value = text.replace(/[^0-9]/g, '').slice(0, 10);
+                        setMobile(value);
+                        if (/^[6-9]\d{9}$/.test(value)) setMobileError('');
+                      }}
+                      style={styles.phoneInput}
+                      returnKeyType="send"
+                      onSubmitEditing={handleSendOtp}
                     />
                   </View>
+                  {mobileError ? <Text style={authStyles.errorText}>{mobileError}</Text> : null}
 
-                  <GradientButton
-                    label={sendingOtp ? 'Sending OTP…' : 'Send OTP'}
-                    disabled={!isMobileValid || sendingOtp}
-                    loading={sendingOtp}
-                    onPress={handleSendOtp}
-                  />
+                  <View style={{ marginTop: 12 }}>
+                    <Pressable
+                      onPress={handleSendOtp}
+                      disabled={!isMobileValid || sendingOtp}
+                      style={({ pressed }) => [
+                        styles.primaryBtnStyle,
+                        { backgroundColor: !isMobileValid ? '#CBD5E1' : COLORS.primary },
+                        pressed && { opacity: 0.9 },
+                      ]}
+                    >
+                      {sendingOtp ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Send OTP</Text>}
+                    </Pressable>
+                  </View>
                 </View>
               )}
 
               {step === 2 && (
                 <View style={styles.centerLoading}>
-                  <ActivityIndicator size="large" color={COLORS.blue} />
-                  <Text style={styles.stepHint}>Sending OTP to +91 {mobile}…</Text>
+                  <ActivityIndicator size="large" color={COLORS.primary} />
+                  <Text style={styles.loadingText}>Generating secure OTP for +91 {mobile}...</Text>
                 </View>
               )}
 
               {step === 3 && (
                 <View>
-                  <Text style={styles.stepTitle}>Enter OTP</Text>
-                  <Text style={styles.stepHint}>
-                    Sent to +91 {mobile.slice(0, 5)}••••• ·{' '}
-                    <Text style={styles.linkText} onPress={() => animateStep(1)}>
-                      Change number
-                    </Text>
+                  <Text style={authStyles.screenTitle}>Enter OTP</Text>
+                  <Text style={authStyles.screenHint}>
+                    A verification code was sent to +91 {mobile.slice(0, 5)}xxxxx. <Text style={styles.linkText} onPress={() => animateToStep(1)}>Change</Text>
                   </Text>
 
                   <View style={styles.otpRow}>
-                    {otp.map((digit, i) => (
-                      <TextInput
-                        key={i}
-                        ref={(r) => {
-                          if (r) otpRefs.current[i] = r;
-                        }}
-                        value={digit}
-                        onChangeText={(v) => handleOtpChange(v, i)}
-                        keyboardType="number-pad"
-                        maxLength={1}
-                        style={[
-                          styles.otpBox,
-                          digit ? styles.otpBoxFilled : undefined,
-                        ]}
-                      />
-                    ))}
+                    {otp.map((d, i) => {
+                      const isFocused = focusedIndex === i;
+                      return (
+                        <TextInput
+                          key={i}
+                          ref={(ref) => (otpRefs.current[i] = ref)}
+                          value={d}
+                          onChangeText={(v) => handleOtpChange(v, i)}
+                          onKeyPress={(e) => handleOtpKeyPress(e, i)}
+                          onFocus={() => setFocusedIndex(i)}
+                          onBlur={() => setFocusedIndex(null)}
+                          keyboardType="numeric"
+                          maxLength={1}
+                          style={[
+                            styles.otpBox,
+                            d ? styles.otpBoxFilled : null,
+                            isFocused && styles.otpBoxFocused,
+                          ]}
+                          textContentType="oneTimeCode"
+                        />
+                      );
+                    })}
+                  </View>
+                  {otpError ? <Text style={authStyles.errorText}>{otpError}</Text> : null}
+
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                    <Text style={styles.resendText}>{canResend ? 'You can resend now' : `Resend in ${countdown}s`}</Text>
+                    <Pressable onPress={handleResend} disabled={!canResend} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+                      <Text style={[styles.resendLink, !canResend ? { color: COLORS.textMuted } : null]}>Resend OTP</Text>
+                    </Pressable>
                   </View>
 
-                  <Pressable onPress={handleSendOtp}>
-                    <Text style={styles.resendText}>Didn't get it? Resend OTP</Text>
-                  </Pressable>
-
-                  <GradientButton
-                    label={verifying ? 'Verifying…' : 'Verify & Continue'}
-                    disabled={!isOtpComplete || verifying}
-                    loading={verifying}
-                    onPress={handleVerifyOtp}
-                  />
+                  <View style={{ marginTop: 20 }}>
+                    <Pressable
+                      onPress={handleVerifyOtp}
+                      disabled={!isOtpComplete || verifying}
+                      style={({ pressed }) => [
+                        styles.primaryBtnStyle,
+                        { backgroundColor: !isOtpComplete ? '#CBD5E1' : COLORS.primary },
+                        pressed && { opacity: 0.9 },
+                      ]}
+                    >
+                      {verifying || checkingUser ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Verify & Continue</Text>}
+                    </Pressable>
+                  </View>
                 </View>
               )}
 
               {step === 4 && (
                 <View>
-                  <Text style={styles.stepTitle}>Tell us about yourself</Text>
-                  <Text style={styles.stepHint}>
-                    Just a few details to finish setting up your account.
-                  </Text>
+                  <Text style={authStyles.screenTitle}>Create citizen profile</Text>
+                  <Text style={authStyles.screenHint}>Please provide details matching your official address in Malvan.</Text>
 
-                  <LabeledInput
-                    icon="account-outline"
-                    placeholder="Full name"
-                    value={fullName}
-                    onChangeText={setFullName}
-                  />
-                  <LabeledInput
-                    icon="map-marker-radius-outline"
-                    placeholder="Ward (e.g. Ward No. 4)"
-                    value={ward}
-                    onChangeText={setWard}
-                  />
-                  <LabeledInput
-                    icon="home-city-outline"
-                    placeholder="Locality / Area"
-                    value={locality}
-                    onChangeText={setLocality}
-                  />
+                  <View style={authStyles.formContainer}>
+                    {/* Name input */}
+                    <Text style={styles.formInputLabel}>Full Name</Text>
+                    <View style={[styles.formInputContainer, nameError ? { borderColor: COLORS.danger } : null]}>
+                      <MaterialCommunityIcons name="account-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                      <TextInput
+                        placeholder="Your official full name"
+                        placeholderTextColor={COLORS.textPlaceholder}
+                        value={fullName}
+                        onChangeText={(t) => {
+                          setFullName(t);
+                          if (t.trim()) setNameError('');
+                        }}
+                        style={styles.fieldInput}
+                      />
+                    </View>
+                    {nameError ? <Text style={authStyles.errorText}>{nameError}</Text> : null}
 
-                  <GradientButton
-                    label="Complete Registration"
-                    disabled={!fullName.trim() || !ward.trim() || !locality.trim()}
-                    onPress={handleCompleteRegistration}
-                  />
+                    {/* Ward Selector (Dropdown Replacement) */}
+                    <Text style={styles.formInputLabel}>Select Ward</Text>
+                    <Pressable
+                      onPress={() => setShowWardModal(true)}
+                      style={[styles.formInputContainer, wardError ? { borderColor: COLORS.danger } : null]}
+                    >
+                      <MaterialCommunityIcons name="map-marker-radius-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                      <Text style={[styles.fieldInputText, ward ? { color: COLORS.text } : null]}>
+                        {ward || 'Tap to choose your ward'}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.textMuted} />
+                    </Pressable>
+                    {wardError ? <Text style={authStyles.errorText}>{wardError}</Text> : null}
+
+                    {/* Locality input */}
+                    <Text style={styles.formInputLabel}>Locality / Street / Landmark</Text>
+                    <View style={[styles.formInputContainer, localityError ? { borderColor: COLORS.danger } : null]}>
+                      <MaterialCommunityIcons name="home-city-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                      <TextInput
+                        placeholder="e.g. Medha, wayari road"
+                        placeholderTextColor={COLORS.textPlaceholder}
+                        value={locality}
+                        onChangeText={(t) => {
+                          setLocality(t);
+                          if (t.trim()) setLocalityError('');
+                        }}
+                        style={styles.fieldInput}
+                      />
+                    </View>
+                    {localityError ? <Text style={authStyles.errorText}>{localityError}</Text> : null}
+                  </View>
+
+                  <View style={{ marginTop: 24 }}>
+                    <Pressable
+                      onPress={handleCompleteRegistration}
+                      disabled={registering}
+                      style={({ pressed }) => [
+                        styles.primaryBtnStyle,
+                        { backgroundColor: COLORS.primary },
+                        pressed && { opacity: 0.9 },
+                      ]}
+                    >
+                      {registering ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Register Account</Text>}
+                    </Pressable>
+                  </View>
                 </View>
               )}
+
             </Animated.View>
           </ScrollView>
-        </View>
+        </AuthSheet>
       </KeyboardAvoidingView>
-    </View>
-  );
-}
 
-function StepDots({ current }: { current: Step }) {
-  return (
-    <View style={styles.dotsRow}>
-      {[1, 2, 3, 4].map((n) => (
-        <View
-          key={n}
-          style={[
-            styles.dot,
-            n === current && styles.dotActive,
-            n < current && styles.dotDone,
-          ]}
-        />
-      ))}
+      {/* Ward Dropdown Modal Bottom Sheet */}
+      <Modal visible={showWardModal} animationType="slide" transparent>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowWardModal(false)}>
+          <View style={styles.modalSheet} onStartShouldSetResponder={() => true}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Select Ward</Text>
+            <Text style={styles.modalSubtitle}>Please choose the municipal ward of your residence.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              {WARDS.map((w) => {
+                const selected = ward === w;
+                return (
+                  <Pressable
+                    key={w}
+                    onPress={() => {
+                      setWard(w);
+                      setWardError('');
+                      setShowWardModal(false);
+                    }}
+                    style={[styles.modalItem, selected && styles.modalItemSelected]}
+                  >
+                    <Text style={[styles.modalItemText, selected && styles.modalItemTextSelected]}>{w}</Text>
+                    {selected && <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} />}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
-  );
-}
-
-function LabeledInput({
-  icon,
-  ...props
-}: {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  placeholder: string;
-  value: string;
-  onChangeText: (t: string) => void;
-}) {
-  return (
-    <View style={styles.inputRow}>
-      <MaterialCommunityIcons name={icon} size={20} color={COLORS.textMuted} />
-      <TextInput
-        placeholderTextColor="#A6ADB8"
-        style={[styles.input, { marginLeft: 10 }]}
-        {...props}
-      />
-    </View>
-  );
-}
-
-function GradientButton({
-  label,
-  onPress,
-  disabled,
-  loading,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-}) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled} style={{ marginTop: 22 }}>
-      <LinearGradient
-        colors={disabled ? ['#C7CEDA', '#C7CEDA'] : [COLORS.navy, COLORS.blue]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.gradientBtn}
-      >
-        {loading && <ActivityIndicator size="small" color={COLORS.white} style={{ marginRight: 8 }} />}
-        <Text style={styles.gradientBtnText}>{label}</Text>
-      </LinearGradient>
-    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.navyDeep },
-  hero: { height: 220 },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7,29,48,0.62)',
-  },
-  heroTopRow: {
+  dotsRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 6,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  heroContent: { alignItems: 'center', marginTop: 6 },
-  logoRing: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  logo: { width: 38, height: 38 },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: COLORS.white, letterSpacing: 1 },
-  heroSubtitle: {
-    marginTop: 4,
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.85)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -22,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.border,
     marginBottom: 18,
   },
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 22 },
   dot: {
     width: 8,
     height: 8,
@@ -423,74 +531,206 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginHorizontal: 4,
   },
-  dotActive: { backgroundColor: COLORS.blue, width: 20 },
-  dotDone: { backgroundColor: COLORS.saffron },
-  stepTitle: { fontSize: 19, fontWeight: '800', color: COLORS.textDark },
-  stepHint: { marginTop: 6, fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
-  linkText: { color: COLORS.blue, fontWeight: '700' },
-  inputRow: {
+  dotActive: {
+    backgroundColor: COLORS.accent,
+    width: 24,
+  },
+  dotDone: {
+    backgroundColor: COLORS.secondary,
+  },
+  phoneInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
+    width: '100%',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    height: 54,
-    marginTop: 18,
+    borderRadius: 16,
+    height: 56,
+    paddingLeft: 14,
+    paddingRight: 10,
+    marginBottom: 8,
   },
-  countryCode: {
-    marginLeft: 8,
+  phoneIcon: {
     marginRight: 6,
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textDark,
   },
-  input: {
+  indiaWrap: {
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  indiaCode: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  divider: {
+    width: 1,
+    height: 24,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 12,
+  },
+  phoneInput: {
     flex: 1,
-    fontSize: 15,
-    color: COLORS.textDark,
-    marginLeft: 4,
+    height: '100%',
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    paddingVertical: 0,
   },
-  centerLoading: { alignItems: 'center', paddingVertical: 40 },
+  centerLoading: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    ...TYPOGRAPHY.caption,
+    marginTop: 12,
+    color: COLORS.textMuted,
+  },
+  linkText: {
+    color: COLORS.secondary,
+    fontWeight: '800',
+  },
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginVertical: 14,
   },
   otpBox: {
-    width: 46,
+    flex: 1,
     height: 54,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.surface,
     textAlign: 'center',
     fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.textDark,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginHorizontal: 3,
   },
   otpBoxFilled: {
-    borderColor: COLORS.blue,
+    borderColor: COLORS.primaryLight,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.sm,
+  },
+  otpBoxFocused: {
+    borderColor: COLORS.primary,
+    borderWidth: 2,
+    backgroundColor: COLORS.white,
   },
   resendText: {
-    marginTop: 16,
+    color: COLORS.textMuted,
     fontSize: 13,
-    color: COLORS.blue,
-    fontWeight: '600',
-    textAlign: 'center',
   },
-  gradientBtn: {
+  resendLink: {
+    color: COLORS.secondary,
+    fontWeight: '800',
+  },
+  formInputLabel: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: 14,
+    marginBottom: 6,
+    paddingLeft: 2,
+  },
+  formInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 16,
     height: 54,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    marginBottom: 4,
+  },
+  fieldIcon: {
+    marginRight: 10,
+  },
+  fieldInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text,
+    paddingVertical: 0,
+  },
+  fieldInputText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textPlaceholder,
+  },
+  primaryBtnStyle: {
+    height: 54,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    width: '100%',
+    ...SHADOWS.button,
   },
-  gradientBtnText: {
+  primaryBtnText: {
     color: COLORS.white,
-    fontSize: 15.5,
-    fontWeight: '700',
+    fontWeight: '800',
+    fontSize: 16,
     letterSpacing: 0.3,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 26, 48, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingHorizontal: 24,
+    maxHeight: Dimensions.get('window').height * 0.7,
+  },
+  modalHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#D8E2EC',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.primary,
+  },
+  modalSubtitle: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    marginTop: 4,
+    marginBottom: 18,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+  modalItemSelected: {
+    borderColor: COLORS.primaryLight,
+    backgroundColor: 'rgba(11, 79, 138, 0.04)',
+  },
+  modalItemText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  modalItemTextSelected: {
+    color: COLORS.primary,
+    fontWeight: '800',
   },
 });

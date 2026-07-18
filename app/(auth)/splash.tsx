@@ -1,161 +1,329 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Dimensions,
   ImageBackground,
+  Pressable,
   StatusBar,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
-
 import Animated, {
-  FadeIn,
-  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
+  withDelay,
   withSequence,
   withTiming,
+  Easing,
+  interpolate,
 } from "react-native-reanimated";
 
-import AnimatedLogo from "@/components/common/AnimatedLogo";
-import LoadingBar from "@/components/common/LoadingBar";
+const { width, height } = Dimensions.get("window");
+const SPLASH_DURATION = 6000;
 
 export default function SplashScreen() {
-  const scale = useSharedValue(1);
+  const screenOpacity = useSharedValue(0);
+  const bgScale = useSharedValue(1);
+  const gradientOpacity = useSharedValue(0);
+  const logoScale = useSharedValue(0.85);
+  const logoOpacity = useSharedValue(0);
+  const glowOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(15);
+  const titleOpacity = useSharedValue(0);
+  const sloganOpacity = useSharedValue(0);
+  const progressWidth = useSharedValue(0);
+  const skipOpacity = useSharedValue(0);
+
+  const [skipVisible, setSkipVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Background animation
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.08, { duration: 3500 }),
-        withTiming(1, { duration: 3500 })
-      ),
-      -1,
-      false
-    );
-
-    // Navigate after 3 seconds
-    const timer = setTimeout(() => {
-      router.replace("/role-selection");
-    }, 3000);
-
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
 
-  const backgroundStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+  useEffect(() => {
+    if (!mounted) return;
+
+    // 1. Screen fades in
+    screenOpacity.value = withTiming(1, { 
+      duration: 400, 
+      easing: Easing.in(Easing.ease) 
+    });
+
+    // 2. Background zoom 1.0 → 1.05 over 6s
+    bgScale.value = withTiming(1.05, {
+      duration: SPLASH_DURATION,
+      easing: Easing.inOut(Easing.ease),
+    });
+
+    // 3. Bottom gradient fades in
+    gradientOpacity.value = withDelay(
+      300,
+      withTiming(1, { duration: 1000, easing: Easing.out(Easing.ease) })
+    );
+
+    // 4. Logo scale 0.85 → 1.0 + fade in
+    logoScale.value = withDelay(
+      700,
+      withTiming(1, { duration: 900, easing: Easing.out(Easing.back(1.2)) })
+    );
+    logoOpacity.value = withDelay(
+      700,
+      withTiming(1, { duration: 800, easing: Easing.out(Easing.ease) })
+    );
+
+    // 5. Logo subtle glow pulse once
+    glowOpacity.value = withDelay(
+      1600,
+      withSequence(
+        withTiming(0.6, { duration: 600, easing: Easing.out(Easing.ease) }),
+        withTiming(0, { duration: 800, easing: Easing.in(Easing.ease) })
+      )
+    );
+
+    // 6. Title slide up 15px + fade in
+    titleTranslateY.value = withDelay(
+      1200,
+      withTiming(0, { duration: 800, easing: Easing.out(Easing.ease) })
+    );
+    titleOpacity.value = withDelay(
+      1200,
+      withTiming(1, { duration: 700, easing: Easing.out(Easing.ease) })
+    );
+
+    // 7. Slogan fades in after title
+    sloganOpacity.value = withDelay(
+      2000,
+      withTiming(1, { duration: 700, easing: Easing.out(Easing.ease) })
+    );
+
+    // 8. Progress bar fills continuously
+    progressWidth.value = withDelay(
+      1000,
+      withTiming(1, { 
+        duration: SPLASH_DURATION - 1000, 
+        easing: Easing.inOut(Easing.ease) 
+      })
+    );
+
+    // 9. Skip button appears after 2s
+    const skipTimer = setTimeout(() => {
+      setSkipVisible(true);
+      skipOpacity.value = withTiming(1, { 
+        duration: 400, 
+        easing: Easing.out(Easing.ease) 
+      });
+    }, 2000);
+
+    // Auto-navigate after 6s
+    const navTimer = setTimeout(() => {
+      try {
+        router.replace("/(auth)/role-selection");
+      } catch (e) {
+        console.error("Navigation error:", e);
+      }
+    }, SPLASH_DURATION);
+
+    return () => {
+      clearTimeout(skipTimer);
+      clearTimeout(navTimer);
+    };
+  }, [mounted]);
+
+  const screenAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: screenOpacity.value 
+  }));
+  
+  const bgAnimatedStyle = useAnimatedStyle(() => ({ 
+    transform: [{ scale: bgScale.value }] 
+  }));
+  
+  const gradientAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: gradientOpacity.value 
+  }));
+  
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+  
+  const glowAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: glowOpacity.value 
+  }));
+  
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: titleTranslateY.value }],
+    opacity: titleOpacity.value,
+  }));
+  
+  const sloganAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: sloganOpacity.value 
+  }));
+  
+  const progressAnimatedStyle = useAnimatedStyle(() => ({
+    width: interpolate(progressWidth.value, [0, 1], [0, width * 0.65]),
+  }));
+  
+  const skipAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: skipOpacity.value 
   }));
 
+  const handleSkip = () => {
+    try {
+      router.replace("/(auth)/role-selection");
+    } catch (e) {
+      console.error("Skip navigation error:", e);
+    }
+  };
+
   return (
-    <>
-      <StatusBar barStyle="light-content" />
+    <Animated.View style={[styles.root, screenAnimatedStyle]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <View style={styles.container}>
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, backgroundStyle]}
-        >
-          <ImageBackground
-            source={require("../../assets/images/shivaji.png")}
-            style={styles.background}
-            resizeMode="cover"
-          />
-        </Animated.View>
+      {/* Background */}
+      <Animated.View style={[StyleSheet.absoluteFill, bgAnimatedStyle]}>
+        <ImageBackground
+          source={require("../../assets/images/shivaji.png")}
+          style={styles.bgImage}
+          resizeMode="cover"
+        />
+      </Animated.View>
 
+      {/* Gradient Overlay */}
+      <Animated.View style={[StyleSheet.absoluteFill, gradientAnimatedStyle]}>
         <LinearGradient
           colors={[
-            "rgba(0,0,0,0.70)",
-            "rgba(0,0,0,0.60)",
-            "rgba(0,0,0,0.85)",
+            "rgba(4,15,35,0.0)",
+            "rgba(4,15,35,0.45)",
+            "rgba(4,15,35,0.75)",
+            "rgba(2,8,20,0.95)",
+            "#020814",
           ]}
-          style={StyleSheet.absoluteFillObject}
+          locations={[0, 0.25, 0.5, 0.75, 1]}
+          style={styles.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
         />
+      </Animated.View>
 
-        <View style={styles.content}>
-          <AnimatedLogo />
+      {/* Skip Button */}
+      {skipVisible && (
+        <Animated.View style={[styles.skipContainer, skipAnimatedStyle]}>
+          <Pressable onPress={handleSkip} style={styles.skipButton}>
+            <Text style={styles.skipText}>Skip →</Text>
+          </Pressable>
+        </Animated.View>
+      )}
 
-          <Animated.Text
-            entering={FadeInDown.duration(700).delay(250)}
-            style={styles.title}
-          >
-            सेवा सेतू
-          </Animated.Text>
-
-          <Animated.Text
-            entering={FadeInDown.duration(700).delay(450)}
-            style={styles.subtitle}
-          >
-            Citizen Complaint Management System
-          </Animated.Text>
-
-          <Animated.Text
-            entering={FadeIn.duration(700).delay(650)}
-            style={styles.location}
-          >
-            Malvan Municipal Council
-          </Animated.Text>
-
-          <View style={{ height: 35 }} />
-
-          <LoadingBar />
+      {/* Bottom Content */}
+      <View style={styles.bottomContent}>
+        <View style={styles.logoWrapper}>
+          <Animated.View 
+            style={[StyleSheet.absoluteFill, styles.glowRing, glowAnimatedStyle]} 
+          />
+          <Animated.Image
+            source={require("../../assets/images/logo.jpeg")}
+            style={[styles.logo, logoAnimatedStyle]}
+            resizeMode="contain"
+          />
         </View>
 
-        <Animated.Text
-          entering={FadeIn.duration(700).delay(900)}
-          style={styles.footer}
-        >
-          Empowering Citizens • Strengthening Governance
+        <Animated.Text style={[styles.title, titleAnimatedStyle]}>
+          सेवा सेतू
         </Animated.Text>
+
+        <Animated.Text style={[styles.slogan, sloganAnimatedStyle]}>
+          Connecting Citizens. Solving Problems.
+        </Animated.Text>
+
+        <View style={styles.progressTrack}>
+          <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
+        </View>
       </View>
-    </>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
+  root: { flex: 1, backgroundColor: "#020814" },
+  bgImage: { flex: 1, width: "100%", height: "100%" },
+  gradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.45,
   },
-
-  background: {
-    flex: 1,
+  skipContainer: { position: "absolute", top: 60, right: 20, zIndex: 100 },
+  skipButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(4, 15, 35, 0.65)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
   },
-
-  content: {
-    flex: 1,
-    justifyContent: "center",
+  skipText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600", letterSpacing: 0.5 },
+  bottomContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.4,
     alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 60,
     paddingHorizontal: 30,
   },
-
-  title: {
-    marginTop: 18,
-    fontSize: 38,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: 1,
+  logoWrapper: { 
+    width: 80, 
+    height: 80, 
+    alignItems: "center", 
+    justifyContent: "center", 
+    marginBottom: 12 
   },
-
-  subtitle: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#EAEAEA",
-    textAlign: "center",
-  },
-
-  location: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#BDBDBD",
-    letterSpacing: 0.5,
-  },
-
-  footer: {
-    position: "absolute",
-    bottom: 40,
+  logo: { width: 72, height: 72 },
+  glowRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "rgba(100, 180, 255, 0.18)",
     alignSelf: "center",
-    color: "#BDBDBD",
-    fontSize: 13,
-    letterSpacing: 0.5,
+    top: -4,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 1.8,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  slogan: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.8)",
+    letterSpacing: 0.8,
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  progressTrack: {
+    width: width * 0.65,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 2,
+    backgroundColor: "#4A9EFF",
+    shadowColor: "#4A9EFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });

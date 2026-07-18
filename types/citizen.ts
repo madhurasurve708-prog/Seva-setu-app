@@ -1,30 +1,39 @@
-export type ComplaintStatus = 'Pending' | 'In Progress' | 'Resolved';
+export type ComplaintStatus = 'Pending' | 'In Progress' | 'Resolved' | 'Rejected';
 
-export type CitizenProfile = {
+export interface CitizenProfile {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  fullName: string;
+  mobile: string;
+  ward: string;
+  locality: string;
+  profileImage?: string;
+  // Aliases for backwards compatibility
   name: string;
   phone: string;
-  ward: string;
-  locality: string;
-  address: string;
-  photoUri?: string;
-};
+  avatar?: string;
+}
 
-export type CitizenComplaint = {
+export interface CitizenComplaint {
   id: string;
-  category: string;
   title: string;
   description: string;
+  category: string;
   ward: string;
   locality: string;
-  submittedAt: string;
   status: ComplaintStatus;
-  photoUri?: string;
+  submittedAt: string;
+  resolvedAt?: string;
   assignedDepartment?: string;
-};
+  images?: string[];
+  photoUri?: string; // added to match the image picker field
+}
 
-export type CitizenPreferences = {
+export interface CitizenPreferences {
   theme: 'light' | 'dark' | 'system';
   complaintUpdates: boolean;
   announcements: boolean;
   smsAlerts: boolean;
-};
+}
+

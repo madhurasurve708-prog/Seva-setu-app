@@ -1,6 +1,20 @@
 import type { ComplaintStatus } from '@/types/citizen';
+import { COLORS } from './theme';
 
-export const CITIZEN_COLORS = { navy: '#0A2A43', navyDeep: '#071D30', blue: '#1E6FD9', saffron: '#F2994A', bg: '#F5F7FA', card: '#FFFFFF', text: '#101826', muted: '#5B6472', border: '#E7ECF2', success: '#1C9B62', danger: '#D64545', white: '#FFFFFF' } as const;
+export const CITIZEN_COLORS = {
+  navy: COLORS.primaryLight,
+  navyDeep: COLORS.primary,
+  blue: COLORS.accent,
+  saffron: COLORS.warning,
+  bg: COLORS.background,
+  card: COLORS.card,
+  text: COLORS.text,
+  muted: COLORS.textMuted,
+  border: COLORS.border,
+  success: COLORS.success,
+  danger: COLORS.danger,
+  white: COLORS.white,
+} as const;
 
 export const WARDS = Array.from({ length: 10 }, (_, index) => `Ward ${index + 1}`);
 
@@ -20,7 +34,12 @@ export const CATEGORIES = [
   { label: 'Other', icon: 'map-marker-outline' },
 ] as const;
 
-export const STATUS_COLORS: Record<ComplaintStatus, string> = { Pending: '#F2994A', 'In Progress': '#1E6FD9', Resolved: '#1C9B62' };
+export const STATUS_COLORS: Record<ComplaintStatus, string> = {
+  Pending: COLORS.warning,
+  'In Progress': COLORS.accent,
+  Resolved: COLORS.success,
+  Rejected: COLORS.danger,
+};
 
 export const ANNOUNCEMENTS = [
   { id: '1', title: 'Monsoon drainage cleaning drive', date: '12 July 2026', priority: 'Pinned', body: 'Ward-wise drain cleaning is in progress this week. Please keep access clear.' },
