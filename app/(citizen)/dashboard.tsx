@@ -85,7 +85,7 @@ export default function Dashboard() {
       {/* ---------------- BRANDED HEADER ---------------- */}
       <View style={styles.brandedHeader}>
         <View style={styles.headerLeft}>
-          <Image source={require('../../assets/images/logo.png')} style={styles.headerLogo} resizeMode="contain" />
+          <Image source={require('../../assets/images/logo.jpeg')} style={styles.headerLogo} resizeMode="contain" />
           <View>
             <Text style={styles.headerTitle}>SEVA SETU</Text>
             <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>

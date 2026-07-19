@@ -50,7 +50,7 @@ export default function About() {
         >
           <View style={styles.innerLogoRing}>
             <Image
-              source={require('../../assets/images/logo.png')}
+              source={require('../../assets/images/logo.jpeg')}
               style={styles.logoImage}
               resizeMode="contain"
             />

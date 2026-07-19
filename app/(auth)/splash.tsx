@@ -1,3 +1,4 @@
+// app/(auth)/splash.tsx
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -46,25 +47,21 @@ export default function SplashScreen() {
   useEffect(() => {
     if (!mounted) return;
 
-    // 1. Screen fades in
-    screenOpacity.value = withTiming(1, { 
-      duration: 400, 
-      easing: Easing.in(Easing.ease) 
+    screenOpacity.value = withTiming(1, {
+      duration: 400,
+      easing: Easing.in(Easing.ease),
     });
 
-    // 2. Background zoom 1.0 → 1.05 over 6s
     bgScale.value = withTiming(1.05, {
       duration: SPLASH_DURATION,
       easing: Easing.inOut(Easing.ease),
     });
 
-    // 3. Bottom gradient fades in
     gradientOpacity.value = withDelay(
       300,
       withTiming(1, { duration: 1000, easing: Easing.out(Easing.ease) })
     );
 
-    // 4. Logo scale 0.85 → 1.0 + fade in
     logoScale.value = withDelay(
       700,
       withTiming(1, { duration: 900, easing: Easing.out(Easing.back(1.2)) })
@@ -74,7 +71,6 @@ export default function SplashScreen() {
       withTiming(1, { duration: 800, easing: Easing.out(Easing.ease) })
     );
 
-    // 5. Logo subtle glow pulse once
     glowOpacity.value = withDelay(
       1600,
       withSequence(
@@ -83,7 +79,6 @@ export default function SplashScreen() {
       )
     );
 
-    // 6. Title slide up 15px + fade in
     titleTranslateY.value = withDelay(
       1200,
       withTiming(0, { duration: 800, easing: Easing.out(Easing.ease) })
@@ -93,34 +88,30 @@ export default function SplashScreen() {
       withTiming(1, { duration: 700, easing: Easing.out(Easing.ease) })
     );
 
-    // 7. Slogan fades in after title
     sloganOpacity.value = withDelay(
       2000,
       withTiming(1, { duration: 700, easing: Easing.out(Easing.ease) })
     );
 
-    // 8. Progress bar fills continuously
     progressWidth.value = withDelay(
       1000,
-      withTiming(1, { 
-        duration: SPLASH_DURATION - 1000, 
-        easing: Easing.inOut(Easing.ease) 
+      withTiming(1, {
+        duration: SPLASH_DURATION - 1000,
+        easing: Easing.inOut(Easing.ease),
       })
     );
 
-    // 9. Skip button appears after 2s
     const skipTimer = setTimeout(() => {
       setSkipVisible(true);
-      skipOpacity.value = withTiming(1, { 
-        duration: 400, 
-        easing: Easing.out(Easing.ease) 
+      skipOpacity.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.ease),
       });
     }, 2000);
 
-    // Auto-navigate after 6s
     const navTimer = setTimeout(() => {
       try {
-        router.replace("/(auth)/role-selection");
+        router.replace("/role-selection");
       } catch (e) {
         console.error("Navigation error:", e);
       }
@@ -132,47 +123,47 @@ export default function SplashScreen() {
     };
   }, [mounted]);
 
-  const screenAnimatedStyle = useAnimatedStyle(() => ({ 
-    opacity: screenOpacity.value 
+  const screenAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: screenOpacity.value,
   }));
-  
-  const bgAnimatedStyle = useAnimatedStyle(() => ({ 
-    transform: [{ scale: bgScale.value }] 
+
+  const bgAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: bgScale.value }],
   }));
-  
-  const gradientAnimatedStyle = useAnimatedStyle(() => ({ 
-    opacity: gradientOpacity.value 
+
+  const gradientAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: gradientOpacity.value,
   }));
-  
+
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: logoScale.value }],
     opacity: logoOpacity.value,
   }));
-  
-  const glowAnimatedStyle = useAnimatedStyle(() => ({ 
-    opacity: glowOpacity.value 
+
+  const glowAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
   }));
-  
+
   const titleAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: titleTranslateY.value }],
     opacity: titleOpacity.value,
   }));
-  
-  const sloganAnimatedStyle = useAnimatedStyle(() => ({ 
-    opacity: sloganOpacity.value 
+
+  const sloganAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: sloganOpacity.value,
   }));
-  
+
   const progressAnimatedStyle = useAnimatedStyle(() => ({
     width: interpolate(progressWidth.value, [0, 1], [0, width * 0.65]),
   }));
-  
-  const skipAnimatedStyle = useAnimatedStyle(() => ({ 
-    opacity: skipOpacity.value 
+
+  const skipAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: skipOpacity.value,
   }));
 
   const handleSkip = () => {
     try {
-      router.replace("/(auth)/role-selection");
+      router.replace("/role-selection");
     } catch (e) {
       console.error("Skip navigation error:", e);
     }
@@ -182,7 +173,6 @@ export default function SplashScreen() {
     <Animated.View style={[styles.root, screenAnimatedStyle]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Background */}
       <Animated.View style={[StyleSheet.absoluteFill, bgAnimatedStyle]}>
         <ImageBackground
           source={require("../../assets/images/shivaji.png")}
@@ -191,7 +181,6 @@ export default function SplashScreen() {
         />
       </Animated.View>
 
-      {/* Gradient Overlay */}
       <Animated.View style={[StyleSheet.absoluteFill, gradientAnimatedStyle]}>
         <LinearGradient
           colors={[
@@ -208,7 +197,6 @@ export default function SplashScreen() {
         />
       </Animated.View>
 
-      {/* Skip Button */}
       {skipVisible && (
         <Animated.View style={[styles.skipContainer, skipAnimatedStyle]}>
           <Pressable onPress={handleSkip} style={styles.skipButton}>
@@ -217,11 +205,10 @@ export default function SplashScreen() {
         </Animated.View>
       )}
 
-      {/* Bottom Content */}
       <View style={styles.bottomContent}>
         <View style={styles.logoWrapper}>
-          <Animated.View 
-            style={[StyleSheet.absoluteFill, styles.glowRing, glowAnimatedStyle]} 
+          <Animated.View
+            style={[StyleSheet.absoluteFill, styles.glowRing, glowAnimatedStyle]}
           />
           <Animated.Image
             source={require("../../assets/images/logo.jpeg")}
@@ -277,12 +264,12 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
     paddingHorizontal: 30,
   },
-  logoWrapper: { 
-    width: 80, 
-    height: 80, 
-    alignItems: "center", 
-    justifyContent: "center", 
-    marginBottom: 12 
+  logoWrapper: {
+    width: 80,
+    height: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   logo: { width: 72, height: 72 },
   glowRing: {

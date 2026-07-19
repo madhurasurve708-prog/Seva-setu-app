@@ -1,3 +1,4 @@
+// components/common/AuthScaffold.tsx
 import React, { type ReactNode } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,7 +22,6 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-// Ensure RADIUS is exported from your theme file
 import { COLORS, SHADOWS, TYPOGRAPHY, RADIUS } from '../../constants/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   hero: {
     height: 370,
     minHeight: 350,
-    backgroundColor: '#081B2B', // Dark blue solid background to blend with image
+    backgroundColor: '#081B2B',
     borderBottomLeftRadius: RADIUS.lg,
     borderBottomRightRadius: RADIUS.lg,
     overflow: 'hidden',
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   heroImageStyle: {
     borderBottomLeftRadius: RADIUS.lg,
     borderBottomRightRadius: RADIUS.lg,
-    opacity: 0.28, // Watermarked background style
+    opacity: 0.28,
     alignSelf: 'center',
   },
   heroSubjectGuard: {
