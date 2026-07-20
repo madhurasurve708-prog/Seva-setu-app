@@ -105,7 +105,7 @@ export default function About() {
         </View>
 
         <Text style={styles.teamSectionSub}>
-          The people behind Seva Setu, working to make Malvan's civic services simpler and faster.
+          The people behind Seva Setu, working to make Malvan’s civic services simpler and faster.
         </Text>
 
         {/* Team Members */}

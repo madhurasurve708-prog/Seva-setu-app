@@ -212,7 +212,7 @@ export default function CitizenLoginScreen() {
         const storedUser = await getStoredProfile(mobile);
         if (storedUser) {
           await saveProfile({ ...storedUser, mobile, phone: mobile });
-          router.replace('/dashboard' as any);
+          router.replace('/(citizen)/dashboard' as any);
         } else {
           animateToStep(4);
         }
@@ -270,7 +270,7 @@ export default function CitizenLoginScreen() {
       await saveProfile(user);
       setRegistering(false);
       playSuccessAnimation();
-      setTimeout(() => router.replace('/dashboard' as any), 450);
+      setTimeout(() => router.replace('/(citizen)/dashboard' as any), 450);
     }, 900);
   }, [validateRegistration, fullName, mobile, ward, locality, playSuccessAnimation, router, saveProfile]);
 
@@ -366,7 +366,9 @@ export default function CitizenLoginScreen() {
                       return (
                         <TextInput
                           key={i}
-                          ref={(ref) => (otpRefs.current[i] = ref)}
+                          ref={(ref) => {
+                            otpRefs.current[i] = ref;
+                          }}
                           value={d}
                           onChangeText={(v) => handleOtpChange(v, i)}
                           onKeyPress={(e) => handleOtpKeyPress(e, i)}

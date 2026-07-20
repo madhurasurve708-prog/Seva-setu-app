@@ -1,13 +1,13 @@
 import React from "react";
 import { Image, StyleSheet } from "react-native";
 import Animated, {
-  FadeIn,
-  ZoomIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
+    FadeIn,
+    ZoomIn,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
 } from "react-native-reanimated";
 
 export default function AnimatedLogo() {
@@ -35,7 +35,7 @@ export default function AnimatedLogo() {
         style={animatedStyle}
       >
         <Image
-          source={require("../../assets/images/logo.png")}
+          source={require("../../assets/images/logo.jpeg")}
           style={styles.logo}
           resizeMode="contain"
         />

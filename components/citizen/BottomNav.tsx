@@ -20,12 +20,12 @@ type TabItem = {
 };
 
 const TABS: TabItem[] = [
-  { key: 'home', label: 'Home', icon: 'home-outline', iconActive: 'home', route: '/dashboard' },
-  { key: 'ward', label: 'Ward', icon: 'map-marker-outline', iconActive: 'map-marker', route: '/ward' },
-  { key: 'complaints', label: 'Complaints', icon: 'clipboard-text-outline', iconActive: 'clipboard-text', route: '/my-complaints' },
-  { key: 'report', label: 'Report', icon: 'clipboard-plus-outline', iconActive: 'clipboard-plus', route: '/report-complaint' },
-  { key: 'announcements', label: 'News', icon: 'bullhorn-outline', iconActive: 'bullhorn', route: '/announcements' },
-  { key: 'profile', label: 'Profile', icon: 'account-outline', iconActive: 'account', route: '/profile' },
+  { key: 'home', label: 'Home', icon: 'home-outline', iconActive: 'home', route: '/(citizen)/dashboard' },
+  { key: 'ward', label: 'Ward', icon: 'map-marker-outline', iconActive: 'map-marker', route: '/(citizen)/ward' },
+  { key: 'complaints', label: 'Complaints', icon: 'clipboard-text-outline', iconActive: 'clipboard-text', route: '/(citizen)/my-complaints' },
+  { key: 'report', label: 'Report', icon: 'clipboard-plus-outline', iconActive: 'clipboard-plus', route: '/(citizen)/report-complaint' },
+  { key: 'announcements', label: 'News', icon: 'bullhorn-outline', iconActive: 'bullhorn', route: '/(citizen)/announcements' },
+  { key: 'profile', label: 'Profile', icon: 'account-outline', iconActive: 'account', route: '/(citizen)/profile' },
 ];
 
 function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; onPress: () => void }) {

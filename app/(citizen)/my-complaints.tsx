@@ -32,7 +32,7 @@ export default function MyComplaints() {
             </Text>
             <PrimaryButton
               label="Report Your First Issue"
-              onPress={() => router.push('/report-complaint')}
+              onPress={() => router.push('/(citizen)/report-complaint')}
               style={styles.emptyBtn}
             />
           </Animated.View>
@@ -56,7 +56,7 @@ export default function MyComplaints() {
                     style={({ pressed }) => [styles.cardPress, pressed && styles.cardPressed]}
                     onPress={() =>
                       router.push({
-                        pathname: '/complaint/[id]',
+                        pathname: '/(citizen)/complaint/[id]',
                         params: { id: c.id },
                       })
                     }

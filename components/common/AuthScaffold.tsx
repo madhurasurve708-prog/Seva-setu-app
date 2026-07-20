@@ -110,7 +110,7 @@ export function AuthHero({
             {subtitle}
           </Animated.Text>
           <Animated.Text entering={FadeInDown.duration(650).delay(210)} style={styles.heroSlogan}>
-            "आपला मालवण, आपली जबाबदारी"
+            &quot;आपला मालवण, आपली जबाबदारी&quot;
           </Animated.Text>
           {badge ? (
             <Animated.View entering={FadeInDown.duration(650).delay(230)} style={styles.heroBadge}>

@@ -14,7 +14,7 @@ export function AuthNavigationGuard() {
     const inCitizenGroup = segments[0] === '(citizen)';
 
     if (!profile && inCitizenGroup) {
-      navigateToRoleSelection(navigation);
+      navigateToRoleSelection(navigation as never);
     }
   }, [ready, profile, segments, navigation]);
 

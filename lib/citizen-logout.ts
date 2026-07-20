@@ -27,7 +27,7 @@ export function navigateToRoleSelection(navigation?: NavigationProp<ParamListBas
     // dismissAll may fail when there is nothing to dismiss
   }
 
-  router.replace('/role-selection');
+  router.replace('/(auth)/role-selection');
 }
 
 export async function performCitizenLogout(
