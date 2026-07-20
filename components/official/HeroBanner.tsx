@@ -31,13 +31,9 @@ export default function HeroBanner({
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) {
-      return { label: 'Good Morning', icon: 'weather-sunset-up' as const };
-    }
-    if (hour < 17) {
-      return { label: 'Good Afternoon', icon: 'weather-sunny' as const };
-    }
-    return { label: 'Good Evening', icon: 'weather-night' as const };
+    if (hour < 12) return { label: 'Good Morning', icon: 'sunny-outline' as const };
+    if (hour < 17) return { label: 'Good Afternoon', icon: 'sunny' as const };
+    return { label: 'Good Evening', icon: 'moon-outline' as const };
   }, []);
 
   useEffect(() => {
@@ -51,45 +47,60 @@ export default function HeroBanner({
 
   return (
     <View style={styles.container}>
-      <ImageBackground
-        source={require('@/assets/images/hero_banner.png')}
-        style={styles.cardContainer}
-        imageStyle={styles.heroImage}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(8, 27, 43, 0.92)', 'rgba(11, 79, 138, 0.70)', 'rgba(16, 185, 129, 0.36)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
+      {/* Hero image — full bleed, no clipping */}
+      <View style={styles.bannerCard}>
+        <ImageBackground
+          source={require('@/assets/images/hero_banner.png')}
+          style={styles.imageBackground}
+          contentFit="cover"
+          contentPosition="center"
+        >
+          {/* Dark gradient overlay — left-to-right + slight bottom fade */}
+          <LinearGradient
+            colors={[
+              'rgba(5, 20, 35, 0.93)',
+              'rgba(11, 79, 138, 0.72)',
+              'rgba(16, 185, 129, 0.28)',
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
 
-        <View style={styles.overlay}>
-          <View style={styles.greetingRow}>
-            <Ionicons name={greeting.icon as any} size={15} color="#4FC3F7" />
-            <Text style={styles.greetingText}>{greeting.label},</Text>
-          </View>
-
-          <Text style={styles.nameText}>{name}</Text>
-          <Text style={styles.roleText}>{designation || 'Nagarsevak • Ward Representative'}</Text>
-
-          <View style={styles.chipRow}>
-            <View style={styles.chip}>
-              <Ionicons name="map-marker" size={12} color="#4FC3F7" />
-              <Text style={styles.chipText}>{wardLabel}</Text>
+          {/* Content sits on top of overlay */}
+          <View style={styles.overlay}>
+            <View style={styles.greetingRow}>
+              <Ionicons name={greeting.icon} size={14} color="#4FC3F7" />
+              <Text style={styles.greetingText}>{greeting.label},</Text>
             </View>
-            {department ? (
-              <View style={styles.chipSecondary}>
-                <Ionicons name="business-outline" size={12} color={COLORS.white} />
-                <Text style={styles.chipSecondaryText}>{department}</Text>
+
+            <Text style={styles.nameText} numberOfLines={1}>
+              {name}
+            </Text>
+
+            <Text style={styles.roleText}>
+              {designation || 'Nagarsevak (Ward Representative)'}
+            </Text>
+
+            <View style={styles.chipRow}>
+              <View style={styles.chip}>
+                <Ionicons name="location-outline" size={12} color="#4FC3F7" />
+                <Text style={styles.chipText}>{wardLabel}</Text>
               </View>
-            ) : null}
+              {department ? (
+                <View style={styles.chipSecondary}>
+                  <Ionicons name="business-outline" size={12} color={COLORS.white} />
+                  <Text style={styles.chipText}>{department}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <Text style={styles.dateText}>{currentDate}</Text>
           </View>
+        </ImageBackground>
+      </View>
 
-          <Text style={styles.dateText}>{currentDate}</Text>
-        </View>
-      </ImageBackground>
-
+      {/* Floating stats card — overlaps hero bottom */}
       <Pressable onPress={onViewComplaints} style={styles.statsCard}>
         <View style={styles.statColumn}>
           <Text style={styles.statVal}>{filedCount}</Text>
@@ -102,7 +113,9 @@ export default function HeroBanner({
         </View>
         <View style={styles.divider} />
         <View style={styles.statColumn}>
-          <Text style={styles.statVal}>{typeof successRate === 'number' ? `${successRate}%` : successRate}</Text>
+          <Text style={styles.statVal}>
+            {typeof successRate === 'number' ? `${successRate}%` : successRate}
+          </Text>
           <Text style={styles.statLbl}>Success</Text>
         </View>
       </Pressable>
@@ -113,96 +126,92 @@ export default function HeroBanner({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 28,
   },
-  cardContainer: {
-    height: 220,
+  bannerCard: {
     borderRadius: 24,
     overflow: 'hidden',
-    ...SHADOWS.md,
+    ...SHADOWS.hero,
   },
-  heroImage: {
-    borderRadius: 24,
+  imageBackground: {
+    width: '100%',
+    height: 210,
   },
   overlay: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 26,
+    paddingTop: 22,
+    paddingBottom: 36,
     justifyContent: 'flex-end',
   },
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
+    gap: 6,
   },
   greetingText: {
     color: '#4FC3F7',
     fontSize: 13,
     fontWeight: '700',
-    marginLeft: 6,
   },
   nameText: {
     color: COLORS.white,
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 4,
+    letterSpacing: 0.2,
   },
   roleText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: 'rgba(255,255,255,0.88)',
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  chipText: {
-    marginLeft: 4,
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '700',
-  },
   chipSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(79, 195, 247, 0.18)',
+    backgroundColor: 'rgba(79,195,247,0.18)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  chipSecondaryText: {
-    marginLeft: 4,
+  chipText: {
     color: COLORS.white,
     fontSize: 12,
     fontWeight: '700',
   },
   dateText: {
-    color: 'rgba(255,255,255,0.76)',
+    color: 'rgba(255,255,255,0.70)',
     fontSize: 12,
     fontWeight: '600',
   },
   statsCard: {
-    marginTop: -20,
-    marginHorizontal: 12,
+    marginTop: -22,
+    marginHorizontal: 10,
     backgroundColor: COLORS.card,
     borderRadius: 20,
     flexDirection: 'row',
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
@@ -223,7 +232,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.textMuted,
-    marginTop: 2,
+    marginTop: 3,
   },
   divider: {
     width: 1,

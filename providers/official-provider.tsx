@@ -53,16 +53,40 @@ export const escalationTargetsByRole: Record<UserRole, EscalationTarget[]> = {
   citizen: [],
   nagarsevak: [
     {
-      id: 'department-officer',
-      label: 'Department Officer',
+      id: 'public-works',
+      label: 'बांधकाम विभाग (Public Works)',
       role: 'department-officer',
-      description: 'Escalate to the department officer responsible for this issue.',
+      description: 'Roads, bridges, footpaths and public infrastructure issues.',
     },
     {
-      id: 'nagaradhyaksha',
-      label: 'Nagaradhyaksha',
-      role: 'nagaradhyaksha',
-      description: 'Escalate to municipal leadership for higher review.',
+      id: 'water-supply',
+      label: 'पाणी पुरवठा विभाग (Water Supply)',
+      role: 'department-officer',
+      description: 'Water pipeline leaks, supply disruptions and connection issues.',
+    },
+    {
+      id: 'solid-waste',
+      label: 'घनकचरा व्यवस्थापन विभाग (Solid Waste Management)',
+      role: 'department-officer',
+      description: 'Garbage collection, dumping grounds and waste disposal.',
+    },
+    {
+      id: 'sanitation',
+      label: 'स्वच्छता व आरोग्य विभाग (Sanitation & Health)',
+      role: 'department-officer',
+      description: 'Public sanitation, health hazards and hygiene complaints.',
+    },
+    {
+      id: 'drainage',
+      label: 'जलनिस्सारण विभाग (Drainage & Sewerage)',
+      role: 'department-officer',
+      description: 'Drainage blockages, sewerage overflow and flood-prone areas.',
+    },
+    {
+      id: 'main-admin',
+      label: 'Main Admin',
+      role: 'main-admin',
+      description: 'Escalate directly to municipal Main Admin for urgent or unresolved issues.',
     },
   ],
   'department-officer': [

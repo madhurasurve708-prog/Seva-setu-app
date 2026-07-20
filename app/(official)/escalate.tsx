@@ -1,18 +1,46 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+    Alert,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { getEscalationTargets, useOfficial } from '@/providers/official-provider';
+
+const DEPT_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  'public-works':  'road-variant',
+  'water-supply':  'water-pump',
+  'solid-waste':   'delete-variant',
+  'sanitation':    'medical-bag',
+  'drainage':      'pipe',
+  'main-admin':    'shield-crown-outline',
+};
+
+const DEPT_COLORS: Record<string, { color: string; bg: string }> = {
+  'public-works':  { color: '#1D4ED8', bg: '#DBEAFE' },
+  'water-supply':  { color: '#0891B2', bg: '#CFFAFE' },
+  'solid-waste':   { color: '#16A34A', bg: '#DCFCE7' },
+  'sanitation':    { color: '#0F766E', bg: '#F0FDFA' },
+  'drainage':      { color: '#4338CA', bg: '#E0E7FF' },
+  'main-admin':    { color: COLORS.primary, bg: '#EFF6FF' },
+};
 
 export default function EscalateScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, complaints, escalateComplaint } = useOfficial();
 
-  const escalationTargets = getEscalationTargets(profile.role);
-  const [selectedTarget, setSelectedTarget] = useState('');
+  const targets = getEscalationTargets(profile.role);
+  const [selected, setSelected] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -20,170 +48,389 @@ export default function EscalateScreen() {
 
   if (!complaint) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center p-6 bg-slate-50">
-        <Ionicons name="alert-circle-outline" size={48} color="#DC2626" />
-        <Text className="text-slate-800 font-extrabold text-lg mt-4 mb-2">Complaint Not Found</Text>
-        <Pressable onPress={() => router.back()} className="bg-blue-600 px-6 py-3 rounded-xl">
-          <Text className="text-white font-bold">Go Back</Text>
-        </Pressable>
+      <SafeAreaView style={styles.emptySafe} edges={['top']}>
+        <View style={styles.emptyInner}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
+          <Text style={styles.emptyTitle}>Complaint Not Found</Text>
+          <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
+            <Text style={styles.emptyBtnText}>Go Back</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
+  const canSubmit = selected && reason.trim().length > 0 && !saving;
+
   const handleEscalate = async () => {
-    if (!selectedTarget) {
-      Alert.alert('Selection Required', 'Please select an escalation target before submitting.');
+    if (!selected) {
+      Alert.alert('Required', 'Please select an escalation target.');
       return;
     }
-
     if (!reason.trim()) {
-      Alert.alert('Reason Required', 'Please provide a justification for this escalation.');
+      Alert.alert('Required', 'Please provide a reason for escalation.');
       return;
     }
 
     setSaving(true);
     try {
-      const target = escalationTargets.find((item) => item.id === selectedTarget);
-      await escalateComplaint(complaint.id, target?.label ?? selectedTarget, reason.trim());
-      Alert.alert('Escalated Successfully', `Grievance has been escalated to ${target?.label ?? selectedTarget}.`, [
-        {
-          text: 'OK',
-          onPress: () => {
-            router.replace({
-              pathname: '/(official)/complaint-details',
-              params: { id: complaint.id },
-            } as any);
+      const target = targets.find((t) => t.id === selected);
+      await escalateComplaint(complaint.id, target?.label ?? selected, reason.trim());
+      Alert.alert(
+        'Escalated',
+        `Complaint escalated to ${target?.label ?? selected}.`,
+        [
+          {
+            text: 'OK',
+            onPress: () =>
+              router.replace({
+                pathname: '/(official)/complaint-details',
+                params: { id: complaint.id },
+              } as any),
           },
-        },
-      ]);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to escalate grievance. Please try again.');
+        ],
+      );
+    } catch {
+      Alert.alert('Error', 'Failed to escalate. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#F5F7FA' }} edges={['top']}>
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm justify-between">
-        <View className="flex-row items-center">
-          <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-            <Ionicons name="arrow-back" size={24} color="#0A2A43" />
+    <SafeAreaView style={styles.root} edges={['top']}>
+      {/* ── Header ── */}
+      <View style={styles.headerBar}>
+        <View style={styles.headerLeft}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
           </Pressable>
           <View>
-            <Text className="text-lg font-extrabold text-slate-800 leading-tight">Escalate Grievance</Text>
-            <Text className="text-xs text-slate-400 font-semibold">{complaint.id}</Text>
+            <Text style={styles.headerTitle}>Escalate Complaint</Text>
+            <Text style={styles.headerSub}>{complaint.id}</Text>
           </View>
         </View>
-
         <Pressable
           onPress={handleEscalate}
-          disabled={saving || !selectedTarget || !reason.trim()}
-          className="bg-red-600 px-4 py-2 rounded-xl shadow-sm disabled:opacity-50"
+          disabled={!canSubmit}
+          style={[styles.confirmBtn, !canSubmit && styles.confirmBtnDisabled]}
         >
-          <Text className="text-white font-bold text-xs">{saving ? 'Escalating...' : 'Confirm'}</Text>
+          <Text style={styles.confirmBtnText}>
+            {saving ? 'Escalating…' : 'Confirm'}
+          </Text>
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Selection list */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <Text className="text-sm font-extrabold text-slate-800 mb-3 uppercase tracking-wider">Select Escalation Target</Text>
-          <Text className="text-slate-400 text-xs mb-4">
-            Choose the next authority for this grievance. New roles can be added later through the shared escalation list.
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        overScrollMode="never"
+      >
+        {/* ── Complaint context pill ── */}
+        <Animated.View entering={FadeInDown.duration(320).delay(0)} style={styles.contextPill}>
+          <MaterialCommunityIcons
+            name="clipboard-alert-outline"
+            size={16}
+            color={COLORS.primary}
+          />
+          <Text style={styles.contextText} numberOfLines={2}>
+            {complaint.title}
+          </Text>
+        </Animated.View>
+
+        {/* ── Select Department ── */}
+        <Animated.View entering={FadeInDown.duration(320).delay(60)} style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <MaterialCommunityIcons
+              name="arrow-up-bold-circle-outline"
+              size={16}
+              color={COLORS.danger}
+            />
+            <Text style={styles.cardTitle}>Select Escalation Target</Text>
+          </View>
+          <Text style={styles.cardSubtext}>
+            Choose the department or authority to transfer this complaint to.
           </Text>
 
-          <View style={{ gap: 8 }}>
-            {escalationTargets.map((target) => {
-              const isSelected = selectedTarget === target.id;
+          <View style={styles.targetList}>
+            {targets.map((target, idx) => {
+              const isSelected = selected === target.id;
+              const icon = DEPT_ICONS[target.id] ?? 'domain';
+              const colors = DEPT_COLORS[target.id] ?? { color: COLORS.primary, bg: '#EFF6FF' };
+
               return (
-                <Pressable
+                <Animated.View
                   key={target.id}
-                  onPress={() => setSelectedTarget(target.id)}
-                  style={[
-                    styles.deptRow,
-                    isSelected && styles.activeDeptRow,
-                  ]}
+                  entering={FadeInDown.duration(300).delay(80 + idx * 50)}
                 >
-                  <Ionicons
-                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                    size={18}
-                    color={isSelected ? '#1E6FD9' : '#A6ADB8'}
-                    style={{ marginRight: 10 }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
+                  <Pressable
+                    onPress={() => setSelected(target.id)}
+                    style={[
+                      styles.targetRow,
+                      isSelected && styles.targetRowActive,
+                    ]}
+                  >
+                    {/* Dept icon */}
+                    <View
                       style={[
-                        styles.deptText,
-                        isSelected && styles.activeDeptText,
+                        styles.targetIcon,
+                        {
+                          backgroundColor: isSelected
+                            ? colors.color
+                            : colors.bg,
+                        },
                       ]}
                     >
-                      {target.label}
-                    </Text>
-                    <Text className="text-slate-400 text-[11px] mt-1">{target.description}</Text>
-                  </View>
-                </Pressable>
+                      <MaterialCommunityIcons
+                        name={icon}
+                        size={18}
+                        color={isSelected ? COLORS.white : colors.color}
+                      />
+                    </View>
+
+                    {/* Label + description */}
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          styles.targetLabel,
+                          isSelected && { color: colors.color },
+                        ]}
+                      >
+                        {target.label}
+                      </Text>
+                      <Text style={styles.targetDesc}>{target.description}</Text>
+                    </View>
+
+                    {/* Radio */}
+                    <MaterialCommunityIcons
+                      name={isSelected ? 'radiobox-marked' : 'radiobox-blank'}
+                      size={20}
+                      color={isSelected ? colors.color : COLORS.textPlaceholder}
+                    />
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Remarks Form */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <Text className="text-sm font-extrabold text-slate-800 mb-3 uppercase tracking-wider">Escalation Remarks</Text>
-          <Text className="text-slate-400 text-xs mb-3">
-            Explain the reasons for escalation (e.g. out of ward jurisdiction, requires expert workforce, budget issues, etc.)
+        {/* ── Reason / Remarks ── */}
+        <Animated.View entering={FadeInDown.duration(320).delay(160)} style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <MaterialCommunityIcons
+              name="comment-text-outline"
+              size={16}
+              color={COLORS.primary}
+            />
+            <Text style={styles.cardTitle}>Escalation Remarks</Text>
+          </View>
+          <Text style={styles.cardSubtext}>
+            Describe why this complaint needs escalation — jurisdiction, resources, urgency, etc.
           </Text>
-
           <TextInput
-            placeholder="Type reason for escalation here..."
-            placeholderTextColor="#A6ADB8"
+            placeholder="Type reason for escalation here…"
+            placeholderTextColor={COLORS.textPlaceholder}
             multiline
-            numberOfLines={4}
+            numberOfLines={5}
             value={reason}
             onChangeText={setReason}
             style={styles.textArea}
+            textAlignVertical="top"
           />
-        </View>
+          <Text style={styles.charCount}>{reason.length} characters</Text>
+        </Animated.View>
+
+        {/* ── Submit button ── */}
+        <Animated.View entering={FadeInDown.duration(320).delay(220)}>
+          <Pressable
+            onPress={handleEscalate}
+            disabled={!canSubmit}
+            style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
+          >
+            <MaterialCommunityIcons
+              name="arrow-up-bold-circle-outline"
+              size={20}
+              color={COLORS.white}
+            />
+            <Text style={styles.submitBtnText}>
+              {saving ? 'Escalating…' : 'Escalate Complaint'}
+            </Text>
+          </Pressable>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  deptRow: {
+  root: { flex: 1, backgroundColor: COLORS.background },
+
+  emptySafe: { flex: 1, backgroundColor: COLORS.background },
+  emptyInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 12,
+  },
+  emptyTitle: { ...TYPOGRAPHY.h3, color: COLORS.text },
+  emptyBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  emptyBtnText: { color: COLORS.white, fontWeight: '700', fontSize: 14 },
+
+  /* Header */
+  headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E7ECF2',
-    borderRadius: 16,
-    backgroundColor: '#F5F7FA',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: COLORS.card,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    ...SHADOWS.sm,
   },
-  activeDeptRow: {
-    borderColor: '#1E6FD9',
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
-  deptText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#5B6472',
+  headerTitle: { ...TYPOGRAPHY.h3, fontSize: 15, color: COLORS.text },
+  headerSub: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginTop: 1 },
+  confirmBtn: {
+    backgroundColor: COLORS.danger,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
-  activeDeptText: {
-    color: '#1E6FD9',
-    fontWeight: '700',
-  },
-  textArea: {
-    fontSize: 14,
-    color: '#101826',
+  confirmBtnDisabled: { backgroundColor: '#CBD5E1' },
+  confirmBtnText: { color: COLORS.white, fontWeight: '800', fontSize: 13 },
+
+  /* Scroll */
+  content: { padding: 16, paddingBottom: 44, gap: 14 },
+
+  /* Context pill */
+  contextPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#E7ECF2',
-    borderRadius: 16,
-    padding: 12,
-    backgroundColor: '#F5F7FA',
-    minHeight: 100,
-    textAlignVertical: 'top',
+    borderColor: '#BFDBFE',
   },
+  contextText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+
+  /* Cards */
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(226,232,240,0.9)',
+    ...SHADOWS.soft,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  cardTitle: { fontSize: 13, fontWeight: '800', color: COLORS.text },
+  cardSubtext: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.textMuted,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+
+  /* Target list */
+  targetList: { gap: 10 },
+  targetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+  },
+  targetRowActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#F0F7FF',
+  },
+  targetIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  targetLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.text,
+    lineHeight: 18,
+  },
+  targetDesc: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: COLORS.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+
+  /* Text area */
+  textArea: {
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    padding: 12,
+    minHeight: 110,
+    fontSize: 14,
+    color: COLORS.text,
+    backgroundColor: '#F8FAFC',
+    lineHeight: 20,
+  },
+  charCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textPlaceholder,
+    textAlign: 'right',
+    marginTop: 6,
+  },
+
+  /* Submit */
+  submitBtn: {
+    backgroundColor: COLORS.danger,
+    borderRadius: 18,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    ...SHADOWS.button,
+  },
+  submitBtnDisabled: { backgroundColor: '#CBD5E1', shadowOpacity: 0, elevation: 0 },
+  submitBtnText: { color: COLORS.white, fontSize: 15, fontWeight: '800' },
 });

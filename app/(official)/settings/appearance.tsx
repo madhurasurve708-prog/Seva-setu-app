@@ -1,125 +1,150 @@
-import { View, Text, Pressable, StyleSheet, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
+import GlassCard from '@/components/common/GlassCard';
+import { OfficialScreen } from '@/components/official/OfficialScreen';
+import { COLORS, SHADOWS } from '@/constants/theme';
 
 export default function AppearanceScreen() {
-  const router = useRouter();
-
   const [activeTheme, setActiveTheme] = useState<'Light' | 'Dark' | 'System'>('Light');
   const [highContrast, setHighContrast] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
+  const THEMES = [
+    { key: 'Light', icon: 'weather-sunny' as const },
+    { key: 'Dark',  icon: 'weather-night' as const },
+    { key: 'System', icon: 'cog-outline' as const },
+  ] as const;
+
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#F5F7FA' }} edges={['top']}>
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Ionicons name="arrow-back" size={24} color="#0A2A43" />
-        </Pressable>
-        <View>
-          <Text className="text-lg font-extrabold text-slate-800 leading-tight">Appearance</Text>
-          <Text className="text-xs text-slate-400 font-bold">Customize color themes and accessibility options</Text>
+    <OfficialScreen title="Appearance" showBack>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        overScrollMode="never"
+      >
+        {/* Theme selection */}
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons name="palette-outline" size={17} color={COLORS.accent} />
+          <Text style={styles.sectionTitle}>Select Theme</Text>
         </View>
-      </View>
-
-      <View className="p-4">
-        {/* Theme Selection */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <Text className="text-sm font-extrabold text-slate-800 mb-3 uppercase tracking-wider">Select Theme</Text>
-          <Text className="text-slate-400 text-xs mb-4">
-            Toggle between light mode, dark mode, or follow system default settings.
-          </Text>
-
-          <View className="flex-row gap-3">
-            {(['Light', 'Dark', 'System'] as const).map((t) => {
-              const isSelected = activeTheme === t;
-              let icon: 'sunny-outline' | 'moon-outline' | 'settings-outline' = 'sunny-outline';
-              if (t === 'Dark') icon = 'moon-outline';
-              if (t === 'System') icon = 'settings-outline';
-
+        <GlassCard style={styles.card}>
+          <View style={styles.themeRow}>
+            {THEMES.map(({ key, icon }) => {
+              const active = activeTheme === key;
               return (
                 <Pressable
-                  key={t}
-                  onPress={() => setActiveTheme(t)}
-                  style={[
-                    styles.themeBox,
-                    isSelected && styles.activeThemeBox,
-                  ]}
-                  className="flex-1 active:scale-95"
+                  key={key}
+                  onPress={() => setActiveTheme(key as any)}
+                  style={[styles.themeBox, active && styles.themeBoxActive]}
                 >
-                  <Ionicons name={icon} size={22} color={isSelected ? '#1E6FD9' : '#5B6472'} />
-                  <Text
-                    style={[
-                      styles.themeText,
-                      isSelected && styles.activeThemeText,
-                    ]}
-                  >
-                    {t}
+                  <MaterialCommunityIcons
+                    name={icon}
+                    size={22}
+                    color={active ? COLORS.primary : COLORS.textMuted}
+                  />
+                  <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>
+                    {key}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
+        </GlassCard>
+
+        {/* Accessibility */}
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons name="eye-settings-outline" size={17} color={COLORS.accent} />
+          <Text style={styles.sectionTitle}>Accessibility</Text>
         </View>
+        <GlassCard style={styles.card}>
+          <ToggleRow
+            label="High Contrast Mode"
+            sub="Increases text contrast for better legibility."
+            value={highContrast}
+            onChange={() => setHighContrast((v) => !v)}
+          />
+          <ToggleRow
+            label="Reduce Motion"
+            sub="Disables slide-in animations and transitions."
+            value={reduceMotion}
+            onChange={() => setReduceMotion((v) => !v)}
+            isLast
+          />
+        </GlassCard>
+      </ScrollView>
+    </OfficialScreen>
+  );
+}
 
-        {/* Accessibility Features */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <Text className="text-sm font-extrabold text-slate-800 mb-4 uppercase tracking-wider">Accessibility</Text>
-
-          {/* High Contrast */}
-          <View className="flex-row items-center justify-between py-2 border-b border-slate-50">
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-800 font-bold text-sm">High Contrast Mode</Text>
-              <Text className="text-slate-400 text-xs mt-0.5">Increases text contrast for better legibility.</Text>
-            </View>
-            <Switch
-              value={highContrast}
-              onValueChange={setHighContrast}
-              trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-            />
-          </View>
-
-          {/* Reduce Motion */}
-          <View className="flex-row items-center justify-between py-2 mt-2">
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-800 font-bold text-sm">Reduce Motion</Text>
-              <Text className="text-slate-400 text-xs mt-0.5">Disables slide-in animations and transitions.</Text>
-            </View>
-            <Switch
-              value={reduceMotion}
-              onValueChange={setReduceMotion}
-              trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-            />
-          </View>
-        </View>
+function ToggleRow({
+  label,
+  sub,
+  value,
+  onChange,
+  isLast,
+}: {
+  label: string;
+  sub: string;
+  value: boolean;
+  onChange: () => void;
+  isLast?: boolean;
+}) {
+  return (
+    <View style={[styles.toggleRow, isLast && { borderBottomWidth: 0 }]}>
+      <View style={{ flex: 1, marginRight: 12 }}>
+        <Text style={styles.toggleLabel}>{label}</Text>
+        <Text style={styles.toggleSub}>{sub}</Text>
       </View>
-    </SafeAreaView>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: COLORS.accent, false: COLORS.border }}
+        thumbColor={Platform.OS === 'android' ? COLORS.white : undefined}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { padding: 18, paddingBottom: 44 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 8,
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
+  card: { padding: 14, marginBottom: 20 },
+  themeRow: { flexDirection: 'row', gap: 10 },
   themeBox: {
-    borderWidth: 1,
-    borderColor: '#E7ECF2',
-    backgroundColor: '#F5F7FA',
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
-  activeThemeBox: {
-    borderColor: '#1E6FD9',
+  themeBoxActive: {
+    borderColor: COLORS.primary,
     backgroundColor: '#EFF6FF',
+    ...SHADOWS.soft,
   },
-  themeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#5B6472',
-    marginTop: 6,
+  themeLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted },
+  themeLabelActive: { color: COLORS.primary },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  activeThemeText: {
-    color: '#1E6FD9',
-  },
+  toggleLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  toggleSub: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted, marginTop: 2 },
 });

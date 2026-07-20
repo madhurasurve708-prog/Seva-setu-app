@@ -1,8 +1,17 @@
-import { useTranslation } from '@/providers/localization-provider';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+
+import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 interface ProfileDropdownProps {
   name: string;
@@ -14,104 +23,138 @@ interface ProfileDropdownProps {
   onLogout: () => void;
 }
 
-export default function ProfileDropdown({ name, initial, language, roleLabel, onLogout }: ProfileDropdownProps) {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export default function ProfileDropdown({
+  name,
+  initial,
+  roleLabel,
+  ward,
+  onLogout,
+}: ProfileDropdownProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+
+  const scale = useSharedValue(1);
+  const avatarAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handleNavigate = (route: string) => {
     setOpen(false);
     router.push(route as any);
   };
 
+  const handleLogout = () => {
+    setOpen(false);
+    onLogout();
+  };
+
+  const MENU_ITEMS: {
+    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    label: string;
+    route: string;
+    color: string;
+    bg: string;
+  }[] = [
+    {
+      icon: 'account-circle-outline',
+      label: t('myProfile'),
+      route: '/(official)/profile',
+      color: COLORS.primary,
+      bg: '#EFF6FF',
+    },
+    {
+      icon: 'bell-outline',
+      label: 'Notifications',
+      route: '/(official)/settings/notifications',
+      color: '#7C3AED',
+      bg: '#F5F3FF',
+    },
+  ];
+
   return (
     <View>
-      <Pressable
+      {/* Avatar trigger */}
+      <AnimatedPressable
+        onPressIn={() => {
+          scale.value = withSpring(0.92, { damping: 14, stiffness: 300 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 14, stiffness: 300 });
+        }}
         onPress={() => setOpen(true)}
-        className="w-10 h-10 rounded-full items-center justify-center shadow"
-        style={{ backgroundColor: '#1E6FD9' }}
+        style={[styles.avatarBtn, avatarAnimStyle]}
       >
-        <Text className="text-white font-bold text-base">{initial}</Text>
-      </Pressable>
+        <Text style={styles.avatarText}>{initial}</Text>
+      </AnimatedPressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable className="flex-1 bg-black/20" onPress={() => setOpen(false)}>
-          <View style={styles.dropdownContainer}>
-            <View className="px-4 py-3.5 border-b border-slate-100">
-              <Text className="font-bold text-slate-800 text-base">{name}</Text>
-              <Text className="text-xs text-slate-500 mt-0.5 font-medium">Malvan Municipal Council</Text>
-            </View>
-
-            {/* My Profile */}
-            <Pressable
-              onPress={() => handleNavigate('/(official)/profile')}
-              className="flex-row items-center px-4 py-3 active:bg-slate-100"
+      <Modal
+        visible={open}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => setOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <Animated.View
+              entering={FadeIn.duration(160)}
+              exiting={FadeOut.duration(120)}
+              style={styles.dropdown}
             >
-              <Ionicons name="person-outline" size={18} color="#475569" />
-              <Text className="text-slate-700 ml-3 font-semibold">{t('myProfile')}</Text>
-            </Pressable>
-
-            {/* Settings */}
-            <Pressable
-              onPress={() => handleNavigate('/(official)/settings')}
-              className="flex-row items-center px-4 py-3 active:bg-slate-100"
-            >
-              <Ionicons name="settings-outline" size={18} color="#475569" />
-              <Text className="text-slate-700 ml-3 font-semibold">{t('settings')}</Text>
-            </Pressable>
-
-            {/* Change Password */}
-            <Pressable
-              onPress={() => handleNavigate('/(official)/settings/security')}
-              className="flex-row items-center px-4 py-3 active:bg-slate-100"
-            >
-              <Ionicons name="lock-closed-outline" size={18} color="#475569" />
-              <Text className="text-slate-700 ml-3 font-semibold">{t('changePassword')}</Text>
-            </Pressable>
-
-            {/* Dark Mode Switch */}
-            <View className="flex-row items-center justify-between px-4 py-2">
-              <Pressable
-                onPress={() => handleNavigate('/(official)/settings/appearance')}
-                className="flex-row items-center flex-1 py-1"
-              >
-                <Ionicons name="moon-outline" size={18} color="#475569" />
-                <Text className="text-slate-700 ml-3 font-semibold">{t('darkMode')}</Text>
-              </Pressable>
-              <Switch
-                value={darkMode}
-                onValueChange={(val) => {
-                  setDarkMode(val);
-                }}
-                trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-              />
-            </View>
-
-            {/* Language Selection */}
-            <Pressable
-              onPress={() => handleNavigate('/(official)/settings/preferences')}
-              className="flex-row items-center justify-between px-4 py-3 border-t border-slate-100 active:bg-slate-100"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="language-outline" size={18} color="#475569" />
-                <Text className="text-slate-700 ml-3 font-semibold">{t('language')}</Text>
+              {/* Profile header */}
+              <View style={styles.dropdownHeader}>
+                <View style={styles.dropdownAvatar}>
+                  <Text style={styles.dropdownAvatarText}>{initial}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.dropdownName} numberOfLines={1}>{name}</Text>
+                  <Text style={styles.dropdownRole} numberOfLines={1}>
+                    {roleLabel ?? 'Nagarsevak'}{ward ? ` · ${ward}` : ''}
+                  </Text>
+                </View>
               </View>
-              <Text className="text-blue-600 font-bold text-sm">{language}</Text>
-            </Pressable>
 
-            {/* Logout */}
-            <Pressable
-              onPress={() => {
-                setOpen(false);
-                onLogout();
-              }}
-              className="flex-row items-center px-4 py-3 border-t border-slate-100 active:bg-red-50"
-            >
-              <Ionicons name="log-out-outline" size={18} color="#DC2626" />
-              <Text className="text-red-600 ml-3 font-bold">{t('logout')}</Text>
-            </Pressable>
-          </View>
+              <View style={styles.divider} />
+
+              {/* Menu items */}
+              {MENU_ITEMS.map((item) => (
+                <Pressable
+                  key={item.route}
+                  onPress={() => handleNavigate(item.route)}
+                  style={({ pressed }) => [
+                    styles.menuRow,
+                    pressed && styles.menuRowPressed,
+                  ]}
+                >
+                  <View style={[styles.menuIconCircle, { backgroundColor: item.bg }]}>
+                    <MaterialCommunityIcons name={item.icon} size={18} color={item.color} />
+                  </View>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.textMuted} />
+                </Pressable>
+              ))}
+
+              <View style={styles.divider} />
+
+              {/* Logout */}
+              <Pressable
+                onPress={handleLogout}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  styles.menuRowLast,
+                  pressed && styles.menuRowPressedDanger,
+                ]}
+              >
+                <View style={[styles.menuIconCircle, { backgroundColor: '#FEF2F2' }]}>
+                  <MaterialCommunityIcons name="logout" size={18} color={COLORS.danger} />
+                </View>
+                <Text style={[styles.menuLabel, { color: COLORS.danger }]}>{t('logout')}</Text>
+              </Pressable>
+            </Animated.View>
+          </Pressable>
         </Pressable>
       </Modal>
     </View>
@@ -119,20 +162,112 @@ export default function ProfileDropdown({ name, initial, language, roleLabel, on
 }
 
 const styles = StyleSheet.create({
-  dropdownContainer: {
-    position: 'absolute',
-    top: 60,
-    right: 16,
-    width: 250,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 4,
-    shadowColor: '#071D30',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
+  avatarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
+    ...SHADOWS.soft,
+  },
+  avatarText: {
+    color: COLORS.white,
+    fontWeight: '800',
+    fontSize: 17,
+  },
+
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(5,20,40,0.18)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 62,
+    paddingRight: 14,
+  },
+
+  dropdown: {
+    width: 284,
+    backgroundColor: COLORS.white,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#E7ECF2',
+    borderColor: 'rgba(226,232,240,0.9)',
+    overflow: 'hidden',
+    shadowColor: '#071D30',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  dropdownAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(46,134,222,0.2)',
+  },
+  dropdownAvatarText: {
+    color: COLORS.white,
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  dropdownName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  dropdownRole: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    gap: 12,
+  },
+  menuRowLast: {
+    borderBottomWidth: 0,
+  },
+  menuRowPressed: {
+    backgroundColor: 'rgba(11,79,138,0.05)',
+  },
+  menuRowPressedDanger: {
+    backgroundColor: 'rgba(239,68,68,0.05)',
+  },
+  menuIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.text,
   },
 });
