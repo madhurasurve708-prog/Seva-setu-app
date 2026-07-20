@@ -1,370 +1,457 @@
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+    Alert,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import CustomTextInput from '@/components/common/CustomTextInput';
+import GlassCard from '@/components/common/GlassCard';
+import PrimaryButton from '@/components/common/PrimaryButton';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { OfficialProfile, useOfficial } from '@/providers/official-provider';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, saveProfile } = useOfficial();
+  const { profile, saveProfile, logout } = useOfficial();
 
-  // Local form state initialized from context profile
   const [name, setName] = useState(profile.name);
   const [phone, setPhone] = useState(profile.phone);
-  const [username, setUsername] = useState(profile.username);
-  const [password, setPassword] = useState(profile.password || '');
-  const [employeeId, setEmployeeId] = useState(profile.employeeId);
-  const [designation, setDesignation] = useState(profile.designation);
-  const [ward, setWard] = useState(profile.ward);
-  const [locality, setLocality] = useState(profile.locality);
-  const [department, setDepartment] = useState(profile.department);
+  const [email, setEmail] = useState(profile.email);
+  const [password, setPassword] = useState('');
+  const [language, setLanguage] = useState(profile.language);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     setName(profile.name);
     setPhone(profile.phone);
-    setUsername(profile.username);
-    setPassword(profile.password || '');
-    setEmployeeId(profile.employeeId);
-    setDesignation(profile.designation);
-    setWard(profile.ward);
-    setLocality(profile.locality);
-    setDepartment(profile.department);
+    setEmail(profile.email);
+    setLanguage(profile.language);
   }, [profile]);
 
-  const handleSaveChanges = async () => {
+  const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Validation Error', 'Full Name is required.');
+      Alert.alert('Validation', 'Full name is required.');
       return;
     }
     if (!phone.trim()) {
-      Alert.alert('Validation Error', 'Phone Number is required.');
+      Alert.alert('Validation', 'Phone number is required.');
       return;
     }
 
     setSaving(true);
     try {
-      const updatedProfile: OfficialProfile = {
+      const updated: OfficialProfile = {
+        ...profile,
         name: name.trim(),
         phone: phone.trim(),
-        email: profile.email,
-        username: username.trim(),
-        password: password.trim() || profile.password,
-        employeeId: employeeId.trim(),
-        designation: designation.trim(),
-        ward: ward.trim(),
-        locality: locality.trim(),
-        department: department.trim(),
-        role: profile.role,
-        roleLabel: profile.roleLabel,
+        email: email.trim(),
+        language: language.trim(),
+        ...(password.trim() ? { password: password.trim() } : {}),
         avatarInitial: name.trim().charAt(0).toUpperCase() || 'U',
-        language: profile.language,
       };
-
-      await saveProfile(updatedProfile);
-      Alert.alert('Success', 'Profile changes saved successfully.', [
-        {
-          text: 'OK',
-          onPress: () => router.push('/(official)/dashboard'),
-        },
-      ]);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to save changes. Please try again.');
+      await saveProfile(updated);
+      Alert.alert('Success', 'Profile updated successfully.');
+    } catch {
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleBack = () => {
-    router.push('/(official)/dashboard');
+  const doLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      // ignore
+    }
+    router.replace('/(auth)/role-selection');
+    setLoggingOut(false);
+  };
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const ok =
+        typeof window !== 'undefined'
+          ? window.confirm('Are you sure you want to logout?')
+          : true;
+      if (ok) void doLogout();
+      return;
+    }
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    ]);
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#F5F7FA' }} edges={['top']}>
-      {/* Header matching Screenshot 2 design */}
-      <View style={styles.headerBar}>
-        <Pressable onPress={handleBack} className="p-2 -ml-2">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </Pressable>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <View style={styles.headerAvatarInitial}>
-          <Text style={styles.headerAvatarInitialText}>{profile.avatarInitial}</Text>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        {/* Profile Avatar section */}
-        <View className="items-center mb-6 mt-4">
-          <View style={styles.largeAvatar}>
-            <Text style={styles.largeAvatarText}>{profile.avatarInitial}</Text>
-            <Pressable
-              onPress={() => Alert.alert('Photo Upload', 'Photo picker will open in a future update.')}
-              style={styles.cameraIconBadge}
-            >
-              <Ionicons name="camera" size={16} color="#FFFFFF" />
-            </Pressable>
-          </View>
-          <Pressable onPress={() => Alert.alert('Photo Upload', 'Photo picker will open in a future update.')}>
-            <Text className="text-blue-500 font-bold text-xs mt-3">Tap to change profile picture</Text>
+    <View style={styles.root}>
+      {/* Header — matches CitizenScreen header exactly */}
+      <SafeAreaView style={styles.safeHeader} edges={['top']}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={12}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
           </Pressable>
-        </View>
-
-        {/* Input Form Card */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          {/* Full Name */}
-          <Text style={styles.fieldLabel}>Full Name</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="person-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Full Name"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Mobile Number */}
-          <Text style={styles.fieldLabel}>Mobile Number</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="call-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Mobile Number"
-              placeholderTextColor="#A6ADB8"
-              keyboardType="phone-pad"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Locality */}
-          <Text style={styles.fieldLabel}>Locality / Area / Street</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="home-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={locality}
-              onChangeText={setLocality}
-              placeholder="Locality"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Official Demographics Divider */}
-          <View className="mt-4 mb-2">
-            <Text style={styles.subHeading}>Official Demographics</Text>
-            <Text className="text-slate-400 text-[10px] font-bold leading-normal">
-              Ward info is attached from your municipal registrations record.
-            </Text>
-          </View>
-
-          {/* Username */}
-          <Text style={styles.fieldLabel}>Username</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="at-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Username"
-              placeholderTextColor="#A6ADB8"
-              autoCapitalize="none"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Password */}
-          <Text style={styles.fieldLabel}>Change Password</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="lock-closed-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter new password"
-              placeholderTextColor="#A6ADB8"
-              secureTextEntry
-              style={styles.input}
-            />
-          </View>
-
-          {/* Employee ID */}
-          <Text style={styles.fieldLabel}>Employee ID</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="card-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={employeeId}
-              onChangeText={setEmployeeId}
-              placeholder="Employee ID"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Designation */}
-          <Text style={styles.fieldLabel}>Designation</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="ribbon-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={designation}
-              onChangeText={setDesignation}
-              placeholder="Designation"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Ward */}
-          <Text style={styles.fieldLabel}>Assigned Ward</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="location-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={ward}
-              onChangeText={setWard}
-              placeholder="Assigned Ward"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
-          </View>
-
-          {/* Department */}
-          <Text style={styles.fieldLabel}>Department</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="briefcase-outline" size={18} color="#5B6472" />
-            <TextInput
-              value={department}
-              onChangeText={setDepartment}
-              placeholder="Department"
-              placeholderTextColor="#A6ADB8"
-              style={styles.input}
-            />
+          <Text style={styles.headerTitle}>My Profile</Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{profile.avatarInitial}</Text>
           </View>
         </View>
+      </SafeAreaView>
 
-        {/* Save Button */}
-        <Pressable
-          onPress={handleSaveChanges}
-          disabled={saving}
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
+      >
+        {/* Avatar section */}
+        <View style={styles.avatarSection}>
+          <Pressable
+            onPress={() =>
+              Alert.alert('Photo Upload', 'Photo picker will be available after backend integration.')
+            }
+            style={styles.avatarPressable}
+          >
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitials}>{profile.avatarInitial}</Text>
+            </View>
+            <View style={styles.cameraBadge}>
+              <MaterialCommunityIcons name="camera" size={16} color={COLORS.white} />
+            </View>
+          </Pressable>
+          <Text style={styles.avatarLabel}>Tap to change profile picture</Text>
+        </View>
+
+        {/* Editable fields card */}
+        <GlassCard style={styles.formCard}>
+          <CustomTextInput
+            icon="account-outline"
+            label="Full Name"
+            placeholder="Enter your name"
+            value={name}
+            onChangeText={setName}
+          />
+
+          <CustomTextInput
+            icon="phone-outline"
+            label="Phone Number"
+            placeholder="e.g. 9420105073"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={setPhone}
+            maxLength={10}
+          />
+
+          <CustomTextInput
+            icon="email-outline"
+            label="Email Address"
+            placeholder="e.g. name@malvan.gov.in"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <CustomTextInput
+            icon="translate"
+            label="Language"
+            placeholder="e.g. English / मराठी"
+            value={language}
+            onChangeText={setLanguage}
+          />
+
+          <CustomTextInput
+            icon="lock-outline"
+            label="Change Password"
+            placeholder="Enter new password (optional)"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </GlassCard>
+
+        {/* Read-only demographics */}
+        <GlassCard style={styles.demoCard}>
+          <Text style={styles.demoHeading}>Official Demographics</Text>
+          <Text style={styles.demoSubtext}>
+            Role and ward info is attached from your municipal registration record.
+          </Text>
+
+          <View style={styles.demoGrid}>
+            <ReadOnlyField
+              icon="map-marker-outline"
+              label="WARD"
+              value={profile.ward || 'Ward 2'}
+            />
+            <ReadOnlyField
+              icon="shield-account-outline"
+              label="ROLE"
+              value="Nagarsevak (Ward Representative)"
+            />
+          </View>
+
+          <View style={styles.demoGrid}>
+            <ReadOnlyField
+              icon="home-city-outline"
+              label="MUNICIPALITY"
+              value="Malvan"
+            />
+            <ReadOnlyField
+              icon="map-marker-radius-outline"
+              label="LOCALITY"
+              value={profile.locality || 'Malvan Bazaar'}
+            />
+          </View>
+        </GlassCard>
+
+        <PrimaryButton
+          label={saving ? 'Saving…' : 'Save Changes'}
+          loading={saving}
+          onPress={handleSave}
           style={styles.saveBtn}
+        />
+
+        <Pressable
+          onPress={handleLogout}
+          disabled={loggingOut}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && styles.logoutPressed,
+            loggingOut && styles.logoutDisabled,
+          ]}
         >
-          <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+          <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
+          <Text style={styles.logoutText}>
+            {loggingOut ? 'Logging out…' : 'Logout'}
+          </Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </View>
+  );
+}
+
+function ReadOnlyField({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.roContainer}>
+      <View style={styles.roLabelRow}>
+        <MaterialCommunityIcons name={icon} size={13} color={COLORS.textMuted} />
+        <Text style={styles.roLabel}>{label}</Text>
+      </View>
+      <View style={styles.roField}>
+        <Text style={styles.roValue} numberOfLines={1}>{value}</Text>
+        <MaterialCommunityIcons name="lock-outline" size={13} color={COLORS.textMuted} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerBar: {
-    height: 56,
-    backgroundColor: '#0A2A43',
+  root: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  safeHeader: {
+    backgroundColor: COLORS.primary,
+  },
+  header: {
+    height: 58,
+    backgroundColor: COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    shadowColor: '#071D30',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    justifyContent: 'space-between',
+  },
+  headerBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
   },
   headerTitle: {
-    color: '#FFFFFF',
+    flex: 1,
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: '800',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  headerAvatarInitial: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F2994A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerAvatarInitialText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  largeAvatar: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: '#3085F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-    shadowColor: '#0A2A43',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  largeAvatarText: {
-    fontSize: 54,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  cameraIconBadge: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
+  avatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#3085F3',
-    justifyContent: 'center',
+    backgroundColor: COLORS.warning,
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+    ...SHADOWS.soft,
   },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  subHeading: {
-    fontSize: 14,
+  avatarText: {
+    color: COLORS.white,
     fontWeight: '800',
-    color: '#1E6FD9',
+    fontSize: 14,
   },
-  inputRow: {
+  body: {
+    flex: 1,
+  },
+  content: {
+    padding: 18,
+    paddingBottom: 50,
+  },
+
+  // Avatar section
+  avatarSection: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  avatarPressable: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    position: 'relative',
+    ...SHADOWS.medium,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+  },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitials: {
+    color: COLORS.white,
+    fontWeight: '800',
+    fontSize: 38,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primaryLight,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    borderColor: COLORS.white,
+  },
+  avatarLabel: {
+    fontSize: 12,
+    color: COLORS.accent,
+    fontWeight: '700',
+    marginTop: 10,
+  },
+
+  // Form card
+  formCard: {
+    padding: 16,
+    marginBottom: 14,
+  },
+
+  // Demographics card
+  demoCard: {
+    padding: 16,
+    marginBottom: 20,
+  },
+  demoHeading: {
+    ...TYPOGRAPHY.captionBold,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  demoSubtext: {
+    ...TYPOGRAPHY.caption,
+    fontSize: 11.5,
+    lineHeight: 16,
+    marginBottom: 14,
+  },
+  demoGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  roContainer: {
+    flex: 1,
+  },
+  roLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E7ECF2',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    height: 50,
+    gap: 4,
+    marginBottom: 4,
   },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: '#101826',
-    marginLeft: 10,
+  roLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textMuted,
   },
-  saveBtn: {
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#1E6FD9',
-    justifyContent: 'center',
+  roField: {
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    shadowColor: '#1E6FD9',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  saveBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  roValue: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginRight: 4,
+  },
+
+  // Buttons
+  saveBtn: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    minHeight: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(239,68,68,0.35)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    marginBottom: 16,
+  },
+  logoutPressed: {
+    opacity: 0.88,
+  },
+  logoutDisabled: {
+    opacity: 0.6,
+  },
+  logoutText: {
+    fontSize: 15,
     fontWeight: '800',
+    color: COLORS.danger,
   },
 });

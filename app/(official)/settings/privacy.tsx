@@ -1,74 +1,121 @@
-import { View, Text, Pressable, StyleSheet, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
+import GlassCard from '@/components/common/GlassCard';
+import { OfficialScreen } from '@/components/official/OfficialScreen';
+import { COLORS } from '@/constants/theme';
+
+const PERMISSIONS = [
+  {
+    key: 'location',
+    label: 'Location Access',
+    sub: 'Use GPS to determine complaint locations on maps.',
+    icon: 'map-marker-outline' as const,
+    defaultValue: true,
+  },
+  {
+    key: 'camera',
+    label: 'Camera Access',
+    sub: 'Capture photos to upload as verification for resolved grievances.',
+    icon: 'camera-outline' as const,
+    defaultValue: true,
+  },
+  {
+    key: 'gallery',
+    label: 'Photo Library',
+    sub: 'Select existing photos from device gallery to attach to updates.',
+    icon: 'image-outline' as const,
+    defaultValue: true,
+  },
+];
 
 export default function PrivacyScreen() {
-  const router = useRouter();
+  const [values, setValues] = useState<Record<string, boolean>>(
+    Object.fromEntries(PERMISSIONS.map((p) => [p.key, p.defaultValue])),
+  );
 
-  const [cameraPermission, setCameraPermission] = useState(true);
-  const [galleryPermission, setGalleryPermission] = useState(true);
-  const [locationPermission, setLocationPermission] = useState(true);
+  const toggle = (key: string) =>
+    setValues((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#F5F7FA' }} edges={['top']}>
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Ionicons name="arrow-back" size={24} color="#0A2A43" />
-        </Pressable>
-        <View>
-          <Text className="text-lg font-extrabold text-slate-800 leading-tight">Privacy & Permissions</Text>
-          <Text className="text-xs text-slate-400 font-bold">Configure device access and security permissions</Text>
+    <OfficialScreen title="Privacy & Permissions" showBack>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        overScrollMode="never"
+      >
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons name="shield-check-outline" size={17} color={COLORS.accent} />
+          <Text style={styles.sectionTitle}>Device Permissions</Text>
         </View>
-      </View>
-
-      <View className="p-4">
-        {/* Hardware Toggles */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
-          <Text className="text-sm font-extrabold text-slate-800 mb-4 uppercase tracking-wider">Device Permissions</Text>
-
-          {/* Location */}
-          <View className="flex-row items-center justify-between py-3 border-b border-slate-50">
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-800 font-bold text-sm">Location Access</Text>
-              <Text className="text-slate-400 text-xs mt-0.5">Use GPS coordinates to determine complaint locations on maps.</Text>
+        <GlassCard style={styles.card}>
+          {PERMISSIONS.map((item, idx) => (
+            <View
+              key={item.key}
+              style={[
+                styles.row,
+                idx === PERMISSIONS.length - 1 && { borderBottomWidth: 0 },
+              ]}
+            >
+              <View style={styles.rowLeft}>
+                <View style={styles.iconCircle}>
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={17}
+                    color={COLORS.primaryLight}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowLabel}>{item.label}</Text>
+                  <Text style={styles.rowSub}>{item.sub}</Text>
+                </View>
+              </View>
+              <Switch
+                value={values[item.key]}
+                onValueChange={() => toggle(item.key)}
+                trackColor={{ true: COLORS.accent, false: COLORS.border }}
+                thumbColor={Platform.OS === 'android' ? COLORS.white : undefined}
+              />
             </View>
-            <Switch
-              value={locationPermission}
-              onValueChange={setLocationPermission}
-              trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-            />
-          </View>
-
-          {/* Camera */}
-          <View className="flex-row items-center justify-between py-3 border-b border-slate-50 mt-2">
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-800 font-bold text-sm">Camera Access</Text>
-              <Text className="text-slate-400 text-xs mt-0.5">Allow camera capture to upload verification photos of resolved grievances.</Text>
-            </View>
-            <Switch
-              value={cameraPermission}
-              onValueChange={setCameraPermission}
-              trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-            />
-          </View>
-
-          {/* Gallery */}
-          <View className="flex-row items-center justify-between py-3 mt-2">
-            <View className="flex-1 mr-4">
-              <Text className="text-slate-800 font-bold text-sm">Photo Library Access</Text>
-              <Text className="text-slate-400 text-xs mt-0.5">Select existing photos from device gallery to attach to grievance updates.</Text>
-            </View>
-            <Switch
-              value={galleryPermission}
-              onValueChange={setGalleryPermission}
-              trackColor={{ true: '#1E6FD9', false: '#CBD5E1' }}
-            />
-          </View>
-        </View>
-      </View>
-    </SafeAreaView>
+          ))}
+        </GlassCard>
+      </ScrollView>
+    </OfficialScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  content: { padding: 18, paddingBottom: 44 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
+  card: { padding: 0, overflow: 'hidden' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 12,
+  },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  rowLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  rowSub: { fontSize: 11, fontWeight: '500', color: COLORS.textMuted, marginTop: 2, lineHeight: 16 },
+});
