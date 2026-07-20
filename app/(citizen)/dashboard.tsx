@@ -91,7 +91,7 @@ export default function Dashboard() {
             <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
           </View>
         </View>
-        <Pressable onPress={() => router.push('/profile')} style={styles.headerAvatarWrap}>
+        <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
           {profile?.avatar || profile?.profileImage ? (
             <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
           ) : (
@@ -228,7 +228,7 @@ export default function Dashboard() {
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionHeading}>Recent complaints</Text>
             {complaints.length > 0 && (
-              <Pressable onPress={() => router.push('/my-complaints')} hitSlop={8}>
+              <Pressable onPress={() => router.push('/(citizen)/my-complaints')} hitSlop={8}>
                 <Text style={styles.viewMoreLink}>View all</Text>
               </Pressable>
             )}
@@ -252,7 +252,7 @@ export default function Dashboard() {
                 <Animated.View key={c.id} entering={FadeInRight.duration(400).delay(120 + idx * 70)}>
                   <Pressable
                     onPress={() =>
-                      router.push({ pathname: '/complaint/[id]', params: { id: c.id } })
+                      router.push({ pathname: '/(citizen)/complaint/[id]', params: { id: c.id } })
                     }
                     style={({ pressed }) => [styles.complaintCard, pressed && { opacity: 0.9 }]}
                   >
@@ -332,7 +332,7 @@ export default function Dashboard() {
             {ANNOUNCEMENTS.slice(0, 4).map((a, idx) => (
               <Animated.View key={a.id} entering={FadeInRight.duration(400).delay(idx * 70)}>
                 <Pressable
-                  onPress={() => router.push('/announcements')}
+                  onPress={() => router.push('/(citizen)/announcements')}
                   style={({ pressed }) => [styles.announceCard, pressed && { opacity: 0.92 }]}
                 >
                   <LinearGradient

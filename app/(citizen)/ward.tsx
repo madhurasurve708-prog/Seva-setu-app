@@ -117,7 +117,10 @@ export default function WardScreen() {
         <Text style={styles.sectionLabel}>Ward Representatives (Nagarsevak)</Text>
 
         {reps.map((rep, idx) => (
-          <GlassCard key={rep.name} style={[styles.repCard, idx > 0 && styles.repCardSpacing]}>
+          <GlassCard
+            key={rep.name}
+            style={{ ...styles.repCard, ...(idx > 0 ? styles.repCardSpacing : {}) }}
+          >
             <View style={styles.repHeaderRow}>
               <View style={styles.repAvatar}>
                 <MaterialCommunityIcons name="account-tie" size={32} color={COLORS.primary} />

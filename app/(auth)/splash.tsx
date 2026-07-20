@@ -111,7 +111,7 @@ export default function SplashScreen() {
 
     const navTimer = setTimeout(() => {
       try {
-        router.replace("/role-selection");
+        router.replace("/(auth)/role-selection");
       } catch (e) {
         console.error("Navigation error:", e);
       }
@@ -163,7 +163,7 @@ export default function SplashScreen() {
 
   const handleSkip = () => {
     try {
-      router.replace("/role-selection");
+      router.replace("/(auth)/role-selection");
     } catch (e) {
       console.error("Skip navigation error:", e);
     }

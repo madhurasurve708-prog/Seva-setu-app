@@ -104,7 +104,7 @@ export default function Profile() {
     } catch {
       // nothing to dismiss, ignore
     }
-    router.replace('/role-selection');
+    router.replace('/(auth)/role-selection');
     setLoggingOut(false);
   };
 
@@ -135,11 +135,11 @@ export default function Profile() {
     onPress: () => void;
     value?: string;
   }[] = [
-      { label: 'Settings', icon: 'cog-outline', onPress: () => router.push('/settings') },
-      { label: 'Help & FAQs', icon: 'help-circle-outline', onPress: () => router.push('/help') },
-      { label: 'Privacy Policy', icon: 'file-document-outline', onPress: () => router.push('/privacy-policy') },
-      { label: 'Terms & Conditions', icon: 'handshake-outline', onPress: () => router.push('/terms-conditions') },
-      { label: 'About Seva Setu', icon: 'information-outline', onPress: () => router.push('/about') },
+      { label: 'Settings', icon: 'cog-outline', onPress: () => router.push('/(citizen)/settings') },
+      { label: 'Help & FAQs', icon: 'help-circle-outline', onPress: () => router.push('/(citizen)/help') },
+      { label: 'Privacy Policy', icon: 'file-document-outline', onPress: () => router.push('/(citizen)/privacy-policy') },
+      { label: 'Terms & Conditions', icon: 'handshake-outline', onPress: () => router.push('/(citizen)/terms-conditions') },
+      { label: 'About Seva Setu', icon: 'information-outline', onPress: () => router.push('/(citizen)/about') },
       { label: 'App Version', icon: 'cellphone', onPress: () => { }, value: '1.0.0' },
     ];
 

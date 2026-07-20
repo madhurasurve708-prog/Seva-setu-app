@@ -48,7 +48,7 @@ export default function ComplaintSuccess() {
       <Animated.View entering={FadeInUp.duration(500).delay(650)} style={styles.btnWrapper}>
         <PrimaryButton
           label="Back to Dashboard"
-          onPress={() => router.replace('/dashboard')}
+          onPress={() => router.replace('/(citizen)/dashboard')}
           style={styles.button}
         />
       </Animated.View>

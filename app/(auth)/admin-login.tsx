@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -17,22 +18,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import CustomTextInput from '@/components/common/CustomTextInput';
+import { useOfficial } from '@/providers/official-provider';
+import { loginAdministrator, loginDemoAdministrator } from '@/services/auth';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { setAuthenticatedUser } = useOfficial();
 
   const canSubmit = adminId.trim().length > 0 && password.length > 0;
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!canSubmit) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const profile = process.env.EXPO_PUBLIC_API_URL
+        ? await loginAdministrator(adminId.trim(), password)
+        : loginDemoAdministrator(adminId.trim(), password);
+      await setAuthenticatedUser(profile);
+      router.replace('/(admin)/dashboard' as any);
+    } catch (error) {
+      Alert.alert('Sign-in failed', error instanceof Error ? error.message : 'Unable to sign in.');
+    } finally {
       setLoading(false);
-      // Simulating transition/login logic
-    }, 900);
+    }
   };
 
   return (
@@ -90,7 +101,9 @@ export default function AdminLoginScreen() {
           >
             <Text style={styles.stepTitle}>Restricted portal</Text>
             <Text style={styles.stepHint}>
-              This area is restricted to Malvan Municipal Council Administrators. All login attempts are logged.
+              {process.env.EXPO_PUBLIC_API_URL
+                ? 'This portal is for the Main Administrator of Seva Setu only.'
+                : 'Demo mode: use Admin ID Mamta Waradkar and password 123456.'}
             </Text>
 
             <View style={styles.formContainer}>

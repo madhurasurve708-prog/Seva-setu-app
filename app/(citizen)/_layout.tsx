@@ -15,7 +15,7 @@ export default function CitizenLayout() {
   }
 
   if (!profile) {
-    return <Redirect href="/role-selection" />;
+    return <Redirect href="/(auth)/role-selection" />;
   }
 
   return <Stack screenOptions={{ headerShown: false }} />;

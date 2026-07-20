@@ -69,7 +69,7 @@ export default function ReportComplaint() {
         photoUri,
       });
       router.replace({
-        pathname: '/complaint-success',
+        pathname: '/(citizen)/complaint-success',
         params: { id: complaint.id },
       });
     } catch (e) {

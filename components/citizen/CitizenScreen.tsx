@@ -41,7 +41,7 @@ export function CitizenScreen({
               {title}
             </Text>
             <Pressable
-              onPress={() => router.push('/profile')}
+              onPress={() => router.push('/(citizen)/profile')}
               style={({ pressed }) => [styles.avatar, pressed && styles.pressedScale] as any}
             >
               <Text style={styles.avatarText}>

@@ -40,7 +40,7 @@ export default function PrivacyPolicyScreen() {
         <GlassCard style={styles.card}>
           <Text style={styles.bulletTitle}>• Internal Service Resolution</Text>
           <Text style={styles.bulletBody}>
-            Your complaint details, including your general ward and location description, are shared directly with the ward's assigned sanitation, water, road, or electricity department officers to help them resolve issues.
+            Your complaint details, including your general ward and location description, are shared directly with the ward’s assigned sanitation, water, road, or electricity department officers to help them resolve issues.
           </Text>
 
           <Text style={styles.bulletTitle}>• Citizen Status Updates</Text>

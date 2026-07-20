@@ -17,7 +17,7 @@ export default function ComplaintDetail() {
   const c = complaints.find((x) => x.id === id);
 
   if (!c) {
-    router.replace('/my-complaints');
+    router.replace('/(citizen)/my-complaints');
     return null;
   }
 
