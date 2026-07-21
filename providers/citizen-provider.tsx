@@ -1,6 +1,31 @@
+import {
+    DEPT_AROGYA,
+    DEPT_BANDHKAM,
+    DEPT_PANI,
+    DEPT_SWACHHATA,
+    DEPT_UDYANE,
+    DEPT_VIDYUT,
+} from '@/data/complaints';
+import type { CitizenComplaint, CitizenPreferences, CitizenProfile } from '@/types/citizen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
-import type { CitizenComplaint, CitizenPreferences, CitizenProfile } from '@/types/citizen';
+
+// Maps citizen complaint category labels to official department names.
+// The citizen never picks a department — this mapping is automatic.
+const CITIZEN_CATEGORY_TO_DEPT: Record<string, string> = {
+  Water:          DEPT_PANI,
+  Garbage:        DEPT_SWACHHATA,
+  'Street Light': DEPT_VIDYUT,
+  Road:           DEPT_BANDHKAM,
+  Drainage:       DEPT_BANDHKAM,
+  'Stray Animals': DEPT_AROGYA,
+  Tree:           DEPT_UDYANE,
+  Other:          DEPT_AROGYA,
+};
+
+function resolveDepartment(category: string): string {
+  return CITIZEN_CATEGORY_TO_DEPT[category] ?? DEPT_AROGYA;
+}
 
 const PROFILE_KEY = '@seva-setu/citizen-profile';
 const COMPLAINTS_KEY_PREFIX = '@seva-setu/citizen-complaints';

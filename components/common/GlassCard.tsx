@@ -7,13 +7,16 @@ interface GlassCardProps {
   style?: ViewStyle;
 }
 
-export default function GlassCard({ children, style }: GlassCardProps) {
+function GlassCard({ children, style }: GlassCardProps) {
   return (
     <View style={[styles.card, style]}>
       {children}
     </View>
   );
 }
+
+export { GlassCard };
+export default GlassCard;
 
 const styles = StyleSheet.create({
   card: {
