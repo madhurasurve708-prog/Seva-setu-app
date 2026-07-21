@@ -1,14 +1,14 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { ScrollView, StatusBar, StyleSheet, Text, View, Dimensions, Pressable } from 'react-native';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Dimensions, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
 const gap = 12;
-const cardWidth = (width - 48 - gap) / 2; // 48 is horizontal padding of AuthSheet (24 * 2)
+const cardWidth = (width - 48 - gap) / 2;
 
 type RoleOption = {
   title: string;

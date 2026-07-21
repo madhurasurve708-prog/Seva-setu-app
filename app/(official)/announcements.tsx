@@ -1,76 +1,101 @@
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInLeft } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import GlassCard from '@/components/common/GlassCard';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+
+const PRIORITY_STYLES: Record<string, {
+  bg: string; text: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+}> = {
+  Emergency: { bg: '#FEF2F2', text: '#DC2626', icon: 'alert-octagon-outline' },
+  High:      { bg: '#FFF7ED', text: '#EA580C', icon: 'alert-circle-outline'  },
+  Pinned:    { bg: '#EFF6FF', text: '#1E6FD9', icon: 'pin-outline'           },
+  Normal:    { bg: '#F1F5F9', text: '#475569', icon: 'bell-outline'           },
+};
+
+const TABS = ['All', 'Emergency', 'High', 'Pinned', 'Normal'] as const;
+type Tab = typeof TABS[number];
 
 export default function AnnouncementsScreen() {
   const router = useRouter();
   const { announcements } = useOfficial();
+  const [tab, setTab] = useState<Tab>('All');
 
-  const getPriorityStyle = (prio: string) => {
-    switch (prio) {
-      case 'Pinned': return { bg: '#EFF6FF', text: '#1E6FD9', icon: 'pin-sharp' as const };
-      case 'Emergency': return { bg: '#FEF2F2', text: '#DC2626', icon: 'alert-circle-outline' as const };
-      case 'High': return { bg: '#FFF7ED', text: '#EA580C', icon: 'warning-outline' as const };
-      default: return { bg: '#F1F5F9', text: '#475569', icon: 'mail-outline' as const };
-    }
-  };
+  const filtered = tab === 'All'
+    ? announcements
+    : announcements.filter((a) => a.priority === tab);
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: '#F5F7FA' }} edges={['top']}>
+    <SafeAreaView style={styles.root} edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center px-4 py-3.5 bg-white border-b border-slate-100 shadow-sm">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Ionicons name="arrow-back" size={24} color="#0A2A43" />
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
         </Pressable>
-        <View>
-          <Text className="text-lg font-extrabold text-slate-800 leading-tight">Municipal Announcements</Text>
-          <Text className="text-xs text-slate-400 font-bold">Important alerts and notices from Main Admin</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Announcements</Text>
+          <Text style={styles.headerSub}>Municipal alerts and council notices</Text>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {announcements.length === 0 ? (
-          <View className="bg-white rounded-3xl p-8 items-center border border-slate-100 shadow-sm mt-8">
-            <View className="w-16 h-16 bg-blue-50 rounded-full items-center justify-center mb-4">
-              <Ionicons name="megaphone-outline" size={32} color="#1E6FD9" />
-            </View>
-            <Text className="text-slate-800 font-extrabold text-base mb-1 text-center">
-              No Announcements
-            </Text>
-            <Text className="text-slate-400 text-sm text-center leading-relaxed">
-              There are no notices or updates published by the main administration at this time.
+      {/* Tab strip */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabs}
+        style={styles.tabsWrap}
+      >
+        {TABS.map((t) => (
+          <Pressable
+            key={t}
+            onPress={() => setTab(t)}
+            style={[styles.tab, tab === t && styles.tabActive]}
+          >
+            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>{t}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        overScrollMode="never"
+      >
+        {filtered.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <MaterialCommunityIcons name="bell-off-outline" size={32} color={COLORS.textMuted} />
+            <Text style={styles.emptyTitle}>No announcements</Text>
+            <Text style={styles.emptyText}>
+              There are no {tab.toLowerCase()} notices at this time.
             </Text>
           </View>
         ) : (
-          announcements.map((a) => {
-            const style = getPriorityStyle(a.priority);
+          filtered.map((a, idx) => {
+            const s = PRIORITY_STYLES[a.priority] ?? PRIORITY_STYLES.Normal;
             return (
-              <View key={a.id} className="bg-white border border-slate-100 rounded-3xl p-5 mb-4 shadow-sm">
-                <View className="flex-row justify-between items-center mb-3">
-                  <View
-                    style={{
-                      backgroundColor: style.bg,
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 10,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Ionicons name={style.icon} size={12} color={style.text} style={{ marginRight: 4 }} />
-                    <Text style={{ color: style.text, fontSize: 11, fontWeight: '700' }}>
-                      {a.priority}
-                    </Text>
+              <Animated.View key={a.id} entering={FadeInLeft.duration(380).delay(idx * 70)}>
+                <GlassCard style={styles.card}>
+                  <View style={styles.cardTop}>
+                    <View style={[styles.badge, { backgroundColor: s.bg }]}>
+                      <MaterialCommunityIcons name={s.icon} size={11} color={s.text} />
+                      <Text style={[styles.badgeText, { color: s.text }]}>{a.priority}</Text>
+                    </View>
+                    <View style={styles.dateRow}>
+                      <MaterialCommunityIcons name="calendar-outline" size={11} color={COLORS.textMuted} />
+                      <Text style={styles.dateText}>{a.date}</Text>
+                    </View>
                   </View>
-                  <Text className="text-xs text-slate-400 font-bold">{a.date}</Text>
-                </View>
-
-                <Text className="text-slate-800 font-extrabold text-base mb-2">{a.title}</Text>
-                <Text className="text-slate-600 text-sm leading-relaxed">{a.body}</Text>
-              </View>
+                  <Text style={styles.annTitle}>{a.title}</Text>
+                  <View style={styles.divider} />
+                  <Text style={styles.annBody}>{a.body}</Text>
+                </GlassCard>
+              </Animated.View>
             );
           })
         )}
@@ -78,3 +103,72 @@ export default function AnnouncementsScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.background },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: COLORS.card,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 10,
+    ...SHADOWS.sm,
+  },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: { ...TYPOGRAPHY.h3, fontSize: 16, color: COLORS.text },
+  headerSub: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginTop: 1 },
+
+  tabsWrap: {
+    backgroundColor: COLORS.card,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  tabs: { gap: 8, paddingHorizontal: 16, paddingVertical: 10, paddingRight: 20 },
+  tab: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 999, backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  tabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tabText: { fontSize: 13, fontWeight: '700', color: COLORS.textMuted },
+  tabTextActive: { color: COLORS.white },
+
+  content: { padding: 18, paddingBottom: 44 },
+
+  card: { padding: 16, marginBottom: 14 },
+  cardTop: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 12,
+  },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999,
+  },
+  badgeText: { fontSize: 10, fontWeight: '800' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dateText: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
+  annTitle: {
+    fontSize: 15, fontWeight: '800', color: COLORS.text, lineHeight: 22,
+  },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 10 },
+  annBody: { fontSize: 13, fontWeight: '500', color: COLORS.textMuted, lineHeight: 20 },
+
+  emptyCard: {
+    marginTop: 40, backgroundColor: COLORS.card, borderRadius: 20,
+    padding: 32, alignItems: 'center', gap: 10,
+    borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.soft,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+  emptyText: {
+    fontSize: 13, fontWeight: '600', color: COLORS.textMuted,
+    textAlign: 'center', lineHeight: 20,
+  },
+});

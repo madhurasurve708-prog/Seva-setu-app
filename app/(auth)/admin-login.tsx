@@ -1,46 +1,56 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Image,
-  SafeAreaView,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-import PrimaryButton from '@/components/common/PrimaryButton';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
+import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
 import CustomTextInput from '@/components/common/CustomTextInput';
+import PrimaryButton from '@/components/common/PrimaryButton';
+import { COLORS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { loginAdministrator, loginDemoAdministrator } from '@/services/auth';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
+  const { setAuthenticatedUser } = useOfficial();
+
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setAuthenticatedUser } = useOfficial();
+  const [error, setError] = useState('');
 
+  const isDemo = !process.env.EXPO_PUBLIC_API_URL;
   const canSubmit = adminId.trim().length > 0 && password.length > 0;
+
+  const fillDemo = () => {
+    setAdminId('Mamta Waradkar');
+    setPassword('123456');
+    setError('');
+  };
 
   const handleLogin = async () => {
     if (!canSubmit) return;
     setLoading(true);
+    setError('');
     try {
-      const profile = process.env.EXPO_PUBLIC_API_URL
-        ? await loginAdministrator(adminId.trim(), password)
-        : loginDemoAdministrator(adminId.trim(), password);
+      const profile = isDemo
+        ? loginDemoAdministrator(adminId.trim(), password)
+        : await loginAdministrator(adminId.trim(), password);
       await setAuthenticatedUser(profile);
       router.replace('/(admin)/dashboard' as any);
-    } catch (error) {
-      Alert.alert('Sign-in failed', error instanceof Error ? error.message : 'Unable to sign in.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in.');
     } finally {
       setLoading(false);
     }
@@ -49,248 +59,168 @@ export default function AdminLoginScreen() {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Premium Framed Hero - Prevents Illustration Cutoff */}
-        <View style={styles.heroContainer}>
-          <LinearGradient
-            colors={[COLORS.primary, COLORS.primaryLight]}
-            style={StyleSheet.absoluteFill}
-          />
-          <SafeAreaView style={styles.heroSafeArea}>
-            <View style={styles.heroTopRow}>
-              <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-                <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
-              </Pressable>
-            </View>
-            <View style={styles.heroContent}>
-              <View style={styles.heroHeaderWrapper}>
-                <View style={styles.shivajiFrame}>
-                  <Image
-                    source={require('../../assets/images/shivaji.png')}
-                    style={styles.shivajiImage}
-                    resizeMode="contain"
-                  />
-                </View>
-                <View style={styles.headerTextCol}>
-                  <View style={styles.logoRing}>
-                    <MaterialCommunityIcons name="shield-crown" size={26} color={COLORS.primary} />
-                  </View>
-                  <Text style={styles.heroTitle}>Admin Login</Text>
-                  <View style={styles.roleBadge}>
-                    <Text style={styles.roleBadgeText}>NAGARADHYAKSHA</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </SafeAreaView>
-        </View>
+        <AuthHero
+          title="Nagaradhyaksha"
+          subtitle="Malvan Municipal Council — Admin Portal"
+          badge="RESTRICTED ACCESS"
+          icon="shield-crown"
+          showLogo
+          onBack={() => router.back()}
+          compact
+        />
 
-        {/* Form Sheet */}
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-
+        <AuthSheet>
           <ScrollView
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             overScrollMode="never"
           >
-            <Text style={styles.stepTitle}>Restricted portal</Text>
-            <Text style={styles.stepHint}>
-              {process.env.EXPO_PUBLIC_API_URL
-                ? 'This portal is for the Main Administrator of Seva Setu only.'
-                : 'Demo mode: use Admin ID Mamta Waradkar and password 123456.'}
-            </Text>
+            {/* Heading */}
+            <Animated.View entering={FadeInDown.duration(420).delay(60)}>
+              <Text style={styles.screenTitle}>Restricted Portal</Text>
+              <Text style={styles.screenHint}>
+                नगराध्यक्ष पोर्टलमध्ये प्रवेश करण्यासाठी अधिकृत क्रेडेन्शियल वापरा.
+              </Text>
+            </Animated.View>
 
-            <View style={styles.formContainer}>
+            {/* Demo credentials card */}
+            {isDemo && (
+              <Animated.View entering={FadeInDown.duration(420).delay(100)}>
+                <Pressable onPress={fillDemo} style={styles.demoCard}>
+                  <LinearGradient
+                    colors={['rgba(124,58,237,0.08)', 'rgba(124,58,237,0.04)']}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.demoLeft}>
+                    <MaterialCommunityIcons name="shield-crown-outline" size={20} color="#7C3AED" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.demoTitle}>Demo Credentials</Text>
+                      <Text style={styles.demoLine}>Admin ID: <Text style={styles.demoBold}>Mamta Waradkar</Text></Text>
+                      <Text style={styles.demoLine}>Password: <Text style={styles.demoBold}>123456</Text></Text>
+                    </View>
+                  </View>
+                  <View style={styles.tapBadge}>
+                    <Text style={styles.tapText}>Tap to fill</Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            )}
+
+            {/* Form */}
+            <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.formContainer}>
               <CustomTextInput
-                icon="account-key-outline"
+                icon="shield-account-outline"
                 placeholder="Enter Admin ID"
                 label="Admin ID"
                 value={adminId}
-                onChangeText={setAdminId}
-                autoCapitalize="none"
+                onChangeText={(v) => { setAdminId(v); setError(''); }}
+                autoCapitalize="words"
               />
-
               <CustomTextInput
                 icon="lock-outline"
                 placeholder="Enter password"
                 label="Password"
                 secureTextEntry
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(v) => { setPassword(v); setError(''); }}
               />
-            </View>
+            </Animated.View>
+
+            {error ? (
+              <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorText}>
+                {error}
+              </Animated.Text>
+            ) : null}
 
             <Pressable style={styles.forgotBtn} hitSlop={8}>
               <Text style={styles.forgotText}>Forgot password?</Text>
             </Pressable>
 
-            <PrimaryButton
-              label={loading ? 'Verifying…' : 'Login'}
-              disabled={!canSubmit || loading}
-              loading={loading}
-              onPress={handleLogin}
-              style={styles.actionBtn}
-            />
+            <Animated.View entering={FadeInDown.duration(420).delay(200)}>
+              <PrimaryButton
+                label={loading ? 'Verifying…' : 'Login to Admin Portal'}
+                disabled={!canSubmit || loading}
+                loading={loading}
+                onPress={handleLogin}
+                style={styles.loginBtn}
+              />
+            </Animated.View>
 
-            <View style={styles.securityBadge}>
-              <MaterialCommunityIcons name="shield-lock-outline" size={16} color={COLORS.textMuted} />
+            <Animated.View entering={FadeInDown.duration(420).delay(240)} style={styles.securityBadge}>
+              <MaterialCommunityIcons name="shield-lock-outline" size={15} color={COLORS.textMuted} />
               <Text style={styles.securityText}>Secured with 256-bit encryption</Text>
-            </View>
+            </Animated.View>
           </ScrollView>
-        </View>
+        </AuthSheet>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
+  root: { flex: 1, backgroundColor: '#081B2B' },
+
+  scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 32 },
+
+  screenTitle: { ...TYPOGRAPHY.h2, color: COLORS.primary },
+  screenHint: {
+    ...TYPOGRAPHY.caption,
+    marginTop: 6,
+    marginBottom: 20,
+    color: COLORS.textMuted,
+    lineHeight: 19,
   },
-  heroContainer: {
-    height: '35%',
-    minHeight: 220,
-  },
-  heroSafeArea: {
-    flex: 1,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 18,
-    paddingTop: 10,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroContent: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  heroHeaderWrapper: {
+
+  demoCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-  },
-  shivajiFrame: {
-    width: 90,
-    height: 110,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    padding: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shivajiImage: {
-    width: '100%',
-    height: '100%',
-  },
-  headerTextCol: {
-    flex: 1,
-    paddingLeft: 18,
-    alignItems: 'flex-start',
-  },
-  logoRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    ...SHADOWS.soft,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.white,
-    letterSpacing: 0.5,
-  },
-  roleBadge: {
-    marginTop: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    backgroundColor: 'rgba(249, 115, 22, 0.15)',
-    borderWidth: 1,
-    borderColor: COLORS.warning,
-  },
-  roleBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: COLORS.warning,
-    letterSpacing: 1.2,
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -20,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 44,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: COLORS.border,
-    marginBottom: 16,
-  },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  stepTitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.primary,
-  },
-  stepHint: {
-    ...TYPOGRAPHY.caption,
-    marginTop: 6,
-    lineHeight: 19,
-    color: COLORS.textMuted,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(124,58,237,0.25)',
+    padding: 14,
     marginBottom: 20,
+    overflow: 'hidden',
+    gap: 10,
   },
-  formContainer: {
-    marginVertical: 4,
+  demoLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 },
+  demoTitle: { fontSize: 11, fontWeight: '800', color: '#7C3AED', letterSpacing: 0.6, marginBottom: 3 },
+  demoLine: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted, lineHeight: 18 },
+  demoBold: { fontWeight: '800', color: COLORS.text },
+  tapBadge: {
+    backgroundColor: 'rgba(124,58,237,0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 18,
-  },
-  forgotText: {
+  tapText: { fontSize: 10, fontWeight: '800', color: '#7C3AED' },
+
+  formContainer: { marginTop: 4 },
+
+  errorText: {
     fontSize: 13,
-    color: COLORS.accent,
+    color: COLORS.danger,
     fontWeight: '600',
+    marginTop: -4,
+    marginBottom: 12,
   },
-  actionBtn: {
-    marginTop: 4,
-  },
+
+  forgotBtn: { alignSelf: 'flex-end', marginBottom: 18 },
+  forgotText: { fontSize: 13, color: COLORS.secondary, fontWeight: '700' },
+
+  loginBtn: { backgroundColor: COLORS.primary },
+
   securityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 24,
+    gap: 6,
   },
-  securityText: {
-    ...TYPOGRAPHY.caption,
-    marginLeft: 6,
-    color: COLORS.textMuted,
-  },
+  securityText: { ...TYPOGRAPHY.caption, color: COLORS.textMuted },
 });
