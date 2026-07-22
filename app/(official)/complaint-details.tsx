@@ -89,7 +89,7 @@ export default function ComplaintDetailsScreen() {
       <View style={styles.headerBar}>
         <View style={styles.headerLeft}>
           <Pressable
-            onPress={() => router.push('/(official)/complaints')}
+            onPress={() => router.back()}
             style={styles.backBtn}
           >
             <Ionicons name="arrow-back" size={22} color={COLORS.primary} />

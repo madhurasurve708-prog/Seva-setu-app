@@ -50,18 +50,12 @@ export default function ComplaintsScreen() {
     Resolved:    complaints.filter((c) => c.status === 'Resolved').length,
   }), [complaints]);
 
-  const reset = () => {
-    setSearch('');
-    setCategory('all');
-    setStatus('All');
-  };
-
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.headerBar}>
         <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.push('/(official)/dashboard')} style={styles.backBtn}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
           </Pressable>
           <View>
@@ -69,10 +63,6 @@ export default function ComplaintsScreen() {
             <Text style={styles.headerSub}>Nagarsevak ward review</Text>
           </View>
         </View>
-        <Pressable onPress={reset} style={styles.resetBtn}>
-          <MaterialCommunityIcons name="filter-remove-outline" size={14} color={COLORS.textMuted} />
-          <Text style={styles.resetText}>Reset</Text>
-        </Pressable>
       </View>
 
       <ScrollView
@@ -222,18 +212,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { ...TYPOGRAPHY.h3, fontSize: 15, color: COLORS.text },
   headerSub: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginTop: 1 },
-  resetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  resetText: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted },
 
   content: { padding: 16, paddingBottom: 44 },
 

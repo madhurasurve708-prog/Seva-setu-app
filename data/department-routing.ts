@@ -11,36 +11,36 @@
  * The citizen NEVER selects a department manually.
  */
 
-import {
-  DEPT_BANDHKAM,
-  DEPT_PANI,
-  DEPT_SWACHHATA,
-  DEPT_VIDYUT,
-  DEPT_UDYANE,
-  DEPT_AROGYA,
-} from './complaints';
 import type { CategoryId } from './complaints';
+import {
+    DEPT_AROGYA,
+    DEPT_BANDHKAM,
+    DEPT_PANI,
+    DEPT_SWACHHATA,
+    DEPT_UDYANE,
+    DEPT_VIDYUT,
+} from './complaints';
 
 export const CATEGORY_TO_DEPT: Record<CategoryId, string> = {
-  // बांधकाम विभाग — roads, drainage infrastructure, gutters
+  // बांधकाम विभाग — roads, construction, footpaths, buildings
   road:         DEPT_BANDHKAM,
   drainage:     DEPT_BANDHKAM,
-  gutter:       DEPT_BANDHKAM,
   traffic:      DEPT_BANDHKAM,
 
   // पाणी पुरवठा विभाग — all water supply issues
   water:        DEPT_PANI,
 
-  // स्वच्छता व घनकचरा व्यवस्थापन विभाग — garbage, sanitation
+  // स्वच्छता व घनकचरा विभाग — garbage, waste, gutters, cleanliness
   garbage:      DEPT_SWACHHATA,
+  gutter:       DEPT_SWACHHATA,
 
-  // विद्युत व रस्ते दिवे विभाग — street lights, electrical
+  // विद्युत विभाग — street lights, electrical faults
   streetlights: DEPT_VIDYUT,
 
-  // उद्याने व पर्यावरण विभाग — trees, parks, environment
+  // उद्याने व बाग विभाग — trees, gardens, parks, playgrounds
   tree:         DEPT_UDYANE,
 
-  // सार्वजनिक आरोग्य विभाग — animals, public health, other civic issues
+  // आरोग्य विभाग — animals, public health, health-related
   animals:      DEPT_AROGYA,
   other:        DEPT_AROGYA,
 };

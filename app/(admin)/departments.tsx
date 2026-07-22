@@ -5,16 +5,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { ALL_DEPARTMENTS } from '@/data/complaints';
+import { DEPT_META } from '@/data/department-routing';
 import { useOfficial } from '@/providers/official-provider';
-
-const DEPT_META = [
-  { id: 'Water Department',      icon: 'water-pump'              as const, color: '#2563EB', bg: '#DBEAFE' },
-  { id: 'Road Department',       icon: 'road-variant'            as const, color: '#1D4ED8', bg: '#EFF6FF' },
-  { id: 'Electrical Department', icon: 'lightbulb-on'            as const, color: '#CA8A04', bg: '#FEF9C3' },
-  { id: 'Sanitation Department', icon: 'medical-bag'             as const, color: '#0F766E', bg: '#F0FDFA' },
-  { id: 'Garden Department',     icon: 'tree'                    as const, color: '#16A34A', bg: '#DCFCE7' },
-  { id: 'Administration',        icon: 'office-building-outline' as const, color: '#7C3AED', bg: '#EDE9FE' },
-];
 
 export default function DepartmentsScreen() {
   const router = useRouter();
@@ -31,34 +24,36 @@ export default function DepartmentsScreen() {
           Tap a department to view all its assigned complaints.
         </Text>
 
-        {DEPT_META.map((dept, idx) => {
-          const total    = complaints.filter((c) => c.assignedDepartment === dept.id).length;
-          const resolved = complaints.filter((c) => c.assignedDepartment === dept.id && c.status === 'Resolved').length;
+        {ALL_DEPARTMENTS.map((name, idx) => {
+          const meta     = DEPT_META[name];
+          const total    = complaints.filter((c) => c.assignedDepartment === name).length;
+          const resolved = complaints.filter((c) => c.assignedDepartment === name && c.status === 'Resolved').length;
           const rate     = total > 0 ? Math.round((resolved / total) * 100) : 0;
+          const icon     = (meta?.icon ?? 'office-building-outline') as React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+          const color    = meta?.color ?? COLORS.primary;
+          const bg       = meta?.bg    ?? '#EFF6FF';
 
           return (
-            <Animated.View key={dept.id} entering={FadeInDown.duration(340).delay(idx * 50)}>
+            <Animated.View key={name} entering={FadeInDown.duration(340).delay(idx * 50)}>
               <Pressable
                 onPress={() =>
-                  router.push({ pathname: '/(admin)/complaints', params: { department: dept.id } } as any)
+                  router.push({ pathname: '/(admin)/complaints', params: { department: name } } as any)
                 }
                 style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
               >
-                {/* Icon */}
-                <View style={[styles.iconCircle, { backgroundColor: dept.bg }]}>
-                  <MaterialCommunityIcons name={dept.icon} size={22} color={dept.color} />
+                <View style={[styles.iconCircle, { backgroundColor: bg }]}>
+                  <MaterialCommunityIcons name={icon} size={22} color={color} />
                 </View>
 
-                {/* Info */}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.deptName}>{dept.id}</Text>
+                  <Text style={styles.deptName}>{name}</Text>
+                  <Text style={styles.deptEnglish}>{meta?.english ?? ''}</Text>
                   <View style={styles.statsRow}>
                     <Text style={styles.statsText}>{total} assigned</Text>
                     <Text style={styles.dot}>·</Text>
                     <Text style={styles.statsText}>{resolved} resolved</Text>
                   </View>
 
-                  {/* Progress bar */}
                   {total > 0 && (
                     <View style={styles.progressBg}>
                       <View
@@ -74,7 +69,6 @@ export default function DepartmentsScreen() {
                   )}
                 </View>
 
-                {/* Rate badge */}
                 {total > 0 && (
                   <View style={[styles.rateBadge, { backgroundColor: rate >= 70 ? '#DCFCE7' : '#FFF8ED' }]}>
                     <Text style={[styles.rateText, { color: rate >= 70 ? '#16A34A' : '#CA8A04' }]}>
@@ -97,19 +91,14 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 44, gap: 10 },
   hint: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted, marginBottom: 4, paddingHorizontal: 2 },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: COLORS.card,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOWS.soft,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: COLORS.card, borderRadius: 20, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.soft,
   },
   cardPressed: { backgroundColor: 'rgba(15,23,42,0.03)' },
   iconCircle: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  deptName: { fontSize: 14, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  deptName: { fontSize: 13.5, fontWeight: '800', color: COLORS.text, marginBottom: 1 },
+  deptEnglish: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginBottom: 4 },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   statsText: { fontSize: 11.5, fontWeight: '600', color: COLORS.textMuted },
   dot: { fontSize: 11, color: COLORS.textMuted },

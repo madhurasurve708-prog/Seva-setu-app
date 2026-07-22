@@ -1,11 +1,11 @@
 // components/citizen/CitizenScreen.tsx — फक्त हे बदल करा
+import { useCitizen } from '@/providers/citizen-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../../constants/theme';
-import { useCitizen } from '@/providers/citizen-provider';
 import BottomNav from './BottomNav';
 
 type CitizenScreenProps = PropsWithChildren<{
@@ -52,8 +52,6 @@ export function CitizenScreen({
         </SafeAreaView>
       )}
 
-      {hideHeader && <SafeAreaView style={styles.safeTransparent} edges={['top']} />}
-
       <View style={styles.body}>{children}</View>
 
       {!hideNav && <BottomNav />}
@@ -68,9 +66,6 @@ const styles = StyleSheet.create({
   },
   safe: {
     backgroundColor: COLORS.primary,
-  },
-  safeTransparent: {
-    backgroundColor: '#0B4F8A',
   },
   body: {
     flex: 1,

@@ -19,6 +19,14 @@ export default function OfficialLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="dashboard" />
+      <Stack.Screen name="complaints" />
+      <Stack.Screen name="complaint-details" />
+      <Stack.Screen name="add-note" />
+      <Stack.Screen name="escalate" />
+      <Stack.Screen name="announcements" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="analytics" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }

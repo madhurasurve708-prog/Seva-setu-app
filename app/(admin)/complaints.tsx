@@ -52,6 +52,7 @@ export default function AdminComplaints() {
   const [search,    setSearch]    = useState('');
   const [status,    setStatus]    = useState<string>(params.status ?? 'All');
   const [priority,  setPriority]  = useState<string>('All');
+  const [escalatedOnly, setEscalatedOnly] = useState(false);
   const [activeId,  setActiveId]  = useState<string | null>(null);
   const [noteModal, setNoteModal] = useState<{ id: string; type: 'note' | 'restrict' | 'block' | 'remove' } | null>(null);
   const [noteText,  setNoteText]  = useState('');
@@ -70,9 +71,10 @@ export default function AdminComplaints() {
       const mDept   = !params.department || c.assignedDepartment === params.department;
       const mStatus = status   === 'All' || c.status === status;
       const mPrio   = priority === 'All' || c.priority === priority;
-      return mSearch && mWard && mCat && mDept && mStatus && mPrio;
+      const mEscal  = !escalatedOnly     || c.is_escalated;
+      return mSearch && mWard && mCat && mDept && mStatus && mPrio && mEscal;
     }),
-  [complaints, params, search, status, priority]);
+  [complaints, params, search, status, priority, escalatedOnly]);
 
   const handleStatusChange = (id: string, s: Complaint['status']) => {
     void updateComplaintStatus(id, s);
@@ -142,6 +144,20 @@ export default function AdminComplaints() {
               <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{st}</Text>
             </Pressable>
           ))}
+          {/* Escalated toggle */}
+          <Pressable
+            onPress={() => setEscalatedOnly((v) => !v)}
+            style={[s.filterChip, escalatedOnly && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}
+          >
+            <MaterialCommunityIcons
+              name="arrow-up-bold-circle-outline"
+              size={12}
+              color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
+            />
+            <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
+              Escalated
+            </Text>
+          </Pressable>
         </View>
 
         <View style={[s.filterRow, { marginBottom: 14 }]}>
@@ -389,7 +405,7 @@ const s = StyleSheet.create({
   chipText: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted },
   chipTextActive: { color: COLORS.white },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  filterChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border },
+  filterChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border },
   filterChipActive: { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
   filterChipText: { fontSize: 11.5, fontWeight: '700', color: COLORS.textMuted },
   filterChipTextActive: { color: COLORS.primary },
