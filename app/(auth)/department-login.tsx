@@ -19,11 +19,13 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { ALL_DEPARTMENTS } from '@/data/complaints';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { DEPT_DEMO_CREDENTIALS, loginDemoDepartmentOfficer } from '@/services/auth';
 
 export default function DepartmentLoginScreen() {
   const router = useRouter();
   const { login } = useDepartment();
+  const { t } = useTranslation();
 
   const [department, setDepartment] = useState<string | undefined>(undefined);
   const [username, setUsername] = useState('');
@@ -55,7 +57,7 @@ export default function DepartmentLoginScreen() {
       await login(loginDemoDepartmentOfficer(department, username, password));
       router.replace('/(dept)/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in.');
+      setError(err instanceof Error ? err.message : t('unableToSignIn'));
     } finally {
       setLoading(false);
     }
@@ -65,9 +67,9 @@ export default function DepartmentLoginScreen() {
     <View style={styles.root}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <AuthHero
-          title="Department Login"
+          title={t('departmentLogin')}
           subtitle="Malvan Municipal Council — Department Portal"
-          badge="DEPARTMENT ACCESS"
+          badge={t('departmentAccess')}
           icon="office-building-outline"
           showLogo
           onBack={() => router.back()}
@@ -82,9 +84,9 @@ export default function DepartmentLoginScreen() {
           >
             {/* ── Section heading ── */}
             <Animated.View entering={FadeInDown.duration(350)}>
-              <Text style={styles.heading}>Select Department</Text>
+              <Text style={styles.heading}>{t('selectDepartment')}</Text>
               <Text style={styles.hint}>
-                Choose your department, then sign in with authorised credentials.
+                {t('departmentLoginHint')}
               </Text>
             </Animated.View>
 
@@ -112,7 +114,7 @@ export default function DepartmentLoginScreen() {
                       <View style={styles.deptText}>
                         <Text style={styles.deptName} numberOfLines={1}>{name}</Text>
                         <Text style={styles.deptEnglish} numberOfLines={1}>
-                          {meta?.english ?? 'Municipal Department'}
+                          {meta?.english ?? t('municipalDepartment')}
                         </Text>
                       </View>
                       {selected && (
@@ -135,7 +137,7 @@ export default function DepartmentLoginScreen() {
                 <Pressable onPress={fillDemo} style={styles.demoPill}>
                   <MaterialCommunityIcons name="lightning-bolt" size={14} color="#A66A00" />
                   <View style={styles.demoTextBlock}>
-                    <Text style={styles.demoLabel}>Demo Credentials — Tap to fill</Text>
+                    <Text style={styles.demoLabel}>{t('demoCredentialsTapToFill')}</Text>
                     <Text style={styles.demoValue}>
                       {credential.username} / {credential.password}
                     </Text>
@@ -145,8 +147,8 @@ export default function DepartmentLoginScreen() {
 
                 <CustomTextInput
                   icon="account-outline"
-                  label="Username"
-                  placeholder="Enter username"
+                  label={t('username')}
+                  placeholder={t('usernamePlaceholder')}
                   value={username}
                   onChangeText={(v) => { setUsername(v); setError(''); }}
                   autoCapitalize="none"
@@ -154,8 +156,8 @@ export default function DepartmentLoginScreen() {
 
                 <CustomTextInput
                   icon="lock-outline"
-                  label="Password"
-                  placeholder="Enter password"
+                  label={t('password')}
+                  placeholder={t('enterPassword')}
                   value={password}
                   onChangeText={(v) => { setPassword(v); setError(''); }}
                   secureTextEntry
@@ -169,7 +171,7 @@ export default function DepartmentLoginScreen() {
                 ) : null}
 
                 <PrimaryButton
-                  label={loading ? 'Signing in…' : 'Login'}
+                  label={loading ? t('signingIn') : t('login')}
                   loading={loading}
                   disabled={!username || !password || loading}
                   onPress={submit}

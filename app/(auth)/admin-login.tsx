@@ -19,11 +19,13 @@ import CustomTextInput from '@/components/common/CustomTextInput';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { COLORS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { loginAdministrator, loginDemoAdministrator } from '@/services/auth';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
   const { setAuthenticatedUser } = useOfficial();
+  const { t } = useTranslation();
 
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +52,7 @@ export default function AdminLoginScreen() {
       await setAuthenticatedUser(profile);
       router.replace('/(admin)/dashboard' as any);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in.');
+      setError(err instanceof Error ? err.message : t('unableToSignIn'));
     } finally {
       setLoading(false);
     }
@@ -64,9 +66,9 @@ export default function AdminLoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <AuthHero
-          title="Nagaradhyaksha"
+          title={t('nagaradhyaksha')}
           subtitle="Malvan Municipal Council — Admin Portal"
-          badge="RESTRICTED ACCESS"
+          badge={t('restrictedAccess')}
           icon="shield-crown"
           showLogo
           onBack={() => router.back()}
@@ -82,9 +84,9 @@ export default function AdminLoginScreen() {
           >
             {/* Heading */}
             <Animated.View entering={FadeInDown.duration(420).delay(60)}>
-              <Text style={styles.screenTitle}>Restricted Portal</Text>
+              <Text style={styles.screenTitle}>{t('restrictedPortal')}</Text>
               <Text style={styles.screenHint}>
-                नगराध्यक्ष पोर्टलमध्ये प्रवेश करण्यासाठी अधिकृत क्रेडेन्शियल वापरा.
+                {t('adminLoginHint')}
               </Text>
             </Animated.View>
 
@@ -99,13 +101,13 @@ export default function AdminLoginScreen() {
                   <View style={styles.demoLeft}>
                     <MaterialCommunityIcons name="shield-crown-outline" size={20} color="#7C3AED" />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.demoTitle}>Demo Credentials</Text>
-                      <Text style={styles.demoLine}>Admin ID: <Text style={styles.demoBold}>Mamta Waradkar</Text></Text>
-                      <Text style={styles.demoLine}>Password: <Text style={styles.demoBold}>123456</Text></Text>
+                      <Text style={styles.demoTitle}>{t('demoCredentials')}</Text>
+                      <Text style={styles.demoLine}>{t('adminId')}: <Text style={styles.demoBold}>Mamta Waradkar</Text></Text>
+                      <Text style={styles.demoLine}>{t('password')}: <Text style={styles.demoBold}>123456</Text></Text>
                     </View>
                   </View>
                   <View style={styles.tapBadge}>
-                    <Text style={styles.tapText}>Tap to fill</Text>
+                    <Text style={styles.tapText}>{t('tapToFill')}</Text>
                   </View>
                 </Pressable>
               </Animated.View>
@@ -115,16 +117,16 @@ export default function AdminLoginScreen() {
             <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.formContainer}>
               <CustomTextInput
                 icon="shield-account-outline"
-                placeholder="Enter Admin ID"
-                label="Admin ID"
+                placeholder={t('adminIdPlaceholder')}
+                label={t('adminId')}
                 value={adminId}
                 onChangeText={(v) => { setAdminId(v); setError(''); }}
                 autoCapitalize="words"
               />
               <CustomTextInput
                 icon="lock-outline"
-                placeholder="Enter password"
-                label="Password"
+                placeholder={t('enterPassword')}
+                label={t('password')}
                 secureTextEntry
                 value={password}
                 onChangeText={(v) => { setPassword(v); setError(''); }}
@@ -138,12 +140,12 @@ export default function AdminLoginScreen() {
             ) : null}
 
             <Pressable style={styles.forgotBtn} hitSlop={8}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
+              <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
             </Pressable>
 
             <Animated.View entering={FadeInDown.duration(420).delay(200)}>
               <PrimaryButton
-                label={loading ? 'Verifying…' : 'Login to Admin Portal'}
+                label={loading ? t('verifying') : t('loginToAdminPortal')}
                 disabled={!canSubmit || loading}
                 loading={loading}
                 onPress={handleLogin}
@@ -153,7 +155,7 @@ export default function AdminLoginScreen() {
 
             <Animated.View entering={FadeInDown.duration(420).delay(240)} style={styles.securityBadge}>
               <MaterialCommunityIcons name="shield-lock-outline" size={15} color={COLORS.textMuted} />
-              <Text style={styles.securityText}>Secured with 256-bit encryption</Text>
+              <Text style={styles.securityText}>{t('secureEncryption')}</Text>
             </Animated.View>
           </ScrollView>
         </AuthSheet>

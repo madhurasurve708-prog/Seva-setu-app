@@ -4,6 +4,7 @@ import CustomTextInput from '@/components/common/CustomTextInput';
 import GlassCard from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,7 @@ const splitName = (fullName: string) => {
 export default function Profile() {
   const router = useRouter();
   const { profile, saveProfile, logout } = useCitizen();
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState(profile?.fullName || profile?.name || '');
   const [mobile, setMobile] = useState(profile?.mobile || profile?.phone || '');
   const [locality, setLocality] = useState(profile?.locality || '');
@@ -55,15 +57,15 @@ export default function Profile() {
   const handleSave = async () => {
     if (!profile) return;
     if (!fullName.trim()) {
-      Alert.alert('Error', 'Full name is required.');
+      Alert.alert(t('error'), t('nameError'));
       return;
     }
     if (!mobile.trim() || !/^\d{10}$/.test(mobile.replace(/[^0-9]/g, ''))) {
-      Alert.alert('Error', 'Valid 10-digit mobile number is required.');
+      Alert.alert(t('error'), t('mobileError'));
       return;
     }
     if (!locality.trim()) {
-      Alert.alert('Error', 'Locality is required.');
+      Alert.alert(t('error'), t('localityError'));
       return;
     }
 
@@ -83,10 +85,10 @@ export default function Profile() {
         avatar: photoUri,
       });
       setSaving(false);
-      Alert.alert('Success', 'Profile updated successfully.');
+      Alert.alert(t('success'), t('profileUpdatedToast'));
     } catch {
       setSaving(false);
-      Alert.alert('Error', 'Failed to update profile.');
+      Alert.alert(t('error'), t('profileUpdateFailed'));
     }
   };
 
@@ -110,17 +112,17 @@ export default function Profile() {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to logout?') : true;
+      const confirmed = typeof window !== 'undefined' ? window.confirm(t('logoutConfirmation')) : true;
       if (confirmed) {
         void doLogout();
       }
       return;
     }
 
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('logout'), t('logoutConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Logout',
+        text: t('logout'),
         style: 'destructive',
         onPress: () => {
           void doLogout();
@@ -144,7 +146,7 @@ export default function Profile() {
     ];
 
   return (
-    <CitizenScreen title="My Profile">
+    <CitizenScreen title={t('myProfile')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -166,22 +168,22 @@ export default function Profile() {
               <MaterialCommunityIcons name="camera" size={16} color={COLORS.white} />
             </View>
           </Pressable>
-          <Text style={styles.avatarLabel}>Tap to change profile picture</Text>
+          <Text style={styles.avatarLabel}>{t('tapToChangePhoto')}</Text>
         </View>
 
         <GlassCard style={styles.formCard}>
           <CustomTextInput
             icon="account-outline"
-            label="Full Name"
-            placeholder="Enter your name"
+            label={t('fullName')}
+            placeholder={t('fullNamePlaceholder')}
             value={fullName}
             onChangeText={setFullName}
           />
 
           <CustomTextInput
             icon="phone-outline"
-            label="Mobile Number"
-            placeholder="e.g. 9876543210"
+            label={t('mobileNumber')}
+            placeholder={t('mobilePlaceholder2')}
             keyboardType="phone-pad"
             value={mobile}
             onChangeText={setMobile}
@@ -190,13 +192,13 @@ export default function Profile() {
 
           <CustomTextInput
             icon="home-outline"
-            label="Locality / Area / Street"
-            placeholder="e.g. Wayari Bazaar"
+            label={t('localityAreaStreet')}
+            placeholder={t('localityPlaceholder')}
             value={locality}
             onChangeText={setLocality}
           />
 
-          <Text style={styles.readOnlyHeading}>Official Demographics</Text>
+          <Text style={styles.readOnlyHeading}>{t('officialDemographics')}</Text>
           <Text style={styles.readOnlySubtext}>
             Ward info is attached from your municipal registrations record.
           </Text>
@@ -227,7 +229,7 @@ export default function Profile() {
         </GlassCard>
 
         <PrimaryButton
-          label={saving ? 'Saving changes…' : 'Save Changes'}
+          label={saving ? t('savingChanges') : t('saveChangesBtn')}
           loading={saving}
           onPress={handleSave}
           style={styles.saveBtn}
@@ -239,10 +241,10 @@ export default function Profile() {
           style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed, loggingOut && styles.logoutButtonDisabled]}
         >
           <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
-          <Text style={styles.logoutButtonText}>{loggingOut ? 'Logging out…' : 'Logout'}</Text>
+          <Text style={styles.logoutButtonText}>{loggingOut ? t('loggingOut') : t('logout')}</Text>
         </Pressable>
 
-        <Text style={styles.menuHeading}>App Menu</Text>
+        <Text style={styles.menuHeading}>{t('appMenuTitle')}</Text>
         <GlassCard style={styles.menuCard}>
           {menuItems.map((item, idx) => (
             <Pressable

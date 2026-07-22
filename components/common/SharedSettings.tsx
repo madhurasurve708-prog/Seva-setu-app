@@ -94,7 +94,7 @@ export default function SharedSettings({
                 style={[styles.segment, active && styles.segmentActive]}
               >
                 <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                  {mode[0].toUpperCase() + mode.slice(1)}
+                  {t(`theme${mode[0].toUpperCase() + mode.slice(1)}`)}
                 </Text>
               </Pressable>
             );
@@ -106,12 +106,12 @@ export default function SharedSettings({
       <Section title={t('language')} icon="translate">
         <View style={styles.langRow}>
           <LangOption
-            label="English"
+            label={t('languageEnglish')}
             active={language === 'English'}
             onPress={() => void setLanguage('English' as AppLanguage)}
           />
           <LangOption
-            label="मराठी"
+            label={t('languageMarathi')}
             active={language === 'Marathi'}
             onPress={() => void setLanguage('Marathi' as AppLanguage)}
           />

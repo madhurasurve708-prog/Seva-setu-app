@@ -18,10 +18,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function NagarsevakLoginScreen() {
   const router = useRouter();
   const { setAuthenticatedUser } = useOfficial();
+  const { t } = useTranslation();
 
   const [officialId, setOfficialId] = useState('');
   const [ward, setWard] = useState('');
@@ -73,8 +75,8 @@ export default function NagarsevakLoginScreen() {
             <MaterialCommunityIcons name="account-tie-outline" size={28} color={COLORS.white} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Nagarsevak Login</Text>
-            <Text style={styles.subtitle}>Access the ward-level municipal dashboard.</Text>
+            <Text style={styles.title}>{t('nagarsevakLogin')}</Text>
+            <Text style={styles.subtitle}>{t('nagarsevakLoginSubtitle')}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -85,43 +87,43 @@ export default function NagarsevakLoginScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Sign in to continue</Text>
-            <Text style={styles.cardText}>Use your ward officer credentials to open the nagarsevak portal.</Text>
+            <Text style={styles.cardTitle}>{t('signInToContinue')}</Text>
+            <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Official ID</Text>
+              <Text style={styles.label}>{t('officialId')}</Text>
               <TextInput
                 autoCapitalize="none"
                 autoCorrect={false}
                 value={officialId}
                 onChangeText={setOfficialId}
-                placeholder="Enter official ID"
+                placeholder={t('officialIdPlaceholder')}
                 placeholderTextColor={COLORS.textPlaceholder}
                 style={styles.input}
               />
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Ward</Text>
+              <Text style={styles.label}>{t('wardLabel2')}</Text>
               <TextInput
                 autoCapitalize="words"
                 autoCorrect={false}
                 value={ward}
                 onChangeText={setWard}
-                placeholder="Enter ward"
+                placeholder={t('enterWard')}
                 placeholderTextColor={COLORS.textPlaceholder}
                 style={styles.input}
               />
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>{t('passwordLabel')}</Text>
               <View style={styles.passwordRow}>
                 <TextInput
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Enter password"
+                  placeholder={t('passwordPlaceholder')}
                   placeholderTextColor={COLORS.textPlaceholder}
                   style={[styles.input, styles.passwordInput]}
                 />
@@ -139,7 +141,7 @@ export default function NagarsevakLoginScreen() {
               {loading ? (
                 <ActivityIndicator color={COLORS.white} />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>{t('login')}</Text>
               )}
             </Pressable>
           </View>

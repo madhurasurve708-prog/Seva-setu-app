@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../../constants/theme';
 import GlassCard from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -13,6 +14,7 @@ export default function ComplaintDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { complaints } = useCitizen();
+  const { t } = useTranslation();
 
   const c = complaints.find((x) => x.id === id);
 
@@ -31,25 +33,25 @@ export default function ComplaintDetail() {
   });
 
   const steps = [
-    { key: 'submitted', title: 'Complaint Registered', desc: 'Ticket logged successfully', active: true, done: true },
+    { key: 'submitted', title: t('complaintRegisteredStep'), desc: t('ticketLogged'), active: true, done: true },
     {
       key: 'assigned',
-      title: c.assignedDepartment ? c.assignedDepartment : 'Forwarded for Review',
-      desc: c.status !== 'Pending' ? 'Department is review/investigation' : 'Awaiting department assignment',
+      title: c.assignedDepartment ? c.assignedDepartment : t('forwardedForReview'),
+      desc: c.status !== 'Pending' ? t('deptReview') : t('awaitingAssignment'),
       active: c.status === 'In Progress',
       done: c.status === 'In Progress' || c.status === 'Resolved',
     },
     {
       key: 'resolved',
-      title: 'Resolved',
-      desc: c.status === 'Resolved' ? 'Civic task marked completed' : 'Awaiting final resolution',
+      title: t('resolved'),
+      desc: c.status === 'Resolved' ? t('civicTaskCompleted') : t('awaitingResolution'),
       active: c.status === 'Resolved',
       done: c.status === 'Resolved',
     },
   ];
 
   return (
-    <CitizenScreen title="Complaint Details" showBack hideNav>
+    <CitizenScreen title={t('complaintDetails')} showBack hideNav>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -58,7 +60,7 @@ export default function ComplaintDetail() {
         <Animated.View entering={FadeInDown.duration(400)}>
           <View style={[styles.statusBanner, { backgroundColor: COLORS.primary }]}>
             <View>
-              <Text style={styles.bannerLabel}>COMPLAINT ID</Text>
+              <Text style={styles.bannerLabel}>{t('complaintId2')}</Text>
               <Text style={styles.bannerId}>{c.id}</Text>
             </View>
             <View
@@ -68,14 +70,14 @@ export default function ComplaintDetail() {
               ]}
             >
               <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-              <Text style={[styles.statusText, { color: statusColor }]}>{c.status.toUpperCase()}</Text>
+              <Text style={[styles.statusText, { color: statusColor }]}>{t(({ Pending: 'pending', 'In Progress': 'inProgress', Resolved: 'resolved', Escalated: 'escalated' } as Record<string,string>)[c.status] || c.status).toUpperCase()}</Text>
             </View>
           </View>
         </Animated.View>
 
         {c.photoUri && (
           <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.sectionWrapper}>
-            <Text style={styles.sectionHeading}>Attached Proof Photo</Text>
+            <Text style={styles.sectionHeading}>{t('attachedPhoto')}</Text>
             <View style={styles.imageCard}>
               <Image source={{ uri: c.photoUri }} style={styles.complaintImage} />
             </View>
@@ -83,24 +85,24 @@ export default function ComplaintDetail() {
         )}
 
         <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-          <Text style={styles.sectionHeading}>Complaint Information</Text>
+          <Text style={styles.sectionHeading}>{t('complaintInformation')}</Text>
           <GlassCard style={styles.detailsCard}>
-            <DetailRow label="Category" value={c.category} icon="tag-outline" />
-            <DetailRow label="Title" value={c.title} icon="format-title" />
-            <DetailRow label="Description" value={c.description} icon="text-box-outline" isLongText />
+            <DetailRow label={t('categoryLabel')} value={c.category} icon="tag-outline" />
+            <DetailRow label={t('titleLabel')} value={c.title} icon="format-title" />
+            <DetailRow label={t('descriptionLabel')} value={c.description} icon="text-box-outline" isLongText />
             <View style={styles.row}>
-              <DetailField label="Ward" value={c.ward} icon="map-marker-outline" />
-              <DetailField label="Locality" value={c.locality} icon="home-city-outline" />
+              <DetailField label={t('wardLabel')} value={c.ward} icon="map-marker-outline" />
+              <DetailField label={t('localityLabel')} value={c.locality} icon="home-city-outline" />
             </View>
-            <DetailRow label="Submitted On" value={submittedDate} icon="calendar-clock" />
+            <DetailRow label={t('submittedOn')} value={submittedDate} icon="calendar-clock" />
             {c.assignedDepartment && (
-              <DetailRow label="Assigned Dept" value={c.assignedDepartment} icon="office-building" />
+              <DetailRow label={t('assignedDept')} value={c.assignedDepartment} icon="office-building" />
             )}
           </GlassCard>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-          <Text style={styles.sectionHeading}>Resolution Timeline</Text>
+          <Text style={styles.sectionHeading}>{t('resolutionTimeline')}</Text>
           <GlassCard style={styles.timelineCard}>
             {steps.map((step, idx) => {
               const isLast = idx === steps.length - 1;

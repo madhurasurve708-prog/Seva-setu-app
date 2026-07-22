@@ -1,6 +1,7 @@
 import SharedSettings from '@/components/common/SharedSettings';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { useDepartment } from '@/providers/department-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { useRouter } from 'expo-router';
 import { Alert, Platform } from 'react-native';
 
@@ -11,6 +12,7 @@ import { Alert, Platform } from 'react-native';
 export default function DepartmentSettings() {
   const router = useRouter();
   const { logout } = useDepartment();
+  const { t } = useTranslation();
 
   // Department provider does not yet have a preferences sub-object,
   // so we keep it lightweight (no notification toggles for now).
@@ -21,17 +23,17 @@ export default function DepartmentSettings() {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Logout from Department Portal?')) void doLogout();
+      if (typeof window !== 'undefined' && window.confirm(t('logoutDepartmentConfirmation'))) void doLogout();
       return;
     }
-    Alert.alert('Logout', 'Sign out of the Department Officer Portal?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logout'), t('logoutDepartmentConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
   return (
-    <DepartmentScreen title="Settings" back>
+    <DepartmentScreen title={t('settings')} back>
       <SharedSettings
         theme="light"
         onThemeChange={() => {}}

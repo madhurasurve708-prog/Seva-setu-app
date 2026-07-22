@@ -6,10 +6,12 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import Animated, { ZoomIn, FadeInUp } from 'react-native-reanimated';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import GlassCard from '@/components/common/GlassCard';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function ComplaintSuccess() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.root}>
@@ -21,25 +23,25 @@ export default function ComplaintSuccess() {
       </Animated.View>
 
       <Animated.Text entering={FadeInUp.duration(500).delay(200)} style={styles.title}>
-        Complaint Registered
+        {t('complaintRegistered')}
       </Animated.Text>
       <Animated.Text entering={FadeInUp.duration(500).delay(350)} style={styles.subtitle}>
-        Your ticket has been logged in the system and forwarded to the municipal grievance desk.
+        {t('complaintRegisteredDesc')}
       </Animated.Text>
 
       {/* ID Detail Card */}
       <Animated.View entering={FadeInUp.duration(600).delay(500)} style={styles.cardContainer}>
         <GlassCard style={styles.card}>
-          <Text style={styles.cardLabel}>OFFICIAL COMPLAINT ID</Text>
+          <Text style={styles.cardLabel}>{t('officialComplaintId')}</Text>
           <Text style={styles.complaintId}>{id}</Text>
           
           <View style={styles.divider} />
           
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Initial Status</Text>
+            <Text style={styles.statusLabel}>{t('initialStatus')}</Text>
             <View style={styles.statusBadge}>
               <View style={styles.statusDot} />
-              <Text style={styles.statusText}>PENDING ACTION</Text>
+              <Text style={styles.statusText}>{t('pendingAction')}</Text>
             </View>
           </View>
         </GlassCard>
@@ -47,7 +49,7 @@ export default function ComplaintSuccess() {
 
       <Animated.View entering={FadeInUp.duration(500).delay(650)} style={styles.btnWrapper}>
         <PrimaryButton
-          label="Back to Dashboard"
+          label={t('backToDashboard')}
           onPress={() => router.replace('/(citizen)/dashboard')}
           style={styles.button}
         />
