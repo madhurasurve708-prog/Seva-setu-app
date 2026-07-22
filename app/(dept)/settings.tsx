@@ -1,2 +1,47 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons'; import { useState } from 'react'; import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native'; import { DepartmentScreen } from '@/components/dept/department-screen'; import { GlassCard } from '@/components/common/GlassCard'; import { COLORS } from '@/constants/theme';
-export default function DepartmentSettings(){const [updates,setUpdates]=useState(true);const [announcements,setAnnouncements]=useState(true);return <DepartmentScreen title="Settings" back><ScrollView contentContainerStyle={styles.content}><Text style={styles.hint}>Common Seva Setu preferences</Text><GlassCard style={styles.card}><View style={styles.row}><View><Text style={styles.title}>Complaint updates</Text><Text style={styles.sub}>Receive status notifications</Text></View><Switch value={updates} onValueChange={setUpdates} trackColor={{true:COLORS.primary}}/></View><View style={styles.row}><View><Text style={styles.title}>Announcements</Text><Text style={styles.sub}>Receive department notices</Text></View><Switch value={announcements} onValueChange={setAnnouncements} trackColor={{true:COLORS.primary}}/></View></GlassCard><GlassCard style={styles.card}>{[['palette-outline','Appearance'],['shield-lock-outline','Privacy & security'],['help-circle-outline','Help & FAQs'],['information-outline','About Seva Setu']].map(([icon,label])=><View style={styles.item} key={label}><MaterialCommunityIcons name={icon as never} size={21} color={COLORS.primary}/><Text style={styles.itemText}>{label}</Text><MaterialCommunityIcons name="chevron-right" size={21} color={COLORS.textMuted}/></View>)}</GlassCard></ScrollView></DepartmentScreen>};const styles=StyleSheet.create({content:{padding:16,gap:13},hint:{fontSize:12,color:COLORS.textMuted,fontWeight:'600'},card:{padding:15,gap:15},row:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},title:{fontSize:13,fontWeight:'800',color:COLORS.text},sub:{fontSize:11.5,color:COLORS.textMuted,marginTop:3},item:{flexDirection:'row',alignItems:'center',gap:10},itemText:{flex:1,fontSize:13,fontWeight:'700',color:COLORS.text}});
+import SharedSettings from '@/components/common/SharedSettings';
+import { DepartmentScreen } from '@/components/dept/department-screen';
+import { useDepartment } from '@/providers/department-provider';
+import { useRouter } from 'expo-router';
+import { Alert, Platform } from 'react-native';
+
+// Department portal uses the shared settings component.
+// Notifications are basic toggles; the role-specific help page
+// is the dept-specific FAQ at /(dept)/help.
+
+export default function DepartmentSettings() {
+  const router = useRouter();
+  const { logout } = useDepartment();
+
+  // Department provider does not yet have a preferences sub-object,
+  // so we keep it lightweight (no notification toggles for now).
+  const doLogout = async () => {
+    await logout();
+    router.replace('/(auth)/department-login' as any);
+  };
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Logout from Department Portal?')) void doLogout();
+      return;
+    }
+    Alert.alert('Logout', 'Sign out of the Department Officer Portal?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    ]);
+  };
+
+  return (
+    <DepartmentScreen title="Settings" back>
+      <SharedSettings
+        theme="light"
+        onThemeChange={() => {}}
+        helpRoute="/(dept)/help"
+        privacyRoute="/(official)/settings/privacy-policy"
+        termsRoute="/(official)/settings/terms"
+        aboutRoute="/(official)/settings/about"
+        onNavigate={(route) => router.push(route as any)}
+        onLogout={handleLogout}
+      />
+    </DepartmentScreen>
+  );
+}
