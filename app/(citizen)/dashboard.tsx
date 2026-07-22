@@ -1,41 +1,43 @@
 // app/(citizen)/dashboard.tsx
+import { CitizenScreen } from '@/components/citizen/CitizenScreen';
+import { ANNOUNCEMENTS, CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
+import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Linking,
-  Dimensions,
-  Image,
-  ImageBackground,
-  Platform,
+    Dimensions,
+    Image,
+    ImageBackground,
+    Linking,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
-import { ANNOUNCEMENTS, CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
-import { CitizenScreen } from '@/components/citizen/CitizenScreen';
-import { useCitizen } from '@/providers/citizen-provider';
+import Animated, { FadeInDown, FadeInRight, FadeInUp } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const STAT_CARD_W = (width - 18 * 2 - 10) / 2;
 
-function getGreeting() {
+function getGreeting(t: (k: string) => string) {
   const hour = new Date().getHours();
-  if (hour < 12) return { text: 'Good Morning', icon: 'weather-sunset-up' as const };
-  if (hour < 17) return { text: 'Good Afternoon', icon: 'weather-sunny' as const };
-  return { text: 'Good Evening', icon: 'weather-night' as const };
+  if (hour < 12) return { text: t('goodMorningCitizen'), icon: 'weather-sunset-up' as const };
+  if (hour < 17) return { text: t('goodAfternoonCitizen'), icon: 'weather-sunny' as const };
+  return { text: t('goodEveningCitizen'), icon: 'weather-night' as const };
 }
 
 export default function Dashboard() {
   const router = useRouter();
   const { complaints, profile } = useCitizen();
+  const { t } = useTranslation();
 
-  const greeting = useMemo(() => getGreeting(), []);
+  const greeting = useMemo(() => getGreeting(t), [t]);
 
   const displayFirstName = useMemo(() => {
     if (profile?.firstName) return profile.firstName;
@@ -83,24 +85,26 @@ export default function Dashboard() {
   return (
     <CitizenScreen title="Seva Setu" hideHeader>
       {/* ---------------- BRANDED HEADER ---------------- */}
-      <View style={styles.brandedHeader}>
-        <View style={styles.headerLeft}>
-          <Image source={require('../../assets/images/logo.jpeg')} style={styles.headerLogo} resizeMode="contain" />
-          <View>
-            <Text style={styles.headerTitle}>SEVA SETU</Text>
-            <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
-          </View>
-        </View>
-        <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
-          {profile?.avatar || profile?.profileImage ? (
-            <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
-          ) : (
-            <View style={styles.headerAvatar}>
-              <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
+      <SafeAreaView style={styles.safeHeader} edges={['top']}>
+        <View style={styles.brandedHeader}>
+          <View style={styles.headerLeft}>
+            <Image source={require('../../assets/images/logo.jpeg')} style={styles.headerLogo} resizeMode="contain" />
+            <View>
+              <Text style={styles.headerTitle}>SEVA SETU</Text>
+              <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
             </View>
-          )}
-        </Pressable>
-      </View>
+          </View>
+          <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
+            {profile?.avatar || profile?.profileImage ? (
+              <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
+            ) : (
+              <View style={styles.headerAvatar}>
+                <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -126,7 +130,7 @@ export default function Dashboard() {
             <Animated.View entering={FadeInUp.duration(500).delay(60)} style={styles.heroContent}>
               <View style={styles.greetRow}>
                 <MaterialCommunityIcons name={greeting.icon} size={15} color="#4FC3F7" />
-                <Text style={styles.greetText}>{greeting.text},</Text>
+                <Text style={styles.greetText}>{greeting.text}</Text>
               </View>
               <Text style={styles.heroName} numberOfLines={1}>
                 {displayFirstName}
@@ -147,53 +151,53 @@ export default function Dashboard() {
           <View style={styles.statsCardInner}>
             <View style={styles.heroStatBlock}>
               <Text style={styles.heroStatValue}>{counts.total}</Text>
-              <Text style={styles.heroStatLabel}>Filed</Text>
+              <Text style={styles.heroStatLabel}>{t('filedCount')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatBlock}>
               <Text style={styles.heroStatValue}>{counts.resolved}</Text>
-              <Text style={styles.heroStatLabel}>Resolved</Text>
+              <Text style={styles.heroStatLabel}>{t('resolvedCount')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatBlock}>
               <Text style={styles.heroStatValue}>{resolvedPct}%</Text>
-              <Text style={styles.heroStatLabel}>Success rate</Text>
+              <Text style={styles.heroStatLabel}>{t('successRateShort')}</Text>
             </View>
           </View>
         </Animated.View>
 
         {/* ---------------- STATS ---------------- */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>Complaint statistics</Text>
+          <Text style={styles.sectionHeading}>{t('complaintStatistics')}</Text>
           <View style={styles.statsGrid}>
             {[
               {
-                label: 'Pending',
-                sub: 'Awaiting action',
+                label: t('pending2'),
+                sub: t('awaitingAction'),
                 value: counts.pending,
                 colors: ['#FFF3E0', '#FFE0B2'] as const,
                 iconColor: '#F59E0B',
                 icon: 'clock-outline' as const,
               },
               {
-                label: 'In progress',
-                sub: 'Being resolved',
+                label: t('inProgress2'),
+                sub: t('beingResolved'),
                 value: counts.progress,
                 colors: ['#E3F2FD', '#BBDEFB'] as const,
                 iconColor: '#2E86DE',
                 icon: 'progress-wrench' as const,
               },
               {
-                label: 'Resolved',
-                sub: 'Task completed',
+                label: t('resolved2'),
+                sub: t('taskCompleted'),
                 value: counts.resolved,
                 colors: ['#E8F5E9', '#C8E6C9'] as const,
                 iconColor: '#10B981',
                 icon: 'check-circle-outline' as const,
               },
               {
-                label: 'Success rate',
-                sub: 'Overall record',
+                label: t('successRate2'),
+                sub: t('overallRecord'),
                 value: `${resolvedPct}%`,
                 colors: ['#EDE7F6', '#D1C4E9'] as const,
                 iconColor: '#7C4DFF',
@@ -402,6 +406,11 @@ const styles = StyleSheet.create({
   },
 
   // Branded Header Styles
+  safeHeader: {
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(226, 232, 240, 0.8)',
+  },
   brandedHeader: {
     height: 64,
     backgroundColor: COLORS.white,
@@ -409,9 +418,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226, 232, 240, 0.8)',
-    marginTop: Platform.OS === 'android' ? 32 : 0, // safe area spacing on android
   },
   headerLeft: {
     flexDirection: 'row',

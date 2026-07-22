@@ -29,7 +29,7 @@ export default function OfficialSettingsScreen() {
   };
 
   return (
-    <OfficialScreen title="Settings" showBack backHref="/(official)/dashboard">
+    <OfficialScreen title="Settings" showBack>
       <SharedSettings
         theme={preferences.theme}
         onThemeChange={(mode) => void savePreferences({ ...preferences, theme: mode })}

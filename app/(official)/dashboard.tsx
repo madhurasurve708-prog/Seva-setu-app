@@ -147,7 +147,6 @@ export default function DashboardScreen() {
           name={profile.name}
           wardLabel={`${profile.ward} • ${profile.locality}`}
           designation="Nagarsevak (Ward Representative)"
-          department={profile.department}
           filedCount={total}
           resolvedCount={resolved}
           successRate={`${successRate}%`}

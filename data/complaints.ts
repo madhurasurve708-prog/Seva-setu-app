@@ -41,10 +41,10 @@ export interface Complaint {
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEPT_BANDHKAM   = 'बांधकाम विभाग';
 export const DEPT_PANI       = 'पाणी पुरवठा विभाग';
-export const DEPT_SWACHHATA  = 'स्वच्छता व घनकचरा व्यवस्थापन विभाग';
-export const DEPT_VIDYUT     = 'विद्युत व रस्ते दिवे विभाग';
-export const DEPT_UDYANE     = 'उद्याने व पर्यावरण विभाग';
-export const DEPT_AROGYA     = 'सार्वजनिक आरोग्य विभाग';
+export const DEPT_SWACHHATA  = 'स्वच्छता व घनकचरा विभाग';
+export const DEPT_VIDYUT     = 'विद्युत विभाग';
+export const DEPT_UDYANE     = 'उद्याने व बाग विभाग';
+export const DEPT_AROGYA     = 'आरोग्य विभाग';
 
 export const ALL_DEPARTMENTS = [
   DEPT_BANDHKAM,
@@ -287,7 +287,7 @@ export const complaints: Complaint[] = [
     assignedOfficer: 'Sneha Jadhav',
   },
 
-  // ── विद्युत व रस्ते दिवे विभाग (Electrical / Street Lights) ──────────────
+  // ── विद्युत विभाग (Electrical / Street Lights) ──────────────────────────
   {
     id: 'CMP-2026-1013',
     title: 'Street Lights Off for Entire Ward',
@@ -363,7 +363,7 @@ export const complaints: Complaint[] = [
     assignedDepartment: DEPT_VIDYUT,
   },
 
-  // ── उद्याने व पर्यावरण विभाग (Parks & Environment) ───────────────────────
+  // ── उद्याने व बाग विभाग (Parks & Environment) ───────────────────────
   {
     id: 'CMP-2026-1017',
     title: 'Tree Branch Fallen on Road',

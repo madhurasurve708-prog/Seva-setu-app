@@ -1,34 +1,36 @@
 // components/citizen/BottomNav.tsx
+import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../../constants/theme';
 
 type TabItem = {
   key: string;
-  label: string;
+  labelKey: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   iconActive: keyof typeof MaterialCommunityIcons.glyphMap;
   route: string;
 };
 
 const TABS: TabItem[] = [
-  { key: 'home', label: 'Home', icon: 'home-outline', iconActive: 'home', route: '/(citizen)/dashboard' },
-  { key: 'ward', label: 'Ward', icon: 'map-marker-outline', iconActive: 'map-marker', route: '/(citizen)/ward' },
-  { key: 'complaints', label: 'Complaints', icon: 'clipboard-text-outline', iconActive: 'clipboard-text', route: '/(citizen)/my-complaints' },
-  { key: 'report', label: 'Report', icon: 'clipboard-plus-outline', iconActive: 'clipboard-plus', route: '/(citizen)/report-complaint' },
-  { key: 'announcements', label: 'News', icon: 'bullhorn-outline', iconActive: 'bullhorn', route: '/(citizen)/announcements' },
-  { key: 'profile', label: 'Profile', icon: 'account-outline', iconActive: 'account', route: '/(citizen)/profile' },
+  { key: 'home',         labelKey: 'home',          icon: 'home-outline',         iconActive: 'home',         route: '/(citizen)/dashboard' },
+  { key: 'ward',         labelKey: 'wardNav',        icon: 'map-marker-outline',   iconActive: 'map-marker',   route: '/(citizen)/ward' },
+  { key: 'complaints',   labelKey: 'complaintsNav',  icon: 'clipboard-text-outline', iconActive: 'clipboard-text', route: '/(citizen)/my-complaints' },
+  { key: 'report',       labelKey: 'reportNav',      icon: 'clipboard-plus-outline', iconActive: 'clipboard-plus', route: '/(citizen)/report-complaint' },
+  { key: 'announcements',labelKey: 'newsNav',        icon: 'bullhorn-outline',     iconActive: 'bullhorn',     route: '/(citizen)/announcements' },
+  { key: 'profile',      labelKey: 'profileNav',     icon: 'account-outline',      iconActive: 'account',      route: '/(citizen)/profile' },
 ];
 
 function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; onPress: () => void }) {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
   const lift = useSharedValue(0);
 
@@ -63,7 +65,7 @@ function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; on
           />
         </View>
         <Text style={[styles.tabLabel, active && styles.tabLabelActive]} numberOfLines={1}>
-          {tab.label}
+          {t(tab.labelKey)}
         </Text>
       </Animated.View>
     </Pressable>
