@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import CustomTextInput from '@/components/common/CustomTextInput';
@@ -31,6 +32,7 @@ const CATEGORIES: Category[] = [
 export default function ReportComplaint() {
   const router = useRouter();
   const { submitComplaint } = useCitizen();
+  const { t } = useTranslation();
   const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
@@ -40,7 +42,7 @@ export default function ReportComplaint() {
   const pick = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission Denied', 'Please grant photo library access to upload a proof image.');
+      Alert.alert(t('permDenied'), t('permDeniedMsg'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -51,7 +53,7 @@ export default function ReportComplaint() {
       const selectedAsset = result.assets[0];
       // Size check: limit to 5MB (approx 5,242,880 bytes)
       if (selectedAsset.fileSize && selectedAsset.fileSize > 5242880) {
-        Alert.alert('File Too Large', 'Please select an image smaller than 5MB.');
+        Alert.alert(t('fileTooLarge'), t('fileTooLargeMsg'));
         return;
       }
       setPhotoUri(selectedAsset.uri);
@@ -74,14 +76,14 @@ export default function ReportComplaint() {
       });
     } catch (e) {
       setSubmitting(false);
-      Alert.alert('Error', 'Failed to submit complaint. Please check fields.');
+      Alert.alert(t('submitError'), t('submitErrorMsg'));
     }
   };
 
   const canSubmit = category && location.trim().length > 0 && description.trim().length > 0 && !submitting;
 
   return (
-    <CitizenScreen title="Report Complaint">
+    <CitizenScreen title={t('reportComplaint')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -91,11 +93,11 @@ export default function ReportComplaint() {
         <View style={styles.noteBox}>
           <MaterialCommunityIcons name="information-outline" size={20} color={COLORS.primaryLight} />
           <Text style={styles.noteText}>
-            Your registered ward and locality details will be attached automatically to this complaint report.
+            {t('autoAttachNote')}
           </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Select complaint category</Text>
+        <Text style={styles.sectionLabel}>{t('selectCategory')}</Text>
         <View style={styles.grid}>
           {CATEGORIES.map((c) => {
             const active = category === c.label;
@@ -118,7 +120,7 @@ export default function ReportComplaint() {
                   <MaterialCommunityIcons name={c.icon} size={24} color={c.iconColor} />
                 </View>
                 <Text style={styles.categoryText} numberOfLines={1}>
-                  {c.label}
+                  {t(({ Water: 'catWater', Garbage: 'catGarbage', 'Street Light': 'catStreetLight', Road: 'catRoad', Drainage: 'catDrainage', 'Stray Animals': 'catStrayAnimals', Tree: 'catTree', Other: 'catOther' } as Record<string, string>)[c.label])}
                 </Text>
               </Pressable>
             );
@@ -128,18 +130,18 @@ export default function ReportComplaint() {
         <View style={styles.formGroup}>
           <CustomTextInput
             icon="map-marker-outline"
-            label="Location"
-            placeholder="Enter the exact location of the issue"
+            label={t('locationLabel')}
+            placeholder={t('locationPlaceholder')}
             value={location}
             onChangeText={setLocation}
           />
 
-          <Text style={styles.label}>Detailed Description</Text>
+          <Text style={styles.label}>{t('detailedDescription')}</Text>
           <View style={styles.descriptionContainer}>
             <TextInput
               value={description}
               onChangeText={setDescription}
-              placeholder="Provide specific details (landmark, duration, impact) to help resolve this quickly."
+              placeholder={t('descriptionPlaceholder')}
               placeholderTextColor="#A6ADB8"
               multiline
               textAlignVertical="top"
@@ -148,7 +150,7 @@ export default function ReportComplaint() {
           </View>
         </View>
 
-        <Text style={styles.label}>Attach Proof Photo (Optional)</Text>
+        <Text style={styles.label}>{t('attachPhoto')}</Text>
         <Pressable onPress={pick} style={styles.photoContainer}>
           {photoUri ? (
             <View style={styles.imagePreviewWrapper}>
@@ -162,14 +164,14 @@ export default function ReportComplaint() {
               <View style={styles.cameraIconCircle}>
                 <MaterialCommunityIcons name="cloud-upload-outline" size={28} color={COLORS.primaryLight} />
               </View>
-              <Text style={styles.photoUploadText}>Upload proof photo</Text>
-              <Text style={styles.photoUploadSubtext}>Supports JPG, PNG (Max 5MB)</Text>
+              <Text style={styles.photoUploadText}>{t('uploadProofPhoto')}</Text>
+              <Text style={styles.photoUploadSubtext}>{t('photoFormats')}</Text>
             </View>
           )}
         </Pressable>
 
         <PrimaryButton
-          label={submitting ? 'Submitting complaint…' : 'Submit Official Complaint'}
+          label={submitting ? t('submittingComplaint') : t('submitComplaint')}
           disabled={!canSubmit}
           loading={submitting}
           onPress={submit}

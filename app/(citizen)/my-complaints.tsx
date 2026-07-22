@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import Animated, { FadeInRight, FadeInUp } from 'react-native-reanimated';
 import GlassCard from '@/components/common/GlassCard';
@@ -13,9 +14,10 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 export default function MyComplaints() {
   const router = useRouter();
   const { complaints } = useCitizen();
+  const { t } = useTranslation();
 
   return (
-    <CitizenScreen title="My Complaints">
+    <CitizenScreen title={t('myComplaints')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -26,19 +28,19 @@ export default function MyComplaints() {
             <View style={styles.emptyIconCircle}>
               <MaterialCommunityIcons name="folder-open-outline" size={48} color={COLORS.accent} />
             </View>
-            <Text style={styles.emptyTitle}>No complaints submitted</Text>
+            <Text style={styles.emptyTitle}>{t('noComplaintsSubmitted')}</Text>
             <Text style={styles.emptyText}>
-              All civic issues reported by you will appear here for tracking and resolution.
+              {t('noComplaintsDesc')}
             </Text>
             <PrimaryButton
-              label="Report Your First Issue"
+              label={t('reportFirstIssue')}
               onPress={() => router.push('/(citizen)/report-complaint')}
               style={styles.emptyBtn}
             />
           </Animated.View>
         ) : (
           <View>
-            <Text style={styles.listHeading}>Active Tracked Grievances</Text>
+            <Text style={styles.listHeading}>{t('activeGrievances')}</Text>
             {complaints.map((c, idx) => {
               const matchedCategory = CATEGORIES.find((cat) => cat.label === c.category);
               const categoryIcon = matchedCategory ? matchedCategory.icon : 'alert-circle-outline';
@@ -74,7 +76,7 @@ export default function MyComplaints() {
                         >
                           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
                           <Text style={[styles.statusText, { color: statusColor }]}>
-                            {c.status.toUpperCase()}
+                            {t(({ Pending: 'pending', 'In Progress': 'inProgress', Resolved: 'resolved', Escalated: 'escalated' } as Record<string, string>)[c.status] || c.status).toUpperCase()}
                           </Text>
                         </View>
                       </View>
@@ -84,7 +86,7 @@ export default function MyComplaints() {
                           <MaterialCommunityIcons name={categoryIcon} size={20} color={COLORS.accent} />
                         </View>
                         <View style={styles.titleColumn}>
-                          <Text style={styles.categoryLabel}>{c.category}</Text>
+                          <Text style={styles.categoryLabel}>{t(({ Water: 'catWater', Garbage: 'catGarbage', 'Street Light': 'catStreetLight', Road: 'catRoad', Drainage: 'catDrainage', 'Stray Animals': 'catStrayAnimals', Tree: 'catTree', Other: 'catOther' } as Record<string, string>)[c.category] || c.category)}</Text>
                           <Text style={styles.complaintTitle} numberOfLines={1}>
                             {c.title}
                           </Text>
@@ -97,7 +99,7 @@ export default function MyComplaints() {
                           <Text style={styles.dateText}>{formattedDate}</Text>
                         </View>
                         <View style={styles.actionLink}>
-                          <Text style={styles.actionLinkText}>Details</Text>
+                          <Text style={styles.actionLinkText}>{t('detailsLink')}</Text>
                           <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.accent} />
                         </View>
                       </View>

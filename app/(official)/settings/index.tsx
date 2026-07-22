@@ -1,12 +1,14 @@
 import SharedSettings from '@/components/common/SharedSettings';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { useRouter } from 'expo-router';
 import { Alert, Platform } from 'react-native';
 
 export default function OfficialSettingsScreen() {
   const router = useRouter();
   const { preferences, savePreferences, logout } = useOfficial();
+  const { t } = useTranslation();
 
   const toggle = (key: 'complaintUpdates' | 'announcements' | 'smsAlerts') => {
     void savePreferences({ ...preferences, [key]: !preferences[key] });
@@ -19,38 +21,38 @@ export default function OfficialSettingsScreen() {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Logout?')) void doLogout();
+      if (typeof window !== 'undefined' && window.confirm(t('logoutConfirmation'))) void doLogout();
       return;
     }
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logout'), t('logoutConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
   return (
-    <OfficialScreen title="Settings" showBack>
+    <OfficialScreen title={t('settings')} showBack>
       <SharedSettings
         theme={preferences.theme}
         onThemeChange={(mode) => void savePreferences({ ...preferences, theme: mode })}
         toggleRows={[
           {
             key: 'complaintUpdates',
-            label: 'Complaint updates',
+            label: t('complaintUpdates'),
             icon: 'clipboard-pulse-outline',
             value: preferences.complaintUpdates,
             onChange: () => toggle('complaintUpdates'),
           },
           {
             key: 'announcements',
-            label: 'Council announcements',
+            label: t('councilAnnouncements'),
             icon: 'bullhorn-outline',
             value: preferences.announcements,
             onChange: () => toggle('announcements'),
           },
           {
             key: 'smsAlerts',
-            label: 'SMS alerts',
+            label: t('smsAlerts'),
             icon: 'message-text-outline',
             value: preferences.smsAlerts,
             onChange: () => toggle('smsAlerts'),

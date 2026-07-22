@@ -1,4 +1,5 @@
 // app/(auth)/splash.tsx
+import { useTranslation } from "@/providers/localization-provider";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -12,19 +13,20 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  Easing,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSequence,
   withTiming,
-  Easing,
-  interpolate,
 } from "react-native-reanimated";
 
 const { width, height } = Dimensions.get("window");
 const SPLASH_DURATION = 6000;
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
   const screenOpacity = useSharedValue(0);
   const bgScale = useSharedValue(1);
   const gradientOpacity = useSharedValue(0);
@@ -200,7 +202,7 @@ export default function SplashScreen() {
       {skipVisible && (
         <Animated.View style={[styles.skipContainer, skipAnimatedStyle]}>
           <Pressable onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip →</Text>
+            <Text style={styles.skipText}>{t('splashSkip')}</Text>
           </Pressable>
         </Animated.View>
       )}
@@ -222,7 +224,7 @@ export default function SplashScreen() {
         </Animated.Text>
 
         <Animated.Text style={[styles.slogan, sloganAnimatedStyle]}>
-          Connecting Citizens. Solving Problems.
+          {t('splashSlogan')}
         </Animated.Text>
 
         <View style={styles.progressTrack}>

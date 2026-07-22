@@ -1,6 +1,7 @@
 import SharedSettings from '@/components/common/SharedSettings';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -9,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function AdminSettings() {
   const router = useRouter();
   const { preferences, savePreferences, logout } = useOfficial();
+  const { t } = useTranslation();
 
   const toggle = (key: 'complaintUpdates' | 'announcements' | 'smsAlerts') => {
     void savePreferences({ ...preferences, [key]: !preferences[key] });
@@ -21,12 +23,12 @@ export default function AdminSettings() {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Logout?')) void doLogout();
+      if (typeof window !== 'undefined' && window.confirm(t('logoutConfirmation'))) void doLogout();
       return;
     }
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logout'), t('logoutConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
@@ -36,7 +38,7 @@ export default function AdminSettings() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
         </Pressable>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings')}</Text>
         <View style={styles.backBtn} />
       </View>
 
@@ -46,21 +48,21 @@ export default function AdminSettings() {
         toggleRows={[
           {
             key: 'complaintUpdates',
-            label: 'Complaint updates',
+            label: t('complaintUpdates'),
             icon: 'clipboard-pulse-outline',
             value: preferences.complaintUpdates,
             onChange: () => toggle('complaintUpdates'),
           },
           {
             key: 'announcements',
-            label: 'Council announcements',
+            label: t('councilAnnouncements'),
             icon: 'bullhorn-outline',
             value: preferences.announcements,
             onChange: () => toggle('announcements'),
           },
           {
             key: 'smsAlerts',
-            label: 'SMS alerts',
+            label: t('smsAlerts'),
             icon: 'message-text-outline',
             value: preferences.smsAlerts,
             onChange: () => toggle('smsAlerts'),

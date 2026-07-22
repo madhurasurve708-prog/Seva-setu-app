@@ -1,4 +1,5 @@
 import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
+import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -19,45 +20,6 @@ type RoleOption = {
   iconBg: string;
   iconColor: string;
 };
-
-const roles: RoleOption[] = [
-  {
-    title: 'Citizen Login',
-    description: 'Report issues & track progress',
-    icon: 'account-group-outline',
-    route: '/(auth)/citizen-login',
-    gradient: ['#FFFFFF', '#F8FAFC'] as const,
-    iconBg: 'rgba(11, 79, 138, 0.08)',
-    iconColor: '#0B4F8A',
-  },
-  {
-    title: 'Nagarsevak Login',
-    description: 'Representative governance portal',
-    icon: 'account-tie-outline',
-    route: '/(auth)/nagarsevak-login',
-    gradient: ['#FFFFFF', '#F8FAFC'] as const,
-    iconBg: 'rgba(16, 185, 129, 0.08)',
-    iconColor: '#10B981',
-  },
-  {
-    title: 'Department Login',
-    description: 'Resolve assigned civic reports',
-    icon: 'office-building-cog-outline',
-    route: '/(auth)/department-login',
-    gradient: ['#FFFFFF', '#F8FAFC'] as const,
-    iconBg: 'rgba(245, 158, 11, 0.08)',
-    iconColor: '#F59E0B',
-  },
-  {
-    title: 'Admin Login',
-    description: 'Municipal control & settings',
-    icon: 'shield-crown-outline',
-    route: '/(auth)/admin-login',
-    gradient: ['#FFFFFF', '#F8FAFC'] as const,
-    iconBg: 'rgba(239, 68, 68, 0.08)',
-    iconColor: '#EF4444',
-  },
-];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -104,6 +66,46 @@ function RoleGridCard({ role, index, onPress }: { role: RoleOption; index: numbe
 
 export default function RoleSelectionScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const roles: RoleOption[] = [
+    {
+      title: t('roleCitizen'),
+      description: t('roleCitizenDesc'),
+      icon: 'account-group-outline',
+      route: '/(auth)/citizen-login',
+      gradient: ['#FFFFFF', '#F8FAFC'] as const,
+      iconBg: 'rgba(11, 79, 138, 0.08)',
+      iconColor: '#0B4F8A',
+    },
+    {
+      title: t('roleNagarsevak'),
+      description: t('roleNagarsevakDesc'),
+      icon: 'account-tie-outline',
+      route: '/(auth)/nagarsevak-login',
+      gradient: ['#FFFFFF', '#F8FAFC'] as const,
+      iconBg: 'rgba(16, 185, 129, 0.08)',
+      iconColor: '#10B981',
+    },
+    {
+      title: t('roleDepartment'),
+      description: t('roleDepartmentDesc'),
+      icon: 'office-building-cog-outline',
+      route: '/(auth)/department-login',
+      gradient: ['#FFFFFF', '#F8FAFC'] as const,
+      iconBg: 'rgba(245, 158, 11, 0.08)',
+      iconColor: '#F59E0B',
+    },
+    {
+      title: t('roleAdmin'),
+      description: t('roleAdminDesc'),
+      icon: 'shield-crown-outline',
+      route: '/(auth)/admin-login',
+      gradient: ['#FFFFFF', '#F8FAFC'] as const,
+      iconBg: 'rgba(239, 68, 68, 0.08)',
+      iconColor: '#EF4444',
+    },
+  ];
 
   return (
     <View style={styles.root}>
@@ -113,8 +115,8 @@ export default function RoleSelectionScreen() {
 
       <AuthSheet>
         <Animated.View entering={FadeInDown.duration(520).delay(150)} style={styles.welcomeCard}>
-          <Text style={styles.heading}>Welcome to Malvan</Text>
-          <Text style={styles.subheading}>Select your login profile to connect with municipal services.</Text>
+          <Text style={styles.heading}>{t('welcomeMalvan')}</Text>
+          <Text style={styles.subheading}>{t('roleSelectHint')}</Text>
         </Animated.View>
 
         <ScrollView
