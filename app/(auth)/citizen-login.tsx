@@ -1,27 +1,27 @@
+import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffold';
+import { useCitizen } from '@/providers/citizen-provider';
+import type { CitizenProfile } from '@/types/citizen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  KeyboardAvoidingView,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  UIManager,
-  View,
-  Modal,
-  Dimensions,
+    ActivityIndicator,
+    Animated,
+    Dimensions,
+    KeyboardAvoidingView,
+    LayoutAnimation,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    UIManager,
+    View,
 } from 'react-native';
-import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffold';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-import { useCitizen } from '@/providers/citizen-provider';
-import type { CitizenProfile } from '@/types/citizen';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -596,10 +596,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 14,
+    gap: 6,
   },
   otpBox: {
     flex: 1,
-    height: 54,
+    aspectRatio: 1,
+    maxHeight: 52,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: COLORS.border,
@@ -608,7 +610,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: COLORS.text,
-    marginHorizontal: 3,
+    paddingHorizontal: 0,
   },
   otpBoxFilled: {
     borderColor: COLORS.primaryLight,

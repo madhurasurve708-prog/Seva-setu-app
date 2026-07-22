@@ -6,6 +6,24 @@ export type AppLanguage = 'English' | 'Marathi';
 const en = {
   // Navigation & Shell
   dashboard: 'Dashboard',
+  wardRepresentative: 'Ward Representative',
+  today: 'Today',
+  // Shared settings labels
+  selectLanguage: 'Select Language',
+  languageEnglish: 'English',
+  languageMarathi: 'मराठी',
+  // Common labels
+  noComplaints: 'No complaints found',
+  wardComplaints: 'Ward Complaints',
+  escalatedComplaints: 'Escalated Complaints',
+  escalatedDesc: 'Complaints escalated to admin for review',
+  noEscalated: 'No escalated complaints at this time.',
+  // Announcement (read-only for dept)
+  latestNotices: 'Latest Notices',
+  noAnnouncements: 'No announcements from admin yet.',
+  adminNotices: 'Admin Notices',
+  readOnly: 'Published by Main Admin',
+
   complaintExplorer: 'Complaint Explorer',
   wardWise: 'Ward Wise',
   categoryWise: 'Category Wise',
@@ -123,7 +141,6 @@ const en = {
   officerDetails: 'Officer Details',
   responsibilities: 'Responsibilities',
   assigned: 'Assigned',
-  wardComplaints: 'Ward Complaints',
   addRemark: 'Add Remark',
   uploadCompletionPhoto: 'Upload Completion Photo',
   softDelete: 'Soft Delete',
@@ -178,6 +195,20 @@ const en = {
 const mr: Record<keyof typeof en, string> = {
   // Navigation & Shell
   dashboard: 'डॅशबोर्ड',
+  wardRepresentative: 'वॉर्ड प्रतिनिधी',
+  today: 'आज',
+  selectLanguage: 'भाषा निवडा',
+  languageEnglish: 'English',
+  languageMarathi: 'मराठी',
+  noComplaints: 'कोणत्याही तक्रारी आढळल्या नाहीत',
+  wardComplaints: 'वॉर्ड तक्रारी',
+  escalatedComplaints: 'वर्ग केलेल्या तक्रारी',
+  escalatedDesc: 'आढाव्यासाठी प्रशासनाकडे वर्ग केलेल्या तक्रारी',
+  noEscalated: 'सध्या कोणत्याही वर्ग केलेल्या तक्रारी नाहीत.',
+  latestNotices: 'नवीनतम सूचना',
+  noAnnouncements: 'मुख्य प्रशासकाकडून अद्याप कोणत्याही घोषणा नाहीत.',
+  adminNotices: 'प्रशासक सूचना',
+  readOnly: 'मुख्य प्रशासकाद्वारे प्रकाशित',
   complaintExplorer: 'तक्रार शोधक',
   wardWise: 'वॉर्डनिहाय',
   categoryWise: 'वर्गनिहाय',
@@ -295,7 +326,6 @@ const mr: Record<keyof typeof en, string> = {
   officerDetails: 'अधिकारी तपशील',
   responsibilities: 'जबाबदाऱ्या',
   assigned: 'नियुक्त',
-  wardComplaints: 'वॉर्ड तक्रारी',
   addRemark: 'शेरा जोडा',
   uploadCompletionPhoto: 'पूर्णतेचा फोटो अपलोड करा',
   softDelete: 'काढून टाका (Soft Delete)',
