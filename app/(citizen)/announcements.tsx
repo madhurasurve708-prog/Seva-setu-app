@@ -1,21 +1,24 @@
 // app/(citizen)/announcements.tsx
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ANNOUNCEMENTS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
-import { COLORS, TYPOGRAPHY } from '../../constants/theme';
-import Animated, { FadeInLeft } from 'react-native-reanimated';
 import GlassCard from '@/components/common/GlassCard';
+import { ANNOUNCEMENTS } from '@/constants/citizen';
+import { useTranslation } from '@/providers/localization-provider';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInLeft } from 'react-native-reanimated';
+import { COLORS, TYPOGRAPHY } from '../../constants/theme';
 
 export default function Announcements() {
+  const { t } = useTranslation();
+
   return (
-    <CitizenScreen title="Announcements">
+    <CitizenScreen title={t('announcementsTitle')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        <Text style={styles.sectionTitle}>Municipal Board Notifications</Text>
+        <Text style={styles.sectionTitle}>{t('municipalNotifications')}</Text>
 
         {ANNOUNCEMENTS.map((a, idx) => (
           <Animated.View key={a.id} entering={FadeInLeft.duration(400).delay(idx * 80)}>
@@ -29,10 +32,9 @@ export default function Announcements() {
                 ) : (
                   <View style={styles.infoBadge}>
                     <MaterialCommunityIcons name="bell-ring-outline" size={11} color={COLORS.accent} />
-                    <Text style={styles.infoBadgeText}>Notice</Text>
+                    <Text style={styles.infoBadgeText}>{t('noticeLabel')}</Text>
                   </View>
                 )}
-
                 <View style={styles.dateBadge}>
                   <MaterialCommunityIcons name="calendar" size={11} color={COLORS.textMuted} />
                   <Text style={styles.dateText}>{a.date}</Text>
@@ -40,9 +42,7 @@ export default function Announcements() {
               </View>
 
               <Text style={styles.title}>{a.title}</Text>
-
               <View style={styles.divider} />
-
               <Text style={styles.body}>{a.body}</Text>
             </GlassCard>
           </Animated.View>
@@ -56,7 +56,12 @@ const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 120 },
   sectionTitle: { ...TYPOGRAPHY.h3, color: COLORS.primary, marginBottom: 16 },
   card: { padding: 16, marginBottom: 14 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   pinnedBadge: {
     flexDirection: 'row',
     alignItems: 'center',

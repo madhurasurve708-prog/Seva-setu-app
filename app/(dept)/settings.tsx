@@ -38,9 +38,9 @@ export default function DepartmentSettings() {
         theme="light"
         onThemeChange={() => {}}
         helpRoute="/(dept)/help"
-        privacyRoute="/(official)/settings/privacy-policy"
-        termsRoute="/(official)/settings/terms"
-        aboutRoute="/(official)/settings/about"
+        privacyRoute="/(dept)/privacy-policy"
+        termsRoute="/(dept)/terms"
+        aboutRoute="/(dept)/about"
         onNavigate={(route) => router.push(route as any)}
         onLogout={handleLogout}
       />

@@ -26,7 +26,18 @@ export default function OfficialLayout() {
       <Stack.Screen name="announcements" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="analytics" />
+      {/* settings index + all sub-pages registered explicitly */}
       <Stack.Screen name="settings" />
+      <Stack.Screen name="settings/index" />
+      <Stack.Screen name="settings/faqs" />
+      <Stack.Screen name="settings/privacy-policy" />
+      <Stack.Screen name="settings/terms" />
+      <Stack.Screen name="settings/about" />
+      <Stack.Screen name="settings/appearance" />
+      <Stack.Screen name="settings/notifications" />
+      <Stack.Screen name="settings/preferences" />
+      <Stack.Screen name="settings/privacy" />
+      <Stack.Screen name="settings/security" />
     </Stack>
   );
 }
