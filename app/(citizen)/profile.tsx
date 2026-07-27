@@ -137,13 +137,13 @@ export default function Profile() {
     onPress: () => void;
     value?: string;
   }[] = [
-      { label: 'Settings', icon: 'cog-outline', onPress: () => router.push('/(citizen)/settings') },
-      { label: 'Help & FAQs', icon: 'help-circle-outline', onPress: () => router.push('/(citizen)/help') },
-      { label: 'Privacy Policy', icon: 'file-document-outline', onPress: () => router.push('/(citizen)/privacy-policy') },
-      { label: 'Terms & Conditions', icon: 'handshake-outline', onPress: () => router.push('/(citizen)/terms-conditions') },
-      { label: 'About Seva Setu', icon: 'information-outline', onPress: () => router.push('/(citizen)/about') },
-      { label: 'App Version', icon: 'cellphone', onPress: () => { }, value: '1.0.0' },
-    ];
+    { label: t('settingsMenu'),   icon: 'cog-outline',           onPress: () => router.push('/(citizen)/settings') },
+    { label: t('helpFaqs'),       icon: 'help-circle-outline',   onPress: () => router.push('/(citizen)/help') },
+    { label: t('privacyPol'),     icon: 'file-document-outline', onPress: () => router.push('/(citizen)/privacy-policy') },
+    { label: t('termsCond'),      icon: 'handshake-outline',     onPress: () => router.push('/(citizen)/terms-conditions') },
+    { label: t('aboutApp'),       icon: 'information-outline',   onPress: () => router.push('/(citizen)/about') },
+    { label: t('appVer'),         icon: 'cellphone',             onPress: () => {},                                value: '1.0.0' },
+  ];
 
   return (
     <CitizenScreen title={t('myProfile')}>

@@ -205,7 +205,7 @@ export default function DashboardScreen() {
                       { backgroundColor: CATEGORY_STYLE[cat.id]?.bg ?? '#F1F5F9' },
                     ]}
                   >
-                    <Ionicons
+                    <MaterialCommunityIcons
                       name={cat.icon as any}
                       size={18}
                       color={CATEGORY_STYLE[cat.id]?.color ?? COLORS.primary}
@@ -435,26 +435,26 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   statCard: {
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 14,
+    padding: 10,
     borderWidth: 1,
     borderColor: 'rgba(226,232,240,0.7)',
     ...SHADOWS.soft,
   },
   statIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
   },
   statLabel: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     fontWeight: '700',
     color: COLORS.textMuted,
     marginTop: 4,

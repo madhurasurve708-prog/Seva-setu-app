@@ -17,6 +17,12 @@ export default function DepartmentProfile() {
 
   const doLogout = async () => {
     await logout();
+    // Let the layout guard redirect — also reset navigation stack
+    try {
+      router.dismissAll();
+    } catch {
+      // nothing to dismiss
+    }
     router.replace('/(auth)/department-login');
   };
 
@@ -50,11 +56,11 @@ export default function DepartmentProfile() {
     icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
     onPress: () => void;
   }[] = [
-    { label: 'Settings', icon: 'cog-outline',           onPress: () => router.push('/(dept)/settings') },
-    { label: 'Help & FAQs', icon: 'help-circle-outline', onPress: () => router.push('/(dept)/help') },
-    { label: 'Privacy Policy', icon: 'file-document-outline', onPress: () => router.push('/(official)/settings/privacy-policy') },
-    { label: 'Terms & Conditions', icon: 'handshake-outline', onPress: () => router.push('/(official)/settings/terms') },
-    { label: 'About Seva Setu', icon: 'information-outline',  onPress: () => router.push('/(official)/settings/about') },
+    { label: 'Settings',          icon: 'cog-outline',           onPress: () => router.push('/(dept)/settings') },
+    { label: 'Help & FAQs',       icon: 'help-circle-outline',   onPress: () => router.push('/(dept)/help') },
+    { label: 'Privacy Policy',    icon: 'file-document-outline', onPress: () => router.push('/(dept)/privacy-policy') },
+    { label: 'Terms & Conditions',icon: 'handshake-outline',     onPress: () => router.push('/(dept)/terms') },
+    { label: 'About Seva Setu',   icon: 'information-outline',   onPress: () => router.push('/(dept)/about') },
   ];
 
   return (

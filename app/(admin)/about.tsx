@@ -1,40 +1,18 @@
-// app/(official)/settings/about.tsx
-// Shared About Us page for Nagarsevak, Department Officer, and Admin portals.
-// Uses OfficialScreen shell + same card/layout language as the Citizen about page.
+// app/(admin)/about.tsx
+// About Us page for the Admin (Nagaradhyaksha) portal.
+// Same content and layout as all other About pages.
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
+import { AdminShell } from '@/components/admin/admin-shell';
 import GlassCard from '@/components/common/GlassCard';
-import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useTranslation } from '@/providers/localization-provider';
 
-type TeamMember = {
-  name: string;
-  titleKey: string;
-  bioKey: string;
-  photo: number;
-};
-
-const TEAM: TeamMember[] = [
-  {
-    name: 'Madhura Surve',
-    titleKey: 'founderTitle',
-    bioKey: 'founderBio',
-    photo: require('../../../assets/images/madhura.jpeg'),
-  },
-  {
-    name: 'Apurva Sawant',
-    titleKey: 'coFounderTitle',
-    bioKey: 'coFounderBio',
-    photo: require('../../../assets/images/apurva.png'),
-  },
-];
-
 const FOUNDER_EN = {
-  founderTitle: 'Founder',
+  founderTitle:   'Founder',
   coFounderTitle: 'Co-Founder',
   founderBio:
     'Madhura leads the vision and development of Seva Setu, overseeing product strategy, backend development, project management, and collaboration with municipal authorities to build an efficient digital civic platform.',
@@ -43,7 +21,7 @@ const FOUNDER_EN = {
 };
 
 const FOUNDER_MR = {
-  founderTitle: 'संस्थापक',
+  founderTitle:   'संस्थापक',
   coFounderTitle: 'सह-संस्थापक',
   founderBio:
     'माधुरा सेवा सेतूची दृष्टी आणि विकास यांचे नेतृत्व करते, उत्पादन धोरण, बॅकएंड विकास, प्रकल्प व्यवस्थापन आणि नगरपालिका अधिकाऱ्यांशी सहकार्य यांवर देखरेख करते.',
@@ -51,31 +29,32 @@ const FOUNDER_MR = {
     'सह-संस्थापक म्हणून, सेवा सेतूची UI/UX डिझाइन, फ्रंटएंड विकास आणि ब्रँडिंगचे नेतृत्व करते, हे सुनिश्चित करते की प्लॅटफॉर्म प्रत्येक नागरिकासाठी अखंड, वापरकर्ता-अनुकूल अनुभव देते.',
 };
 
-export default function SettingsAboutScreen() {
+type TeamMember = { name: string; titleKey: string; bioKey: string; photo: number };
+
+const TEAM: TeamMember[] = [
+  { name: 'Madhura Surve',  titleKey: 'founderTitle',   bioKey: 'founderBio',   photo: require('../../assets/images/madhura.jpeg') },
+  { name: 'Apurva Sawant',  titleKey: 'coFounderTitle', bioKey: 'coFounderBio', photo: require('../../assets/images/apurva.png')   },
+];
+
+export default function AdminAboutScreen() {
   const { t, language } = useTranslation();
   const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
+  useEffect(() => { setHydrated(true); }, []);
 
   const local = language === 'Marathi' ? FOUNDER_MR : FOUNDER_EN;
 
   return (
-    <OfficialScreen title={t('aboutSevaSetu')} showBack>
+    <AdminShell title={t('aboutSevaSetu')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
         {/* Logo */}
-        <Animated.View
-          entering={hydrated ? ZoomIn.duration(600) : undefined}
-          style={styles.logoFrame}
-        >
+        <Animated.View entering={hydrated ? ZoomIn.duration(600) : undefined} style={styles.logoFrame}>
           <View style={styles.innerLogoRing}>
             <Image
-              source={require('../../../assets/images/logo.jpeg')}
+              source={require('../../assets/images/logo.jpeg')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -83,24 +62,15 @@ export default function SettingsAboutScreen() {
         </Animated.View>
 
         {/* Title & version */}
-        <Animated.Text
-          entering={hydrated ? FadeInUp.duration(500).delay(160) : undefined}
-          style={styles.title}
-        >
+        <Animated.Text entering={hydrated ? FadeInUp.duration(500).delay(160) : undefined} style={styles.title}>
           सेवा सेतू
         </Animated.Text>
-        <Animated.Text
-          entering={hydrated ? FadeInUp.duration(500).delay(240) : undefined}
-          style={styles.version}
-        >
+        <Animated.Text entering={hydrated ? FadeInUp.duration(500).delay(240) : undefined} style={styles.version}>
           {t('officialGovernancePortal')}
         </Animated.Text>
 
         {/* Info cards */}
-        <Animated.View
-          entering={hydrated ? FadeInUp.duration(600).delay(320) : undefined}
-          style={styles.infoWrapper}
-        >
+        <Animated.View entering={hydrated ? FadeInUp.duration(600).delay(320) : undefined} style={styles.infoWrapper}>
           <GlassCard style={styles.card}>
             <View style={styles.headingRow}>
               <MaterialCommunityIcons name="bridge" size={22} color={COLORS.accent} />
@@ -135,11 +105,7 @@ export default function SettingsAboutScreen() {
             >
               <GlassCard style={styles.teamMemberCard}>
                 <View style={styles.teamPhotoRing}>
-                  <Image
-                    source={member.photo}
-                    style={styles.teamPhoto}
-                    resizeMode="cover"
-                  />
+                  <Image source={member.photo} style={styles.teamPhoto} resizeMode="cover" />
                 </View>
                 <Text style={styles.teamName}>{member.name}</Text>
                 <Text style={styles.teamTitle}>{local[member.titleKey as keyof typeof local]}</Text>
@@ -149,10 +115,9 @@ export default function SettingsAboutScreen() {
           ))}
         </View>
 
-        {/* Footer */}
         <Text style={styles.footerText}>{t('footerCopyright')}</Text>
       </ScrollView>
-    </OfficialScreen>
+    </AdminShell>
   );
 }
 
@@ -160,116 +125,47 @@ const styles = StyleSheet.create({
   content: { padding: 24, alignItems: 'center', paddingBottom: 44 },
 
   logoFrame: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
+    width: 104, height: 104, borderRadius: 52,
     backgroundColor: 'rgba(37, 99, 235, 0.05)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(37, 99, 235, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    ...SHADOWS.soft,
+    borderWidth: 1.5, borderColor: 'rgba(37, 99, 235, 0.15)',
+    justifyContent: 'center', alignItems: 'center',
+    marginTop: 20, ...SHADOWS.soft,
   },
   innerLogoRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 80, height: 80, borderRadius: 40,
     backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     ...SHADOWS.soft,
   },
   logoImage: { width: 56, height: 56 },
 
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.primary,
-    marginTop: 18,
-    letterSpacing: 1.5,
-  },
-  version: {
-    ...TYPOGRAPHY.captionBold,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 2,
-  },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.primary, marginTop: 18, letterSpacing: 1.5 },
+  version: { ...TYPOGRAPHY.captionBold, color: COLORS.textMuted, textAlign: 'center', marginTop: 6, marginBottom: 2 },
 
   infoWrapper: { width: '100%', marginVertical: 24, gap: 16 },
   card: { padding: 18 },
   supportCard: { borderColor: 'rgba(16, 185, 129, 0.2)' },
   headingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   cardHeading: { fontSize: 16, fontWeight: '800', color: COLORS.primary, flex: 1 },
-  cardText: {
-    fontSize: 13.5,
-    color: COLORS.textMuted,
-    lineHeight: 20,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
+  cardText: { fontSize: 13.5, color: COLORS.textMuted, lineHeight: 20, fontWeight: '500', marginBottom: 6 },
 
-  teamSectionHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
+  teamSectionHeader: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   teamSectionTitle: { fontSize: 18, fontWeight: '900', color: COLORS.primary },
-  teamSectionSub: {
-    width: '100%',
-    fontSize: 12.5,
-    color: COLORS.textMuted,
-    fontWeight: '500',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
+  teamSectionSub: { width: '100%', fontSize: 12.5, color: COLORS.textMuted, fontWeight: '500', lineHeight: 18, marginBottom: 20 },
 
   teamContainer: { width: '100%', gap: 16, marginBottom: 24 },
   teamMemberWrapper: { width: '100%' },
   teamMemberCard: { padding: 18, alignItems: 'center' },
   teamPhotoRing: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    padding: 3,
+    width: 100, height: 100, borderRadius: 50, padding: 3,
     backgroundColor: 'rgba(37, 99, 235, 0.08)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(37, 99, 235, 0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+    borderWidth: 1.5, borderColor: 'rgba(37, 99, 235, 0.18)',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
   teamPhoto: { width: '100%', height: '100%', borderRadius: 48 },
-  teamName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  teamTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.accent,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  teamBio: {
-    fontSize: 12.5,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    lineHeight: 19,
-    fontWeight: '500',
-  },
+  teamName: { fontSize: 16, fontWeight: '800', color: COLORS.text, textAlign: 'center', marginBottom: 4 },
+  teamTitle: { fontSize: 13, fontWeight: '700', color: COLORS.accent, textAlign: 'center', marginBottom: 12 },
+  teamBio: { fontSize: 12.5, color: COLORS.textMuted, textAlign: 'center', lineHeight: 19, fontWeight: '500' },
 
-  footerText: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-    fontWeight: '600',
-  },
+  footerText: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center', marginTop: 8, fontWeight: '600' },
 });
