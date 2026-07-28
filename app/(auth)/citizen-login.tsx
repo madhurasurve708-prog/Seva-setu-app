@@ -42,6 +42,9 @@ const splitName = (fullName: string) => {
 
 const WARDS = Array.from({ length: 10 }, (_, index) => `Ward ${index + 1}`);
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const OTP_BOX_SIZE = Math.min(46, Math.floor((SCREEN_WIDTH - 48 - 5 * 10) / OTP_LENGTH));
+
 export default function CitizenLoginScreen() {
   const router = useRouter();
   const { saveProfile, getStoredProfile } = useCitizen();
@@ -291,7 +294,7 @@ export default function CitizenLoginScreen() {
     <View style={authStyles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <KeyboardAvoidingView style={authStyles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}>
-        <AuthHero compact title={t('citizenLogin')} subtitle="Seva Setu - Malvan" showLogo={false} icon="account-circle-outline" onBack={goBackStep} />
+        <AuthHero compact title={t('citizenLogin')} subtitle="Seva Setu - Malvan" showLogo={true} onBack={goBackStep} />
 
         <AuthSheet>
           <View style={styles.dotsRow}>
@@ -596,20 +599,20 @@ const styles = StyleSheet.create({
   },
   otpRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginVertical: 14,
-    gap: 6,
+    gap: 10,
   },
   otpBox: {
-    flex: 1,
-    aspectRatio: 1,
-    maxHeight: 52,
+    width: OTP_BOX_SIZE,
+    height: OTP_BOX_SIZE,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface,
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: COLORS.text,
     paddingHorizontal: 0,

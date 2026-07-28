@@ -1,5 +1,6 @@
+// components/common/GlassCard.tsx
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { COLORS, SHADOWS } from '../../constants/theme';
 
 interface GlassCardProps {

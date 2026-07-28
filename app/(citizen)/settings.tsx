@@ -58,10 +58,10 @@ export default function CitizenSettingsScreen() {
             onChange: () => toggle('smsAlerts'),
           },
         ]}
-        helpRoute="/(official)/settings/faqs"
-        privacyRoute="/(official)/settings/privacy-policy"
-        termsRoute="/(official)/settings/terms"
-        aboutRoute="/(official)/settings/about"
+        helpRoute="/(citizen)/help"
+        privacyRoute="/(citizen)/privacy-policy"
+        termsRoute="/(citizen)/terms-conditions"
+        aboutRoute="/(citizen)/about"
         onNavigate={(route) => router.push(route as any)}
         onLogout={handleLogout}
       />

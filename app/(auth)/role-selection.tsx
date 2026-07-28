@@ -1,69 +1,100 @@
+// app/(auth)/role-selection.tsx
+// Role / Login selection screen.
+// Visual reference: 2-column card grid below a welcome card,
+// inside a white rounded sheet overlapping the dark hero section.
 import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Dimensions, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
+import {
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { COLORS, SHADOWS } from '../../constants/theme';
 
+// ── Dimensions ────────────────────────────────────────────────────────────────
 const { width } = Dimensions.get('window');
-const gap = 12;
-const cardWidth = (width - 48 - gap) / 2;
+const SIDE_PAD  = 20;   // horizontal padding on each side of the sheet
+const COL_GAP   = 12;   // gap between the two columns
+const CARD_W    = (width - SIDE_PAD * 2 - COL_GAP) / 2;
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 type RoleOption = {
   title: string;
   description: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   route: string;
-  gradient: readonly [string, string];
   iconBg: string;
   iconColor: string;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function RoleGridCard({ role, index, onPress }: { role: RoleOption; index: number; onPress: () => void }) {
+// ── RoleCard — single vertical card matching the reference image ──────────────
+function RoleCard({
+  role,
+  index,
+  onPress,
+}: {
+  role: RoleOption;
+  index: number;
+  onPress: () => void;
+}) {
   const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
+  const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const onPressIn = () => {
-    scale.value = withSpring(0.95, { damping: 14, stiffness: 350 });
-  };
-
-  const onPressOut = () => {
-    scale.value = withSpring(1, { damping: 14, stiffness: 350 });
-  };
-
   return (
     <AnimatedPressable
-      entering={FadeInDown.duration(500).delay(250 + index * 90)}
+      entering={FadeInDown.duration(460).delay(180 + index * 75)}
       onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      style={[styles.card, animatedStyle]}
+      onPressIn={() => {
+        scale.value = withSpring(0.96, { damping: 14, stiffness: 360 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 14, stiffness: 360 });
+      }}
+      android_ripple={{ color: 'rgba(15,23,42,0.06)', borderless: false }}
+      style={[styles.card, animStyle]}
     >
-      <LinearGradient colors={role.gradient} style={styles.cardGradient}>
-        <View style={[styles.iconWrap, { backgroundColor: role.iconBg }]}>
-          <MaterialCommunityIcons name={role.icon} size={28} color={role.iconColor} />
+      {/* ── Icon box ── */}
+      <View style={[styles.iconWrap, { backgroundColor: role.iconBg }]}>
+        <MaterialCommunityIcons name={role.icon} size={22} color={role.iconColor} />
+      </View>
+
+      {/* ── Title ── */}
+      <Text style={styles.cardTitle} numberOfLines={2}>
+        {role.title}
+      </Text>
+
+      {/* ── Description — flex:1 pushes arrow row to bottom ── */}
+      <Text style={styles.cardDesc} numberOfLines={3}>
+        {role.description}
+      </Text>
+
+      {/* ── Arrow circle — bottom-right ── */}
+      <View style={styles.arrowRow}>
+        <View style={[styles.arrowCircle, { borderColor: `${role.iconColor}40` }]}>
+          <MaterialCommunityIcons name="arrow-right" size={14} color={role.iconColor} />
         </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>
-          {role.title}
-        </Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {role.description}
-        </Text>
-        <View style={styles.arrowIcon}>
-          <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.textMuted} />
-        </View>
-      </LinearGradient>
+      </View>
     </AnimatedPressable>
   );
 }
 
+// ── Screen ────────────────────────────────────────────────────────────────────
 export default function RoleSelectionScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -73,36 +104,32 @@ export default function RoleSelectionScreen() {
       title: t('roleCitizen'),
       description: t('roleCitizenDesc'),
       icon: 'account-group-outline',
-      route: '/(auth)/citizen-login',
-      gradient: ['#FFFFFF', '#F8FAFC'] as const,
-      iconBg: 'rgba(11, 79, 138, 0.08)',
+      route: '/citizen-login',
+      iconBg: 'rgba(11, 79, 138, 0.10)',
       iconColor: '#0B4F8A',
     },
     {
       title: t('roleNagarsevak'),
       description: t('roleNagarsevakDesc'),
       icon: 'account-tie-outline',
-      route: '/(auth)/nagarsevak-login',
-      gradient: ['#FFFFFF', '#F8FAFC'] as const,
-      iconBg: 'rgba(16, 185, 129, 0.08)',
+      route: '/nagarsevak-login',
+      iconBg: 'rgba(16, 185, 129, 0.10)',
       iconColor: '#10B981',
     },
     {
       title: t('roleDepartment'),
       description: t('roleDepartmentDesc'),
       icon: 'office-building-cog-outline',
-      route: '/(auth)/department-login',
-      gradient: ['#FFFFFF', '#F8FAFC'] as const,
-      iconBg: 'rgba(245, 158, 11, 0.08)',
+      route: '/department-login',
+      iconBg: 'rgba(245, 158, 11, 0.10)',
       iconColor: '#F59E0B',
     },
     {
       title: t('roleAdmin'),
       description: t('roleAdminDesc'),
       icon: 'shield-crown-outline',
-      route: '/(auth)/admin-login',
-      gradient: ['#FFFFFF', '#F8FAFC'] as const,
-      iconBg: 'rgba(239, 68, 68, 0.08)',
+      route: '/admin-login',
+      iconBg: 'rgba(239, 68, 68, 0.10)',
       iconColor: '#EF4444',
     },
   ];
@@ -111,25 +138,33 @@ export default function RoleSelectionScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
+      {/* ── Hero: background image + logo + title + subtitle + slogan ── */}
       <AuthHero title="Seva Setu" subtitle="Malvan Municipal Council" />
 
+      {/* ── White rounded sheet overlapping the hero bottom ── */}
       <AuthSheet>
-        <Animated.View entering={FadeInDown.duration(520).delay(150)} style={styles.welcomeCard}>
-          <Text style={styles.heading}>{t('welcomeMalvan')}</Text>
-          <Text style={styles.subheading}>{t('roleSelectHint')}</Text>
+        {/* Welcome card */}
+        <Animated.View
+          entering={FadeInDown.duration(480).delay(120)}
+          style={styles.welcomeCard}
+        >
+          <Text style={styles.welcomeTitle}>{t('welcomeMalvan')}</Text>
+          <Text style={styles.welcomeSub}>{t('roleSelectHint')}</Text>
         </Animated.View>
 
+        {/* 2×2 card grid — scrollable only when screen is too short */}
         <ScrollView
-          contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           overScrollMode="never"
+          bounces={false}
+          contentContainerStyle={styles.gridWrap}
         >
           <View style={styles.grid}>
-            {roles.map((role, index) => (
-              <RoleGridCard
-                key={role.title}
+            {roles.map((role, idx) => (
+              <RoleCard
+                key={role.route}
                 role={role}
-                index={index}
+                index={idx}
                 onPress={() => router.push(role.route as any)}
               />
             ))}
@@ -140,81 +175,101 @@ export default function RoleSelectionScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#061422', // matches hero dark background
   },
+
+  // ── Welcome card ─────────────────────────────────────────────────────────
   welcomeCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-    backgroundColor: COLORS.card,
+    paddingVertical: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: 'rgba(226,232,240,0.86)',
-    ...SHADOWS.sm,
+    borderColor: 'rgba(220,230,240,0.8)',
+    ...SHADOWS.soft,
   },
-  heading: {
-    ...TYPOGRAPHY.h3,
+  welcomeTitle: {
+    fontSize: 17,
+    fontWeight: '900',
     color: COLORS.primary,
+    marginBottom: 3,
   },
-  subheading: {
-    ...TYPOGRAPHY.caption,
-    marginTop: 3,
+  welcomeSub: {
+    fontSize: 12.5,
+    fontWeight: '500',
     color: COLORS.textMuted,
+    lineHeight: 17,
   },
-  list: {
-    paddingBottom: 34,
+
+  // ── Grid wrapper ──────────────────────────────────────────────────────────
+  gridWrap: {
+    paddingBottom: 18,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: gap,
-    justifyContent: 'space-between',
+    gap: COL_GAP,
   },
+
+  // ── Individual card ───────────────────────────────────────────────────────
   card: {
-    width: cardWidth,
-    height: cardWidth * 1.08,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: COLORS.card,
-    borderWidth: 1.2,
-    borderColor: 'rgba(226,232,240,0.9)',
-    ...SHADOWS.card,
+    width: CARD_W,
+    minHeight: 128,
+    borderRadius: 16,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: 'rgba(220,230,240,0.8)',
+    padding: 12,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    ...SHADOWS.soft,
   },
-  cardGradient: {
-    flex: 1,
-    padding: 14,
-    justifyContent: 'space-between',
-  },
+
+  // Icon rounded-square
   iconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
+
+  // Bold title — max 2 lines, never clips
   cardTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     color: COLORS.text,
-    marginTop: 8,
+    lineHeight: 18,
+    marginBottom: 3,
   },
-  cardDescription: {
+
+  // Muted description — flex:1 fills remaining space and pushes arrow down
+  cardDesc: {
     fontSize: 11,
-    lineHeight: 14,
     fontWeight: '500',
     color: COLORS.textMuted,
-    marginTop: 2,
+    lineHeight: 15,
     flex: 1,
   },
-  arrowIcon: {
-    alignSelf: 'flex-end',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.04)',
+
+  // Arrow row — aligns circle to the right
+  arrowRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 6,
+  },
+  arrowCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(15,23,42,0.03)',
     alignItems: 'center',
     justifyContent: 'center',
   },

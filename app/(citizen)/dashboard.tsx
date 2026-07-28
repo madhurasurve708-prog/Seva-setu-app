@@ -8,15 +8,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    Linking,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -230,10 +230,10 @@ export default function Dashboard() {
         {/* ---------------- RECENT COMPLAINTS ---------------- */}
         <View style={styles.sectionBlock}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>Recent complaints</Text>
+            <Text style={styles.sectionHeading}>{t('recentComplaints')}</Text>
             {complaints.length > 0 && (
               <Pressable onPress={() => router.push('/(citizen)/my-complaints')} hitSlop={8}>
-                <Text style={styles.viewMoreLink}>View all</Text>
+                <Text style={styles.viewMoreLink}>{t('viewAll2')}</Text>
               </Pressable>
             )}
           </View>
@@ -241,7 +241,7 @@ export default function Dashboard() {
           {recentComplaints.length === 0 ? (
             <View style={styles.emptyBox}>
               <MaterialCommunityIcons name="clipboard-text-outline" size={26} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No complaints filed yet</Text>
+              <Text style={styles.emptyText}>{t('noComplaintsYet')}</Text>
             </View>
           ) : (
             recentComplaints.map((c, idx) => {
@@ -289,7 +289,7 @@ export default function Dashboard() {
 
         {/* ---------------- WARD INFO ---------------- */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>Ward information</Text>
+          <Text style={styles.sectionHeading}>{t('wardInformation')}</Text>
           <LinearGradient
             colors={['#0B4F8A', '#1A6BB5']}
             start={{ x: 0, y: 0 }}
@@ -310,24 +310,24 @@ export default function Dashboard() {
             <View style={styles.wardStatsRow}>
               <View style={styles.wardStatItem}>
                 <MaterialCommunityIcons name="account-tie-outline" size={14} color="rgba(255,255,255,0.85)" />
-                <Text style={styles.wardStatText}>Nagarsevak Office</Text>
+                <Text style={styles.wardStatText}>{t('nagarsevakOffice')}</Text>
               </View>
               <View style={styles.wardStatDividerV} />
               <View style={styles.wardStatItem}>
                 <MaterialCommunityIcons name="account-group-outline" size={14} color="rgba(255,255,255,0.85)" />
-                <Text style={styles.wardStatText}>~12,400 residents</Text>
+                <Text style={styles.wardStatText}>{t('residents')}</Text>
               </View>
             </View>
             <View style={styles.wardProgressTrack}>
               <View style={[styles.wardProgressFill, { width: `${resolvedPct}%` }]} />
             </View>
-            <Text style={styles.wardProgressLabel}>{resolvedPct}% of ward issues resolved</Text>
+            <Text style={styles.wardProgressLabel}>{resolvedPct}{t('issuesResolved')}</Text>
           </LinearGradient>
         </View>
 
         {/* ---------------- ANNOUNCEMENTS ---------------- */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>Latest announcements</Text>
+          <Text style={styles.sectionHeading}>{t('latestAnnouncementsTitle')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -349,7 +349,7 @@ export default function Dashboard() {
                       color={a.priority ? '#F59E0B' : '#2E86DE'}
                     />
                     <Text style={[styles.announceBadgeText, { color: a.priority ? '#F59E0B' : '#2E86DE' }]}>
-                      {a.priority || 'Notice'}
+                      {a.priority || t('noticeLabel')}
                     </Text>
                   </LinearGradient>
                   <Text style={styles.announceTitle} numberOfLines={2}>{a.title}</Text>
@@ -363,7 +363,7 @@ export default function Dashboard() {
 
         {/* ---------------- EMERGENCY CONTACTS ---------------- */}
         <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>Emergency contacts</Text>
+          <Text style={styles.sectionHeading}>{t('emergencyContacts')}</Text>
           <View style={styles.emergencyGrid}>
             {[
               { label: 'Police', phone: '112', icon: 'shield-outline', colors: ['#E3F2FD', '#BBDEFB'], iconColor: '#2E86DE' },

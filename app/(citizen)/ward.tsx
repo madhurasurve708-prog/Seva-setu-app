@@ -1,12 +1,13 @@
 // app/(citizen)/ward.tsx
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, Linking } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
-import { useCitizen } from '@/providers/citizen-provider';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import GlassCard from '@/components/common/GlassCard';
+import { useCitizen } from '@/providers/citizen-provider';
+import { useTranslation } from '@/providers/localization-provider';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 type Nagarsevak = {
   name: string;
@@ -60,13 +61,15 @@ const WARD_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
 
 export default function WardScreen() {
   const { profile, complaints } = useCitizen();
+  const { t } = useTranslation();
 
   const currentWard = useMemo(() => profile?.ward || 'Ward 3', [profile]);
   const reps = useMemo(() => WARD_REPS[currentWard] || WARD_REPS['Ward 3'], [currentWard]);
 
-  const wardComplaints = useMemo(() => {
-    return complaints.filter((c) => c.ward === currentWard);
-  }, [complaints, currentWard]);
+  const wardComplaints = useMemo(
+    () => complaints.filter((c) => c.ward === currentWard),
+    [complaints, currentWard],
+  );
 
   const counts = useMemo(() => {
     const total = wardComplaints.length;
@@ -78,18 +81,14 @@ export default function WardScreen() {
     };
   }, [wardComplaints]);
 
-  const handleCall = (phone: string) => {
-    Linking.openURL(`tel:${phone}`).catch(() => {});
-  };
-
   return (
-    <CitizenScreen title="My Ward Info">
+    <CitizenScreen title={t('myWardInfo')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        {/* Ward Info Title Header */}
+        {/* ── Hero card ── */}
         <LinearGradient
           colors={['#0B4F8A', '#2E86DE']}
           style={styles.heroCard}
@@ -98,7 +97,7 @@ export default function WardScreen() {
         >
           <View style={styles.heroRow}>
             <View style={styles.heroTextCol}>
-              <Text style={styles.heroLabel}>OFFICIAL DEMOGRAPHICS</Text>
+              <Text style={styles.heroLabel}>{t('officialDemographicsLabel')}</Text>
               <Text style={styles.heroTitle}>{currentWard}</Text>
               <Text style={styles.heroSub}>{profile?.locality || 'Malvan Municipal area'}</Text>
             </View>
@@ -108,13 +107,31 @@ export default function WardScreen() {
           </View>
 
           <View style={styles.heroProgressTrack}>
-            <View style={[styles.heroProgressFill, { width: `${counts.pct}%` }]} />
+            <View style={[styles.heroProgressFill, { width: `${counts.pct}%` as any }]} />
           </View>
-          <Text style={styles.heroProgressLabel}>{counts.pct}% issues resolved in this ward</Text>
+          <Text style={styles.heroProgressLabel}>{counts.pct}{t('issuesResolvedLabel')}</Text>
         </LinearGradient>
 
-        {/* Nagarsevak / Representative Details Cards */}
-        <Text style={styles.sectionLabel}>Ward Representatives (Nagarsevak)</Text>
+        {/* ── Ward stats row ── */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{counts.total}</Text>
+            <Text style={styles.statLabel}>{t('pending2')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{counts.resolved}</Text>
+            <Text style={styles.statLabel}>{t('resolved2')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={[styles.statValue, { color: COLORS.success }]}>{counts.pct}%</Text>
+            <Text style={styles.statLabel}>{t('successRateShort')}</Text>
+          </View>
+        </View>
+
+        {/* ── Representatives ── */}
+        <Text style={styles.sectionLabel}>{t('wardRepsTitle')}</Text>
 
         {reps.map((rep, idx) => (
           <GlassCard
@@ -134,17 +151,9 @@ export default function WardScreen() {
             </View>
 
             <View style={styles.repInfoRow}>
-              <MaterialCommunityIcons name="map-marker-outline" size={18} color={COLORS.textMuted} />
+              <MaterialCommunityIcons name="map-marker-outline" size={16} color={COLORS.textMuted} />
               <Text style={styles.repInfoText}>{rep.address}</Text>
             </View>
-
-            <Pressable
-              onPress={() => handleCall(rep.phone)}
-              style={({ pressed }) => [styles.callBtn, pressed && { opacity: 0.9 }]}
-            >
-              <MaterialCommunityIcons name="phone" size={18} color={COLORS.white} style={{ marginRight: 6 }} />
-              <Text style={styles.callBtnText}>Call Ward Representative</Text>
-            </Pressable>
           </GlassCard>
         ))}
       </ScrollView>
@@ -154,20 +163,20 @@ export default function WardScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 110 },
+
+  /* Hero gradient card */
   heroCard: {
     padding: 20,
     borderRadius: 24,
     ...SHADOWS.hero,
-    marginBottom: 20,
+    marginBottom: 14,
   },
   heroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  heroTextCol: {
-    flex: 1,
-  },
+  heroTextCol: { flex: 1 },
   heroLabel: {
     fontSize: 10,
     fontWeight: '900',
@@ -211,24 +220,55 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 6,
   },
+
+  /* Stats row */
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 20,
+    ...SHADOWS.soft,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: COLORS.primary,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 10,
+  },
+
+  /* Section */
   sectionLabel: {
     ...TYPOGRAPHY.h3,
     color: COLORS.primary,
-    marginTop: 18,
     marginBottom: 10,
     fontWeight: '800',
   },
-  repCard: {
-    padding: 16,
-  },
-  repCardSpacing: {
-    marginTop: 14,
-  },
+
+  /* Rep cards */
+  repCard: { padding: 16 },
+  repCardSpacing: { marginTop: 14 },
   repHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   repAvatar: {
     width: 48,
@@ -260,26 +300,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
   },
   repInfoText: {
     fontSize: 13,
     color: COLORS.textMuted,
     fontWeight: '500',
     flex: 1,
-  },
-  callBtn: {
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.sm,
-  },
-  callBtnText: {
-    color: COLORS.white,
-    fontWeight: '700',
-    fontSize: 13.5,
   },
 });

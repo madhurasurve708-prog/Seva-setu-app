@@ -42,22 +42,28 @@ export default function DepartmentAnnouncements() {
       </View>
 
       {/* ── Priority tabs ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-        style={styles.tabsWrap}
-      >
-        {TABS.map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>{t}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      <View style={styles.tabsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabs}
+          style={styles.tabsWrap}
+          overScrollMode="never"
+          bounces={false}
+        >
+          {TABS.map((t) => (
+            <Pressable
+              key={t}
+              onPress={() => setTab(t)}
+              style={[styles.tab, tab === t && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, tab === t && styles.tabTextActive]} numberOfLines={1}>
+                {t}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -122,22 +128,36 @@ const styles = StyleSheet.create({
   },
 
   /* Tabs */
-  tabsWrap: {
+  tabsContainer: {
     backgroundColor: COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    height: 52,
   },
-  tabs: { gap: 8, paddingHorizontal: 16, paddingVertical: 10, paddingRight: 20 },
+  tabsWrap: {
+    flex: 1,
+  },
+  tabs: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    paddingRight: 16,
+  },
   tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     borderRadius: 999,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: COLORS.border,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  tabText: { fontSize: 13, fontWeight: '700', color: COLORS.textMuted },
+  tabText: { fontSize: 12.5, fontWeight: '700', color: COLORS.textMuted },
   tabTextActive: { color: COLORS.white },
 
   /* Content */

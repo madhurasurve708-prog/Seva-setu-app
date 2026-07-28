@@ -72,9 +72,9 @@ export default function AdminLayout() {
           backgroundColor: COLORS.card,
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          height: Platform.OS === 'ios' ? 84 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 72,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingTop: 6,
           ...SHADOWS.sm,
         },
         tabBarActiveTintColor: COLORS.primary,
@@ -83,6 +83,10 @@ export default function AdminLayout() {
           fontSize: 10,
           fontWeight: '700',
           marginTop: 2,
+          includeFontPadding: false,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
         },
       }}
     >
@@ -148,6 +152,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="people"          options={{ href: null }} />
       <Tabs.Screen name="settings"        options={{ href: null }} />
       <Tabs.Screen name="complaint-explorer" options={{ href: null }} />
+      <Tabs.Screen name="about"              options={{ href: null }} />
     </Tabs>
   );
 }

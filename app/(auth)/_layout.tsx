@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+
 export default function AuthLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -8,6 +9,7 @@ export default function AuthLayout() {
       <Stack.Screen name="citizen-login" />
       <Stack.Screen name="nagarsevak-login" />
       <Stack.Screen name="department-login" />
+      <Stack.Screen name="department-credentials" />
       <Stack.Screen name="admin-login" />
     </Stack>
   );
