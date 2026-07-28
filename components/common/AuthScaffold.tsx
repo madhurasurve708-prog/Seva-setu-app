@@ -1,7 +1,7 @@
 // components/common/AuthScaffold.tsx
-import React, { type ReactNode } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { type ReactNode } from 'react';
 import {
   Image,
   ImageBackground,
@@ -10,8 +10,8 @@ import {
   StyleSheet,
   Text,
   View,
-  type ViewStyle,
   type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -22,7 +22,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { COLORS, SHADOWS, TYPOGRAPHY, RADIUS } from '../../constants/theme';
+import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -53,6 +53,9 @@ type AuthSheetProps = {
   contentStyle?: StyleProp<ViewStyle>;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AuthHero — dark cinematic hero with background image, logo, title, slogan
+// ─────────────────────────────────────────────────────────────────────────────
 export function AuthHero({
   title,
   subtitle,
@@ -66,20 +69,22 @@ export function AuthHero({
     <View style={[styles.hero, compact && styles.heroCompact]}>
       <ImageBackground
         source={require('../../assets/images/shivaji.png')}
-        style={styles.heroImage}
+        style={StyleSheet.absoluteFill}
         imageStyle={styles.heroImageStyle}
-        resizeMode="contain"
+        resizeMode="cover"
       >
+        {/* Cinematic dark-blue gradient overlay */}
         <LinearGradient
           colors={[
-            'rgba(8, 27, 43, 0.85)',
-            'rgba(11, 79, 138, 0.70)',
-            'rgba(8, 27, 43, 0.95)',
+            'rgba(5, 18, 35, 0.78)',
+            'rgba(8, 55, 110, 0.65)',
+            'rgba(5, 18, 35, 0.88)',
           ]}
-          locations={[0, 0.5, 1]}
+          locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.heroSubjectGuard} />
+
+        {/* Safe-area spacer + optional back button */}
         <View style={styles.heroTopRow}>
           {onBack ? (
             <Pressable
@@ -88,32 +93,60 @@ export function AuthHero({
               style={styles.backButton}
               hitSlop={12}
             >
-              <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
+              <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.white} />
             </Pressable>
           ) : (
             <View style={styles.backPlaceholder} />
           )}
         </View>
 
+        {/* Logo · Title · Subtitle · Slogan — all centered */}
         <Animated.View entering={FadeIn.duration(500)} style={styles.heroContent}>
-          <Animated.View entering={FadeInUp.duration(650).delay(80)} style={styles.logoWrap}>
+          <Animated.View
+            entering={FadeInUp.duration(600).delay(60)}
+            style={styles.logoWrap}
+          >
             {showLogo ? (
-              <Image source={require('../../assets/images/logo.jpeg')} style={styles.logo} resizeMode="contain" />
+              <Image
+                source={require('../../assets/images/logo.jpeg')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
             ) : (
-              <MaterialCommunityIcons name={icon ?? 'shield-check'} size={30} color={COLORS.primary} />
+              <MaterialCommunityIcons
+                name={icon ?? 'shield-check'}
+                size={32}
+                color={COLORS.primary}
+              />
             )}
           </Animated.View>
-          <Animated.Text entering={FadeInDown.duration(650).delay(120)} style={styles.heroTitle}>
+
+          <Animated.Text
+            entering={FadeInDown.duration(600).delay(100)}
+            style={styles.heroTitle}
+          >
             {title}
           </Animated.Text>
-          <Animated.Text entering={FadeInDown.duration(650).delay(180)} style={styles.heroSubtitle}>
+
+          <Animated.Text
+            entering={FadeInDown.duration(600).delay(150)}
+            style={styles.heroSubtitle}
+          >
             {subtitle}
           </Animated.Text>
-          <Animated.Text entering={FadeInDown.duration(650).delay(210)} style={styles.heroSlogan}>
+
+          <Animated.Text
+            entering={FadeInDown.duration(600).delay(190)}
+            style={styles.heroSlogan}
+          >
             &quot;आपला मालवण, आपली जबाबदारी&quot;
           </Animated.Text>
+
           {badge ? (
-            <Animated.View entering={FadeInDown.duration(650).delay(230)} style={styles.heroBadge}>
+            <Animated.View
+              entering={FadeInDown.duration(600).delay(220)}
+              style={styles.heroBadge}
+            >
               <Text style={styles.heroBadgeText}>{badge}</Text>
             </Animated.View>
           ) : null}
@@ -123,15 +156,25 @@ export function AuthHero({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AuthSheet — white rounded panel that overlaps the bottom of the hero
+// ─────────────────────────────────────────────────────────────────────────────
 export function AuthSheet({ children, style, contentStyle }: AuthSheetProps) {
   return (
-    <Animated.View entering={FadeInDown.duration(650).delay(180)} style={[styles.sheet, style]}>
+    <Animated.View
+      entering={FadeInDown.duration(600).delay(160)}
+      style={[styles.sheet, style]}
+    >
+      {/* Drag handle */}
       <View style={styles.sheetHandle} />
       <View style={[{ flex: 1 }, contentStyle]}>{children}</View>
     </Animated.View>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LoginOptionCard — horizontal list-style card (used on individual login pages)
+// ─────────────────────────────────────────────────────────────────────────────
 export function LoginOptionCard({
   title,
   subtitle,
@@ -146,20 +189,16 @@ export function LoginOptionCard({
     transform: [{ scale: scale.value }],
   }));
 
-  const onPressIn = () => {
-    scale.value = withSpring(0.975, { damping: 16, stiffness: 320 });
-  };
-
-  const onPressOut = () => {
-    scale.value = withSpring(1, { damping: 16, stiffness: 320 });
-  };
-
   return (
     <AnimatedPressable
       entering={FadeInDown.duration(480).delay(delay)}
       onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
+      onPressIn={() => {
+        scale.value = withSpring(0.975, { damping: 16, stiffness: 320 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 16, stiffness: 320 });
+      }}
       android_ripple={{ color: 'rgba(46, 134, 222, 0.12)' }}
       style={[styles.loginCard, animatedStyle]}
     >
@@ -185,159 +224,115 @@ export function LoginOptionCard({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared auth-screen utility styles (used by individual login screens)
+// ─────────────────────────────────────────────────────────────────────────────
 export const authStyles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  keyboard: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  screenTitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.primary,
-  },
-  screenHint: {
-    ...TYPOGRAPHY.caption,
-    marginTop: 6,
-    marginBottom: 20,
-    color: COLORS.textMuted,
-  },
-  formContainer: {
-    marginTop: 4,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 18,
-  },
-  forgotText: {
-    fontSize: 13,
-    color: COLORS.secondary,
-    fontWeight: '700',
-  },
-  actionBtn: {
-    marginTop: 4,
-  },
-  securityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  securityText: {
-    ...TYPOGRAPHY.caption,
-    marginLeft: 6,
-    color: COLORS.textMuted,
-  },
-  errorText: {
-    fontSize: 12,
-    color: COLORS.danger,
-    marginTop: -8,
-    marginBottom: 12,
-    fontWeight: '600',
-  },
+  root:          { flex: 1, backgroundColor: COLORS.background },
+  keyboard:      { flex: 1 },
+  scrollContent: { paddingBottom: 32 },
+  screenTitle:   { ...TYPOGRAPHY.h2, color: COLORS.primary },
+  screenHint:    { ...TYPOGRAPHY.caption, marginTop: 6, marginBottom: 20, color: COLORS.textMuted },
+  formContainer: { marginTop: 4 },
+  forgotBtn:     { alignSelf: 'flex-end', marginBottom: 18 },
+  forgotText:    { fontSize: 13, color: COLORS.secondary, fontWeight: '700' },
+  actionBtn:     { marginTop: 4 },
+  securityBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+  securityText:  { ...TYPOGRAPHY.caption, marginLeft: 6, color: COLORS.textMuted },
+  errorText:     { fontSize: 12, color: COLORS.danger, marginTop: -8, marginBottom: 12, fontWeight: '600' },
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Private styles
+// ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  // ── Hero ──────────────────────────────────────────────────────────────────
   hero: {
-    height: 370,
-    minHeight: 350,
-    backgroundColor: '#081B2B',
+    height: 300,
+    minHeight: 260,
+    backgroundColor: '#061422',
     borderBottomLeftRadius: RADIUS.lg,
     borderBottomRightRadius: RADIUS.lg,
     overflow: 'hidden',
     ...SHADOWS.hero,
   },
   heroCompact: {
-    height: 320,
-    minHeight: 300,
+    height: 260,
+    minHeight: 230,
   },
-  heroImage: {
-    flex: 1,
-    width: '100%',
-  },
+
   heroImageStyle: {
-    borderBottomLeftRadius: RADIUS.lg,
-    borderBottomRightRadius: RADIUS.lg,
-    opacity: 0.28,
-    alignSelf: 'center',
+    width: '100%',
+    height: '100%',
+    opacity: 0.45,
   },
-  heroSubjectGuard: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(3, 24, 45, 0.08)',
-  },
+
+  // Status-bar spacer row — reduced padding so the background shows through
   heroTopRow: {
-    minHeight: 58,
-    paddingTop: Platform.OS === 'android' ? 34 : 48,
-    paddingHorizontal: 18,
+    paddingTop: Platform.OS === 'android' ? 18 : 30,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backPlaceholder: {
-    width: 42,
-    height: 42,
-  },
+  backPlaceholder: { width: 36, height: 36 },
+
+  // Logo + text block — centered in remaining space
   heroContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 28,
+    paddingBottom: 36,
   },
+
   logoWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.85)',
     ...SHADOWS.medium,
   },
-  logo: {
-    width: 46,
-    height: 46,
-  },
+  logo: { width: 52, height: 52 },
+
   heroTitle: {
     color: COLORS.white,
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '900',
     textAlign: 'center',
-    letterSpacing: 0,
+    letterSpacing: 0.3,
   },
   heroSubtitle: {
-    marginTop: 8,
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 15,
-    lineHeight: 21,
+    marginTop: 5,
+    color: 'rgba(255,255,255,0.90)',
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '700',
     textAlign: 'center',
   },
   heroSlogan: {
     color: '#4FC3F7',
-    fontSize: 15,
+    fontSize: 13.5,
     fontStyle: 'italic',
     fontWeight: '800',
     textAlign: 'center',
-    marginTop: 6,
-    letterSpacing: 0.6,
+    marginTop: 4,
+    letterSpacing: 0.4,
   },
   heroBadge: {
     marginTop: 10,
@@ -354,23 +349,32 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0.8,
   },
+
+  // ── White sheet ───────────────────────────────────────────────────────────
   sheet: {
     flex: 1,
-    marginTop: -26,
+    marginTop: -18,
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 14,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   sheetHandle: {
     alignSelf: 'center',
-    width: 46,
+    width: 44,
     height: 5,
     borderRadius: 999,
-    backgroundColor: '#D8E2EC',
-    marginBottom: 18,
+    backgroundColor: '#C8D6E0',
+    marginBottom: 16,
   },
+
+  // ── LoginOptionCard (horizontal, used on individual portal login pages) ──
   loginCard: {
     minHeight: 86,
     borderRadius: 24,
@@ -391,17 +395,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(46, 134, 222, 0.08)',
   },
   optionIconWrap: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  optionCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
+  optionCopy: { flex: 1, minWidth: 0 },
   optionTitle: {
     fontSize: 16,
     lineHeight: 22,

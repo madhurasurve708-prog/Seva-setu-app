@@ -1,7 +1,7 @@
 import SharedSettings from '@/components/common/SharedSettings';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
+import { useOfficial } from '@/providers/official-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -71,7 +71,7 @@ export default function AdminSettings() {
         helpRoute="/(official)/settings/faqs"
         privacyRoute="/(official)/settings/privacy-policy"
         termsRoute="/(official)/settings/terms"
-        aboutRoute="/(official)/settings/about"
+        aboutRoute="/(admin)/about"
         onNavigate={(route) => router.push(route as any)}
         onLogout={handleLogout}
       />

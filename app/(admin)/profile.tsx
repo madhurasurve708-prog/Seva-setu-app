@@ -51,6 +51,7 @@ export default function AdminProfile() {
     { icon: 'chart-donut'              as const, label: 'Analytics',       route: '/(admin)/analytics'       },
     { icon: 'shield-account-outline'   as const, label: 'Departments',     route: '/(admin)/departments'     },
     { icon: 'account-group-outline'    as const, label: 'Citizens',        route: '/(admin)/people'          },
+    { icon: 'information-outline'     as const, label: 'About Seva Setu',  route: '/(admin)/about'           },
     { icon: 'cog-outline'              as const, label: 'Settings',        route: '/(admin)/settings'        },
   ];
 

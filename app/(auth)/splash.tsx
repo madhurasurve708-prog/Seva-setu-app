@@ -220,7 +220,7 @@ export default function SplashScreen() {
         </View>
 
         <Animated.Text style={[styles.title, titleAnimatedStyle]}>
-          सेवा सेतू
+          {t('appName')}
         </Animated.Text>
 
         <Animated.Text style={[styles.slogan, sloganAnimatedStyle]}>
