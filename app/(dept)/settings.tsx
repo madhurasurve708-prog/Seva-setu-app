@@ -18,7 +18,7 @@ export default function DepartmentSettings() {
   // so we keep it lightweight (no notification toggles for now).
   const doLogout = async () => {
     await logout();
-    router.replace('/(auth)/department-login' as any);
+    router.replace('/(auth)/role-selection' as any);
   };
 
   const handleLogout = () => {

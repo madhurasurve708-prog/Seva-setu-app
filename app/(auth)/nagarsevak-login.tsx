@@ -14,14 +14,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import LanguageToggle from '@/components/common/LanguageToggle';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
 export default function NagarsevakLoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { setAuthenticatedUser } = useOfficial();
   const { t } = useTranslation();
 
@@ -67,10 +69,20 @@ export default function NagarsevakLoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <LinearGradient
+        colors={[COLORS.primary, COLORS.secondary]}
+        style={[styles.header, { paddingTop: insets.top + 14 }]}
+      >
         <View style={styles.headerContent}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            hitSlop={10}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.white} />
+          </Pressable>
           <View style={styles.iconWrap}>
             <MaterialCommunityIcons name="account-tie-outline" size={28} color={COLORS.white} />
           </View>
@@ -78,6 +90,7 @@ export default function NagarsevakLoginScreen() {
             <Text style={styles.title}>{t('nagarsevakLogin')}</Text>
             <Text style={styles.subtitle}>{t('nagarsevakLoginSubtitle')}</Text>
           </View>
+          <LanguageToggle size={38} variant="dark" />
         </View>
       </LinearGradient>
 
@@ -158,13 +171,22 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 18,
     paddingBottom: 24,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconWrap: {
     width: 46,

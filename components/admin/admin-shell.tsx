@@ -63,7 +63,7 @@ export function AdminShell({ title, children, showBack = true, backHref, rightAc
             </Pressable>
           ) : (
             <Pressable
-              onPress={() => router.push('/(admin)/announcements' as any)}
+              onPress={() => router.push('/(admin)/notification' as any)}
               style={styles.notifBtn}
             >
               <MaterialCommunityIcons name="bell-outline" size={18} color={COLORS.primary} />

@@ -7,33 +7,35 @@ import { AdminShell } from '@/components/admin/admin-shell';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
-
-const DEPARTMENTS = [
-  'Water Department', 'Road Department', 'Electrical Department',
-  'Sanitation Department', 'Garden Department', 'Administration',
-];
-
-const MODE_META: Record<string, { title: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; bg: string }> = {
-  ward:       { title: 'Ward Wise',       icon: 'map-marker-outline',  color: '#2563EB', bg: '#DBEAFE' },
-  category:   { title: 'Category Wise',   icon: 'layers-outline',      color: '#EA580C', bg: '#FFEDD5' },
-  department: { title: 'Department Wise', icon: 'domain',              color: '#7C3AED', bg: '#EDE9FE' },
-};
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function ComplaintExplorer() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { mode = 'ward' } = useLocalSearchParams<{ mode?: string }>();
   const { complaints } = useOfficial();
+
+  const DEPARTMENTS = [
+    t('deptWaterDept'), t('deptRoadDept'), t('deptElectricalDept'),
+    t('deptSanitationDept'), t('deptGardenDept'), t('deptAdministration'),
+  ];
+
+  const MODE_META: Record<string, { title: string; noun: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; bg: string }> = {
+    ward:       { title: t('wardWiseLabel'),       noun: t('ward2'),     icon: 'map-marker-outline',  color: '#2563EB', bg: '#DBEAFE' },
+    category:   { title: t('categoryWiseLabel'),   noun: t('category'),  icon: 'layers-outline',      color: '#EA580C', bg: '#FFEDD5' },
+    department: { title: t('departmentWiseLabel'), noun: t('department'),icon: 'domain',              color: '#7C3AED', bg: '#EDE9FE' },
+  };
   const meta = MODE_META[mode] ?? MODE_META.ward;
 
   const items =
     mode === 'category'
       ? categories
           .filter((c) => c.id !== 'all')
-          .map((c) => ({ label: c.label, value: c.id, count: complaints.filter((x) => x.category === c.id).length }))
+          .map((c) => ({ label: t(c.id), value: c.id, count: complaints.filter((x) => x.category === c.id).length }))
       : mode === 'department'
       ? DEPARTMENTS.map((d) => ({ label: d, value: d, count: complaints.filter((x) => x.assignedDepartment === d).length }))
       : Array.from({ length: 10 }, (_, i) => ({
-          label: `Ward ${i + 1}`,
+          label: `${t('ward2')} ${i + 1}`,
           value: `Ward ${i + 1}`,
           count: complaints.filter((x) => x.ward.startsWith(`Ward ${i + 1}`)).length,
         }));
@@ -46,7 +48,7 @@ export default function ComplaintExplorer() {
         overScrollMode="never"
       >
         <Text style={styles.hint}>
-          Tap a {mode} to view all matching complaints in that group.
+          {t('tapModeHint').replace('{mode}', meta.noun)}
         </Text>
 
         {items.map((item, idx) => (
@@ -60,7 +62,9 @@ export default function ComplaintExplorer() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardLabel}>{item.label}</Text>
-                <Text style={styles.cardCount}>{item.count} complaint{item.count !== 1 ? 's' : ''}</Text>
+                <Text style={styles.cardCount}>
+                  {t('complaintsCountSuffix').replace('{count}', String(item.count)).replace('{plural}', item.count !== 1 ? 's' : '')}
+                </Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.textMuted} />
             </Pressable>

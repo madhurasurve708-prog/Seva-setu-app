@@ -11,9 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GlassCard from '@/components/common/GlassCard';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function AdminProfile() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profile, logout } = useOfficial();
 
   const doLogout = async () => {
@@ -23,43 +25,43 @@ export default function AdminProfile() {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Logout?')) void doLogout();
+      if (typeof window !== 'undefined' && window.confirm(t('logoutConfirmation'))) void doLogout();
       return;
     }
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logout'), t('logoutConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
   const INFO_ROWS = [
-    { icon: 'phone-outline'           as const, label: 'Mobile Number', value: profile.phone },
-    { icon: 'account-outline'         as const, label: 'Username',       value: profile.username },
-    { icon: 'office-building-outline' as const, label: 'Department',     value: profile.department },
-    { icon: 'badge-account-outline'   as const, label: 'Designation',    value: profile.designation },
-    { icon: 'map-marker-outline'      as const, label: 'Ward Access',    value: profile.ward },
-    { icon: 'email-outline'           as const, label: 'Email',          value: profile.email },
+    { icon: 'phone-outline'           as const, label: t('mobileNumber'), value: profile.phone },
+    { icon: 'account-outline'         as const, label: t('username'),     value: profile.username },
+    { icon: 'office-building-outline' as const, label: t('department'),   value: profile.department },
+    { icon: 'badge-account-outline'   as const, label: t('designation'),  value: profile.designation },
+    { icon: 'map-marker-outline'      as const, label: t('wardAccess'),   value: profile.ward },
+    { icon: 'email-outline'           as const, label: t('email'),        value: profile.email },
   ];
 
   // Admin tools — complaint-explorer removed, replaced by dedicated screens
   const ADMIN_TOOLS = [
-    { icon: 'map-outline'              as const, label: 'Ward Wise',       route: '/(admin)/ward-wise'       },
-    { icon: 'layers-outline'           as const, label: 'Category Wise',   route: '/(admin)/category-wise'   },
-    { icon: 'domain'                   as const, label: 'Department Wise', route: '/(admin)/department-wise' },
-    { icon: 'trophy-outline'           as const, label: 'Best Wards',      route: '/(admin)/best-wards'      },
-    { icon: 'chart-bar'                as const, label: 'Reports',         route: '/(admin)/reports'         },
-    { icon: 'chart-donut'              as const, label: 'Analytics',       route: '/(admin)/analytics'       },
-    { icon: 'shield-account-outline'   as const, label: 'Departments',     route: '/(admin)/departments'     },
-    { icon: 'account-group-outline'    as const, label: 'Citizens',        route: '/(admin)/people'          },
-    { icon: 'information-outline'     as const, label: 'About Seva Setu',  route: '/(admin)/about'           },
-    { icon: 'cog-outline'              as const, label: 'Settings',        route: '/(admin)/settings'        },
+    { icon: 'map-outline'              as const, label: t('wardWiseLabel'),       route: '/(admin)/ward-wise'       },
+    { icon: 'layers-outline'           as const, label: t('categoryWiseLabel'),   route: '/(admin)/category-wise'   },
+    { icon: 'domain'                   as const, label: t('departmentWiseLabel'), route: '/(admin)/department-wise' },
+    { icon: 'trophy-outline'           as const, label: t('bestWards'),           route: '/(admin)/best-wards'      },
+    { icon: 'chart-bar'                as const, label: t('reports'),             route: '/(admin)/reports'         },
+    { icon: 'chart-donut'              as const, label: t('analytics'),           route: '/(admin)/analytics'       },
+    { icon: 'shield-account-outline'   as const, label: t('departments'),         route: '/(admin)/departments'     },
+    { icon: 'account-group-outline'    as const, label: t('citizens'),            route: '/(admin)/people'          },
+    { icon: 'information-outline'     as const, label: t('aboutSevaSetu'),        route: '/(admin)/about'           },
+    { icon: 'cog-outline'              as const, label: t('settings'),            route: '/(admin)/settings'        },
   ];
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* Header — no back button since this is a tab screen */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>More</Text>
+        <Text style={styles.headerTitle}>{t('moreLabel')}</Text>
       </View>
 
       <ScrollView
@@ -79,7 +81,7 @@ export default function AdminProfile() {
               <MaterialCommunityIcons name="shield-crown-outline" size={12} color="#4FC3F7" />
               <Text style={styles.roleText}>{profile.roleLabel}</Text>
             </View>
-            <Text style={styles.heroOrg}>{profile.locality || 'Malvan Municipal Council'}</Text>
+            <Text style={styles.heroOrg}>{profile.locality || t('malvanMunicipal')}</Text>
           </LinearGradient>
         </Animated.View>
 
@@ -88,7 +90,7 @@ export default function AdminProfile() {
           <GlassCard style={styles.infoCard}>
             {INFO_ROWS.map((row, idx) => (
               <View
-                key={row.label}
+                key={row.icon}
                 style={[styles.infoRow, idx === INFO_ROWS.length - 1 && { borderBottomWidth: 0 }]}
               >
                 <View style={styles.infoLeft}>
@@ -111,18 +113,18 @@ export default function AdminProfile() {
           >
             <LinearGradient colors={['#0B4F8A', '#2E86DE']} style={styles.editBtnGrad}>
               <MaterialCommunityIcons name="account-edit-outline" size={18} color="#fff" />
-              <Text style={styles.editBtnText}>Edit Profile &amp; Change Password</Text>
+              <Text style={styles.editBtnText}>{t('editProfileChangePassword')}</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
 
         {/* ── Admin tools ── */}
         <Animated.View entering={FadeInDown.duration(360).delay(140)}>
-          <Text style={styles.toolsHeading}>Admin Tools</Text>
+          <Text style={styles.toolsHeading}>{t('adminToolsLabel')}</Text>
           <GlassCard style={styles.toolsCard}>
             {ADMIN_TOOLS.map((tool, idx) => (
               <Pressable
-                key={tool.label}
+                key={tool.route}
                 onPress={() => router.push(tool.route as any)}
                 style={({ pressed }) => [
                   styles.toolRow,
@@ -147,7 +149,7 @@ export default function AdminProfile() {
             style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
           >
             <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

@@ -7,45 +7,48 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import GlassCard from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
-const SECTIONS = [
+const SECTION_DEFS = [
   {
     number: '01',
-    title: 'Acceptable Portal Use',
+    titleKey: 'deptTermsSec1Title',
     icon: 'check-circle-outline' as const,
     color: COLORS.primary,
     bg: '#EFF6FF',
-    paragraphs: [
-      'Access to this portal is restricted to authorized municipal representatives and ward officers of the Malvan Municipal Council.',
-      'Officers must use this portal solely for monitoring complaints, documenting resolution progress, uploading proof, and escalating issues to the respective departments.',
-    ],
+    paraKeys: ['deptTermsSec1Para1', 'deptTermsSec1Para2'],
   },
   {
     number: '02',
-    title: 'Administrative Accountability',
+    titleKey: 'deptTermsSec2Title',
     icon: 'shield-account-outline' as const,
     color: '#7C3AED',
     bg: '#F5F3FF',
-    paragraphs: [
-      "All status edits, notes, and photos added through an officer's account are considered formal municipal records.",
-      'Officers are responsible for ensuring the absolute accuracy and integrity of all data submitted through their profiles.',
-    ],
+    paraKeys: ['deptTermsSec2Para1', 'deptTermsSec2Para2'],
   },
   {
     number: '03',
-    title: 'Security & Compliance',
+    titleKey: 'deptTermsSec3Title',
     icon: 'lock-outline' as const,
     color: '#DC2626',
     bg: '#FEF2F2',
-    paragraphs: [
-      'Unauthorized sharing of login credentials, municipal logs, or citizen identity profiles is strictly prohibited and subject to administrative disciplinary actions by the Council.',
-    ],
+    paraKeys: ['deptTermsSec3Para1'],
   },
 ];
 
 export default function DeptTermsScreen() {
+  const { t } = useTranslation();
+  const SECTIONS = SECTION_DEFS.map((s) => ({
+    number: s.number,
+    title: t(s.titleKey),
+    icon: s.icon,
+    color: s.color,
+    bg: s.bg,
+    paragraphs: s.paraKeys.map((k) => t(k)),
+  }));
+
   return (
-    <DepartmentScreen title="Terms & Conditions" back>
+    <DepartmentScreen title={t('termsConditions')} back>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -53,7 +56,7 @@ export default function DeptTermsScreen() {
       >
         <View style={styles.datePill}>
           <MaterialCommunityIcons name="calendar-outline" size={13} color={COLORS.textMuted} />
-          <Text style={styles.dateText}>Last Updated: July 2026</Text>
+          <Text style={styles.dateText}>{t('deptPrivacyLastUpdated')}</Text>
         </View>
 
         {SECTIONS.map((s) => (
