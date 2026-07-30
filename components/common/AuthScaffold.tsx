@@ -5,7 +5,6 @@ import React, { type ReactNode } from 'react';
 import {
   Image,
   ImageBackground,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -21,8 +20,10 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
+import LanguageToggle from './LanguageToggle';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -65,6 +66,8 @@ export function AuthHero({
   compact = false,
   badge,
 }: AuthHeroProps) {
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={[styles.hero, compact && styles.heroCompact]}>
       <ImageBackground
@@ -85,7 +88,7 @@ export function AuthHero({
         />
 
         {/* Safe-area spacer + optional back button */}
-        <View style={styles.heroTopRow}>
+        <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
           {onBack ? (
             <Pressable
               android_ripple={{ color: 'rgba(255,255,255,0.18)', borderless: true }}
@@ -98,6 +101,8 @@ export function AuthHero({
           ) : (
             <View style={styles.backPlaceholder} />
           )}
+          <View style={{ flex: 1 }} />
+          <LanguageToggle size={36} variant="dark" />
         </View>
 
         {/* Logo · Title · Subtitle · Slogan — all centered */}
@@ -267,9 +272,8 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
 
-  // Status-bar spacer row — reduced padding so the background shows through
+  // Status-bar spacer row — paddingTop set inline from safe-area insets
   heroTopRow: {
-    paddingTop: Platform.OS === 'android' ? 18 : 30,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',

@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import GlassCard from '@/components/common/GlassCard';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const PRIORITY_STYLES: Record<string, {
   bg: string; text: string;
@@ -25,6 +26,7 @@ type Tab = typeof TABS[number];
 export default function AnnouncementsScreen() {
   const router = useRouter();
   const { announcements } = useOfficial();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
 
   const filtered = tab === 'All'
@@ -39,8 +41,8 @@ export default function AnnouncementsScreen() {
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Announcements</Text>
-          <Text style={styles.headerSub}>Municipal alerts and council notices</Text>
+          <Text style={styles.headerTitle}>{t('announcementsTitle')}</Text>
+          <Text style={styles.headerSub}>{t('municipalAlerts')}</Text>
         </View>
       </View>
 
@@ -70,9 +72,9 @@ export default function AnnouncementsScreen() {
         {filtered.length === 0 ? (
           <View style={styles.emptyCard}>
             <MaterialCommunityIcons name="bell-off-outline" size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>No announcements</Text>
+            <Text style={styles.emptyTitle}>{t('noAnnouncementsTab')}</Text>
             <Text style={styles.emptyText}>
-              There are no {tab.toLowerCase()} notices at this time.
+              {t('noNoticesTime').replace('{tab}', tab.toLowerCase())}
             </Text>
           </View>
         ) : (

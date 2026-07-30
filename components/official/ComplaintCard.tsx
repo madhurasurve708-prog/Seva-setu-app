@@ -9,6 +9,7 @@ import Animated, {
 
 import { Colors } from '@/constants/color';
 import type { Complaint } from '@/data/complaints';
+import { useTranslation } from '@/providers/localization-provider';
 
 import PriorityBadge from './PriorityBadge';
 import StatusBadge from './StatusBadge';
@@ -26,6 +27,7 @@ export default function ComplaintCard({
   onNotes,
   onEscalate,
 }: ComplaintCardProps) {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -169,7 +171,7 @@ export default function ComplaintCard({
               fontSize: 12,
             }}
           >
-            Updated {formatDate(complaint.updatedAt)}
+            {t('updatedOn')} {formatDate(complaint.updatedAt)}
           </Text>
         </View>
 
@@ -193,21 +195,21 @@ export default function ComplaintCard({
         >
           <ActionButton
             icon="eye-outline"
-            title="View"
+            title={t('view')}
             color={Colors.primary}
             onPress={onView}
           />
 
           <ActionButton
             icon="document-text-outline"
-            title="Notes"
+            title={t('notes')}
             color="#EA580C"
             onPress={onNotes}
           />
 
           <ActionButton
             icon="arrow-up-circle-outline"
-            title="Escalate"
+            title={t('escalateBtn')}
             color="#DC2626"
             onPress={onEscalate}
           />

@@ -2,22 +2,26 @@ import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/color';
 import type { ComplaintStatus } from '@/data/complaints';
+import { useTranslation } from '@/providers/localization-provider';
 
 const STATUS_CONFIG = {
   Pending: {
     bg: '#FEF3C7',
     text: '#B45309',
     icon: 'clock-outline',
+    labelKey: 'pending',
   },
   'In Progress': {
     bg: '#DBEAFE',
     text: Colors.status.inProgress,
     icon: 'progress-clock',
+    labelKey: 'inProgress',
   },
   Resolved: {
     bg: '#DCFCE7',
     text: Colors.status.resolved,
     icon: 'check-circle',
+    labelKey: 'resolved',
   },
 } as const;
 
@@ -28,6 +32,7 @@ interface StatusBadgeProps {
 export default function StatusBadge({
   status,
 }: StatusBadgeProps) {
+  const { t } = useTranslation();
   const config = STATUS_CONFIG[status];
 
   return (
@@ -56,7 +61,7 @@ export default function StatusBadge({
           fontWeight: '700',
         }}
       >
-        {status}
+        {t(config.labelKey)}
       </Text>
     </View>
   );

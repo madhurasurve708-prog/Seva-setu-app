@@ -5,16 +5,18 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import LanguageToggle from '@/components/common/LanguageToggle';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 // Explore destinations — each goes to its own dedicated screen, no more complaint-explorer
-const EXPLORE_ITEMS = [
+const EXPLORE_ITEMS = (t: (key: string) => string) => [
   {
     route: '/(admin)/ward-wise',
     icon: 'map-outline'       as const,
-    label: 'Ward Wise',
-    sub:   'All 10 municipal wards',
+    label: t('wardWiseLabel'),
+    sub:   t('allMunicipalWards'),
     color: '#2563EB',
     bg:    '#DBEAFE',
     grad:  ['#EFF6FF', '#DBEAFE'] as const,
@@ -22,8 +24,8 @@ const EXPLORE_ITEMS = [
   {
     route: '/(admin)/category-wise',
     icon: 'layers-outline'    as const,
-    label: 'Category Wise',
-    sub:   'By issue type',
+    label: t('categoryWiseLabel'),
+    sub:   t('byIssueType'),
     color: '#EA580C',
     bg:    '#FFEDD5',
     grad:  ['#FFF7ED', '#FFEDD5'] as const,
@@ -31,8 +33,8 @@ const EXPLORE_ITEMS = [
   {
     route: '/(admin)/department-wise',
     icon: 'domain'            as const,
-    label: 'Department Wise',
-    sub:   'Resolution by dept.',
+    label: t('departmentWiseLabel'),
+    sub:   t('resolutionByDept'),
     color: '#7C3AED',
     bg:    '#EDE9FE',
     grad:  ['#F5F3FF', '#EDE9FE'] as const,
@@ -40,8 +42,8 @@ const EXPLORE_ITEMS = [
   {
     route: '/(admin)/best-wards',
     icon: 'trophy-outline'    as const,
-    label: 'Best Wards',
-    sub:   'Performance ranking',
+    label: t('bestWards'),
+    sub:   t('performanceRanking'),
     color: '#F59E0B',
     bg:    '#FEF3C7',
     grad:  ['#FFFBEB', '#FEF3C7'] as const,
@@ -57,6 +59,7 @@ const PRIORITY_STYLE: Record<string, { bg: string; text: string }> = {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profile, complaints, announcements } = useOfficial();
 
   const total       = complaints.length;
@@ -67,11 +70,12 @@ export default function AdminDashboard() {
   const successRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   const STAT_CARDS = [
-    { label: 'Pending',     value: pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },
-    { label: 'In Progress', value: inProgress, color: '#2563EB', icon: 'progress-wrench'       as const, grad: ['#EFF6FF','#DBEAFE'] as const },
-    { label: 'Resolved',    value: resolved,   color: '#10B981', icon: 'check-circle-outline'  as const, grad: ['#ECFDF5','#D1FAE5'] as const },
-    { label: 'Escalated',   value: escalated,  color: '#DC2626', icon: 'alert-octagon-outline' as const, grad: ['#FEF2F2','#FEE2E2'] as const },
+    { key: 'Pending',     label: t('pending'),     value: pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },
+    { key: 'In Progress', label: t('inProgress'), value: inProgress, color: '#2563EB', icon: 'progress-wrench'       as const, grad: ['#EFF6FF','#DBEAFE'] as const },
+    { key: 'Resolved',    label: t('resolved'),    value: resolved,   color: '#10B981', icon: 'check-circle-outline'  as const, grad: ['#ECFDF5','#D1FAE5'] as const },
+    { key: 'Escalated',   label: t('escalated'),   value: escalated,  color: '#DC2626', icon: 'alert-octagon-outline' as const, grad: ['#FEF2F2','#FEE2E2'] as const },
   ];
+  const exploreItems = EXPLORE_ITEMS(t);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -80,18 +84,19 @@ export default function AdminDashboard() {
         <View style={styles.brandRow}>
           <Image source={require('@/assets/images/logo.jpeg')} style={styles.logo} resizeMode="contain" />
           <View>
-            <Text style={styles.brandTitle}>SEVA SETU</Text>
-            <Text style={styles.brandSub}>Malvan Municipal Council</Text>
+            <Text style={styles.brandTitle}>{t('sevaSetuTitle')}</Text>
+            <Text style={styles.brandSub}>{t('malvanMunicipal')}</Text>
           </View>
         </View>
         <View style={styles.headerRight}>
           <Pressable
-            onPress={() => router.push('/(admin)/announcements' as any)}
+            onPress={() => router.push('/(admin)/notification' as any)}
             style={styles.headerBtn}
           >
             <MaterialCommunityIcons name="bell-outline" size={18} color={COLORS.primary} />
             {pending > 0 && <View style={styles.notifDot} />}
           </Pressable>
+          <LanguageToggle size={38} variant="light" />
           <Pressable
             onPress={() => router.push('/(admin)/profile' as any)}
             style={styles.avatarBtn}
@@ -117,36 +122,36 @@ export default function AdminDashboard() {
               <View style={styles.heroLeft}>
                 <View style={styles.heroBadge}>
                   <MaterialCommunityIcons name="shield-crown-outline" size={12} color="#4FC3F7" />
-                  <Text style={styles.heroBadgeText}>NAGARADHYAKSHA</Text>
+                  <Text style={styles.heroBadgeText}>{t('nagaradhyaksha').toUpperCase()}</Text>
                 </View>
-                <Text style={styles.heroGreeting}>नमस्कार,</Text>
+                <Text style={styles.heroGreeting}>{t('welcome')}</Text>
                 <Text style={styles.heroName} numberOfLines={1}>{profile.name}</Text>
-                <Text style={styles.heroSub}>Malvan Municipal Council — All Wards</Text>
+                <Text style={styles.heroSub}>{t('malvanMunicipal')} — {t('allWards')}</Text>
               </View>
               <View style={styles.heroRight}>
                 <View style={styles.heroRateCircle}>
                   <Text style={styles.heroRateVal}>{successRate}%</Text>
-                  <Text style={styles.heroRateLabel}>Success</Text>
+                  <Text style={styles.heroRateLabel}>{t('success')}</Text>
                 </View>
               </View>
             </View>
 
             {/* Quick stats strip */}
             <View style={styles.heroStrip}>
-              <HeroStat label="Total" value={total} />
+              <HeroStat label={t('totalLabel')} value={total} />
               <View style={styles.stripDivider} />
-              <HeroStat label="Resolved" value={resolved} highlight />
+              <HeroStat label={t('resolved')} value={resolved} highlight />
               <View style={styles.stripDivider} />
-              <HeroStat label="Pending" value={pending} warn />
+              <HeroStat label={t('pending')} value={pending} warn />
               <View style={styles.stripDivider} />
-              <HeroStat label="Escalated" value={escalated} danger />
+              <HeroStat label={t('escalated')} value={escalated} danger />
             </View>
 
             <Pressable
               onPress={() => router.push('/(admin)/complaints' as any)}
               style={styles.heroViewAllBtn}
             >
-              <Text style={styles.heroViewAllText}>View All Complaints</Text>
+              <Text style={styles.heroViewAllText}>{t('viewAllComplaints')}</Text>
               <MaterialCommunityIcons name="arrow-right" size={14} color="#4FC3F7" />
             </Pressable>
           </LinearGradient>
@@ -154,15 +159,15 @@ export default function AdminDashboard() {
 
         {/* ── Stats grid ── */}
         <View style={styles.section}>
-          <SectionHeader title="Live City Stats" subtitle="Real-time municipal overview" />
+          <SectionHeader title={t('liveStats')} subtitle={t('realTimeOverview')} />
           <View style={styles.statsGrid}>
             {STAT_CARDS.map((s, idx) => (
               <Animated.View
-                key={s.label}
+                key={s.key}
                 entering={FadeInDown.duration(360).delay(80 + idx * 55)}
                 style={styles.statWrap}
               >
-                <Pressable onPress={() => router.push({ pathname: '/(admin)/complaints', params: { status: s.label === 'Pending' ? 'Pending' : s.label === 'In Progress' ? 'In Progress' : s.label === 'Resolved' ? 'Resolved' : undefined } } as any)}>
+                <Pressable onPress={() => router.push({ pathname: '/(admin)/complaints', params: { status: s.key === 'Pending' ? 'Pending' : s.key === 'In Progress' ? 'In Progress' : s.key === 'Resolved' ? 'Resolved' : undefined } } as any)}>
                   <LinearGradient colors={s.grad} style={[styles.statCard, { borderColor: `${s.color}22` }]}>
                     <View style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}>
                       <MaterialCommunityIcons name={s.icon} size={18} color={s.color} />
@@ -178,9 +183,9 @@ export default function AdminDashboard() {
 
         {/* ── Explore section (replaces old complaint-explorer) ── */}
         <View style={styles.section}>
-          <SectionHeader title="Explore Complaints" subtitle="Drill into city-wide data" />
+          <SectionHeader title={t('exploreComplaints')} subtitle={t('drillData')} />
           <View style={styles.exploreGrid}>
-            {EXPLORE_ITEMS.map((item, idx) => (
+            {exploreItems.map((item, idx) => (
               <Animated.View
                 key={item.route}
                 entering={FadeInRight.duration(340).delay(80 + idx * 60)}
@@ -197,7 +202,7 @@ export default function AdminDashboard() {
                     <Text style={styles.exploreLabel}>{item.label}</Text>
                     <Text style={styles.exploreSub}>{item.sub}</Text>
                     <View style={[styles.exploreCta, { borderColor: `${item.color}30` }]}>
-                      <Text style={[styles.exploreCtaText, { color: item.color }]}>View</Text>
+                      <Text style={[styles.exploreCtaText, { color: item.color }]}>{t('view')}</Text>
                       <MaterialCommunityIcons name="arrow-right" size={11} color={item.color} />
                     </View>
                   </LinearGradient>
@@ -210,8 +215,8 @@ export default function AdminDashboard() {
         {/* ── Latest Announcements ── */}
         <View style={styles.section}>
           <SectionHeader
-            title="Latest Announcements"
-            actionLabel="View All"
+            title={t('latestAnnouncements')}
+            actionLabel={t('viewAll')}
             onAction={() => router.push('/(admin)/announcements' as any)}
           />
           {announcements.slice(0, 2).map((a, idx) => {
@@ -238,14 +243,14 @@ export default function AdminDashboard() {
 
         {/* ── Quick Actions ── */}
         <View style={[styles.section, { marginBottom: 28 }]}>
-          <SectionHeader title="Quick Actions" />
+          <SectionHeader title={t('quickActions')} />
           <View style={styles.quickGrid}>
-            <QuickAction icon="chart-bar"               label="Reports"     color="#2563EB" bg="#EFF6FF" onPress={() => router.push('/(admin)/reports'      as any)} />
-            <QuickAction icon="chart-donut"             label="Analytics"   color="#7C3AED" bg="#EDE9FE" onPress={() => router.push('/(admin)/analytics'    as any)} />
-            <QuickAction icon="domain"                  label="Departments" color="#0F766E" bg="#CCFBF1" onPress={() => router.push('/(admin)/departments'  as any)} />
-            <QuickAction icon="account-group-outline"   label="Citizens"    color="#EA580C" bg="#FFEDD5" onPress={() => router.push('/(admin)/people'       as any)} />
-            <QuickAction icon="cog-outline"             label="Settings"    color="#475569" bg="#F1F5F9" onPress={() => router.push('/(admin)/settings'     as any)} />
-            <QuickAction icon="trophy-outline"          label="Best Wards"  color="#F59E0B" bg="#FEF3C7" onPress={() => router.push('/(admin)/best-wards'  as any)} />
+            <QuickAction icon="chart-bar"               label={t('reports')}     color="#2563EB" bg="#EFF6FF" onPress={() => router.push('/(admin)/reports'      as any)} />
+            <QuickAction icon="chart-donut"             label={t('analytics')}   color="#7C3AED" bg="#EDE9FE" onPress={() => router.push('/(admin)/analytics'    as any)} />
+            <QuickAction icon="domain"                  label={t('departments')} color="#0F766E" bg="#CCFBF1" onPress={() => router.push('/(admin)/departments'  as any)} />
+            <QuickAction icon="account-group-outline"   label={t('citizens')}    color="#EA580C" bg="#FFEDD5" onPress={() => router.push('/(admin)/people'       as any)} />
+            <QuickAction icon="cog-outline"             label={t('settings')}    color="#475569" bg="#F1F5F9" onPress={() => router.push('/(admin)/settings'     as any)} />
+            <QuickAction icon="trophy-outline"          label={t('bestWards')}   color="#F59E0B" bg="#FEF3C7" onPress={() => router.push('/(admin)/best-wards'  as any)} />
           </View>
         </View>
       </ScrollView>

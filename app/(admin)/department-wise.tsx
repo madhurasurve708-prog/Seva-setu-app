@@ -18,6 +18,7 @@ import {
 } from '@/data/complaints';
 import { DEPT_META as DEPT_DISPLAY } from '@/data/department-routing';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 // Officer heads per department (display only)
 const DEPT_HEADS: Record<string, string> = {
@@ -31,6 +32,7 @@ const DEPT_HEADS: Record<string, string> = {
 
 export default function DepartmentWiseScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   const deptData = useMemo(() =>
@@ -66,8 +68,8 @@ export default function DepartmentWiseScreen() {
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
         </Pressable>
         <View>
-          <Text style={styles.headerTitle}>Department Wise</Text>
-          <Text style={styles.headerSub}>Track resolution by municipal department</Text>
+          <Text style={styles.headerTitle}>{t('departmentWiseLabel')}</Text>
+          <Text style={styles.headerSub}>{t('trackResolutionByDept')}</Text>
         </View>
       </View>
 
@@ -78,7 +80,7 @@ export default function DepartmentWiseScreen() {
       >
         {/* ── Top performers ── */}
         <Animated.View entering={FadeInDown.duration(380).delay(0)}>
-          <Text style={styles.sectionTitle}>Top Performers</Text>
+          <Text style={styles.sectionTitle}>{t('topPerformers')}</Text>
           <View style={styles.topRow}>
             {topDepts.map((d, idx) => (
               <Pressable
@@ -102,7 +104,7 @@ export default function DepartmentWiseScreen() {
           </View>
         </Animated.View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>All Departments</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 4 }]}>{t('audienceAllDepartments')}</Text>
 
         {deptData.map((dept, idx) => (
           <Animated.View key={dept.name} entering={FadeInDown.duration(360).delay(60 + idx * 45)}>
@@ -126,17 +128,17 @@ export default function DepartmentWiseScreen() {
                   }]}>
                     {dept.rate}%
                   </Text>
-                  <Text style={styles.rateSub}>resolved</Text>
+                  <Text style={styles.rateSub}>{t('resolved')}</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
               </View>
 
               <View style={styles.statsRow}>
-                <DeptStat label="Assigned"  value={dept.total}    color={COLORS.primary} />
-                <DeptStat label="Resolved"  value={dept.resolved}  color="#10B981" />
-                <DeptStat label="Pending"   value={dept.pending}   color="#F59E0B" />
+                <DeptStat label={t('assignedLabel')} value={dept.total}    color={COLORS.primary} />
+                <DeptStat label={t('resolved')}  value={dept.resolved}  color="#10B981" />
+                <DeptStat label={t('pending')}   value={dept.pending}   color="#F59E0B" />
                 {dept.escalated > 0 && (
-                  <DeptStat label="Escalated" value={dept.escalated} color="#DC2626" />
+                  <DeptStat label={t('escalated')} value={dept.escalated} color="#DC2626" />
                 )}
               </View>
 

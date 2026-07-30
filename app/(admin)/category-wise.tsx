@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const CATEGORY_COLORS: Record<string, { color: string; bg: string; grad: readonly [string, string] }> = {
   water:        { color: '#2563EB', bg: '#DBEAFE', grad: ['#EFF6FF', '#DBEAFE'] },
@@ -25,6 +26,7 @@ const CATEGORY_COLORS: Record<string, { color: string; bg: string; grad: readonl
 
 export default function CategoryWiseScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   const catData = useMemo(() =>
@@ -47,19 +49,19 @@ export default function CategoryWiseScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Category Wise</Text>
-        <Text style={styles.headerSub}>Complaints grouped by issue type</Text>
+        <Text style={styles.headerTitle}>{t('categoryWiseLabel')}</Text>
+        <Text style={styles.headerSub}>{t('complaintsGroupedByIssue')}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
         {/* Distribution bar chart */}
         <Animated.View entering={FadeInDown.duration(380).delay(0)}>
           <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Distribution Overview</Text>
+            <Text style={styles.chartTitle}>{t('distributionOverview')}</Text>
             {catData.map((item, idx) => (
               <View key={item.id} style={styles.chartRow}>
                 <MaterialCommunityIcons name={item.icon as any} size={14} color={item.color} style={{ width: 18 }} />
-                <Text style={styles.chartLabel} numberOfLines={1}>{item.label}</Text>
+                <Text style={styles.chartLabel} numberOfLines={1}>{t(item.id)}</Text>
                 <View style={styles.chartBarBg}>
                   <Animated.View
                     entering={FadeInDown.duration(500).delay(100 + idx * 50)}
@@ -75,7 +77,7 @@ export default function CategoryWiseScreen() {
           </View>
         </Animated.View>
 
-        <Text style={styles.sectionTitle}>All Categories</Text>
+        <Text style={styles.sectionTitle}>{t('all_cat')}</Text>
 
         {catData.map((item, idx) => (
           <Animated.View key={item.id} entering={FadeInDown.duration(360).delay(60 + idx * 45)}>
@@ -89,8 +91,10 @@ export default function CategoryWiseScreen() {
                     <MaterialCommunityIcons name={item.icon as any} size={22} color={item.color} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.catName}>{item.label}</Text>
-                    <Text style={styles.catCount}>{item.total} complaint{item.total !== 1 ? 's' : ''}</Text>
+                    <Text style={styles.catName}>{t(item.id)}</Text>
+                    <Text style={styles.catCount}>
+                      {t('complaintsCountSuffix').replace('{count}', String(item.total)).replace('{plural}', item.total !== 1 ? 's' : '')}
+                    </Text>
                   </View>
                   {item.emergency > 0 && (
                     <View style={styles.emergBadge}>
@@ -100,16 +104,16 @@ export default function CategoryWiseScreen() {
                   )}
                   <View style={[styles.rateBadge, { backgroundColor: item.bg }]}>
                     <Text style={[styles.rateText, { color: item.color }]}>{item.rate}%</Text>
-                    <Text style={styles.rateSub}>resolved</Text>
+                    <Text style={styles.rateSub}>{t('resolved')}</Text>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
                 </View>
 
                 {/* Mini stats */}
                 <View style={styles.miniRow}>
-                  <MiniStat label="Resolved" value={item.resolved} color="#10B981" />
-                  <MiniStat label="Pending" value={item.pending} color="#F59E0B" />
-                  <MiniStat label="In Progress" value={item.total - item.resolved - item.pending} color="#2563EB" />
+                  <MiniStat label={t('resolved')} value={item.resolved} color="#10B981" />
+                  <MiniStat label={t('pending')} value={item.pending} color="#F59E0B" />
+                  <MiniStat label={t('inProgress')} value={item.total - item.resolved - item.pending} color="#2563EB" />
                 </View>
 
                 {/* Bar */}

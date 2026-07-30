@@ -8,20 +8,22 @@ import { COLORS, SHADOWS } from '@/constants/theme';
 import { ALL_DEPARTMENTS } from '@/data/complaints';
 import { DEPT_META } from '@/data/department-routing';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function DepartmentsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   return (
-    <AdminShell title="Departments" showBack>
+    <AdminShell title={t('departments')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
         <Text style={styles.hint}>
-          Tap a department to view all its assigned complaints.
+          {t('tapDeptHint')}
         </Text>
 
         {ALL_DEPARTMENTS.map((name, idx) => {
@@ -49,9 +51,9 @@ export default function DepartmentsScreen() {
                   <Text style={styles.deptName}>{name}</Text>
                   <Text style={styles.deptEnglish}>{meta?.english ?? ''}</Text>
                   <View style={styles.statsRow}>
-                    <Text style={styles.statsText}>{total} assigned</Text>
+                    <Text style={styles.statsText}>{t('assignedCountSuffix').replace('{count}', String(total))}</Text>
                     <Text style={styles.dot}>·</Text>
-                    <Text style={styles.statsText}>{resolved} resolved</Text>
+                    <Text style={styles.statsText}>{t('resolvedCountSuffix').replace('{count}', String(resolved))}</Text>
                   </View>
 
                   {total > 0 && (
