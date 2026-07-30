@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Alert, Pressable, ScrollView, StyleSheet,
     Text, TextInput, View,
@@ -10,32 +10,35 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 // ── Audience hierarchy ────────────────────────────────────────────────────────
 type AudienceGroup = {
   groupKey: string;
   label: string;
+  subLabel: string;
   icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   color: string;
   bg: string;
   children?: string[];
 };
 
-const AUDIENCE_GROUPS: AudienceGroup[] = [
-  { groupKey: 'everyone',   label: 'Everyone',             icon: 'earth',                 color: '#0B4F8A', bg: '#DBEAFE' },
-  { groupKey: 'all-citizens', label: 'All Citizens',       icon: 'account-group-outline', color: '#2563EB', bg: '#EFF6FF',
-    children: ['Ward 1 Citizens','Ward 2 Citizens','Ward 3 Citizens','Ward 4 Citizens','Ward 5 Citizens',
-               'Ward 6 Citizens','Ward 7 Citizens','Ward 8 Citizens','Ward 9 Citizens','Ward 10 Citizens'] },
-  { groupKey: 'ward-citizens', label: 'Ward-wise Citizens',icon: 'map-marker-multiple-outline', color: '#EA580C', bg: '#FFEDD5',
-    children: ['Ward 1 Citizens','Ward 2 Citizens','Ward 3 Citizens','Ward 4 Citizens','Ward 5 Citizens',
-               'Ward 6 Citizens','Ward 7 Citizens','Ward 8 Citizens','Ward 9 Citizens','Ward 10 Citizens'] },
-  { groupKey: 'all-nagarsevaks', label: 'All Nagarsevaks', icon: 'badge-account-outline',  color: '#7C3AED', bg: '#EDE9FE',
-    children: ['NS Ward 1','NS Ward 2','NS Ward 3','NS Ward 4','NS Ward 5',
-               'NS Ward 6','NS Ward 7','NS Ward 8','NS Ward 9','NS Ward 10'] },
-  { groupKey: 'departments', label: 'All Departments',     icon: 'domain',                color: '#0F766E', bg: '#CCFBF1',
-    children: ['Water Department','Road Department','Electrical Department',
-               'Sanitation Department','Garden Department','Administration','Public Works','Traffic Police'] },
-];
+function buildAudienceGroups(t: (key: string) => string): AudienceGroup[] {
+  const wardCitizens = Array.from({ length: 10 }, (_, i) => `${t('ward2')} ${i + 1} ${t('citizens')}`);
+  const nsWards = Array.from({ length: 10 }, (_, i) => `${t('nagarsevak')} ${t('ward2')} ${i + 1}`);
+  return [
+    { groupKey: 'everyone', label: t('audienceEveryone'), subLabel: '', icon: 'earth', color: '#0B4F8A', bg: '#DBEAFE' },
+    { groupKey: 'all-citizens', label: t('audienceAllCitizens'), subLabel: t('citizens'), icon: 'account-group-outline', color: '#2563EB', bg: '#EFF6FF',
+      children: wardCitizens },
+    { groupKey: 'ward-citizens', label: t('audienceWardCitizens'), subLabel: t('wardWiseLabel'), icon: 'map-marker-multiple-outline', color: '#EA580C', bg: '#FFEDD5',
+      children: wardCitizens },
+    { groupKey: 'all-nagarsevaks', label: t('audienceAllNagarsevaks'), subLabel: t('nagarsevaks'), icon: 'badge-account-outline', color: '#7C3AED', bg: '#EDE9FE',
+      children: nsWards },
+    { groupKey: 'departments', label: t('audienceAllDepartments'), subLabel: t('departments'), icon: 'domain', color: '#0F766E', bg: '#CCFBF1',
+      children: [t('deptWaterDept'), t('deptRoadDept'), t('deptElectricalDept'), t('deptSanitationDept'),
+                 t('deptGardenDept'), t('deptAdministration'), t('deptPublicWorks'), t('deptTrafficPolice')] },
+  ];
+}
 
 const PRIORITY_OPTS = [
   { key: 'Normal',    icon: 'information-outline'    as const, color: '#475569', bg: '#F1F5F9' },
@@ -51,8 +54,15 @@ const PRIORITY_CARD: Record<string, { bg: string; text: string }> = {
   Normal:    { bg: '#F1F5F9', text: '#475569' },
 };
 
+function priorityLabel(t: (key: string) => string, key: string): string {
+  return ({ All: t('all'), Normal: t('priorityNormal'), High: t('priorityHigh'), Emergency: t('priorityEmergency'), Pinned: t('priorityPinned') } as Record<string, string>)[key] ?? key;
+}
+
 export default function AdminAnnouncements() {
+  const { t } = useTranslation();
   const { announcements } = useOfficial();
+
+  const AUDIENCE_GROUPS = useMemo(() => buildAudienceGroups(t), [t]);
 
   const [tab, setTab] = useState<'compose' | 'published'>('compose');
   const [title,     setTitle]     = useState('');
@@ -61,21 +71,30 @@ export default function AdminAnnouncements() {
   const [audience,  setAudience]  = useState('everyone');
   const [subTarget, setSubTarget] = useState<string | null>(null);
   const [preview,   setPreview]   = useState(false);
+  const [publishedFilter, setPublishedFilter] = useState('All');
+
+  const FILTER_OPTS = [
+    { key: 'All', icon: 'view-grid-outline' as const, color: COLORS.primary, bg: '#EFF6FF' },
+    ...PRIORITY_OPTS,
+  ];
+  const filteredAnnouncements = publishedFilter === 'All'
+    ? announcements
+    : announcements.filter((a) => a.priority === publishedFilter);
 
   const selectedGroup = AUDIENCE_GROUPS.find((g) => g.groupKey === audience);
   const hasChildren   = (selectedGroup?.children?.length ?? 0) > 0;
-  const audienceLabel = subTarget ?? selectedGroup?.label ?? 'Everyone';
+  const audienceLabel = subTarget ?? selectedGroup?.label ?? t('audienceEveryone');
 
   const canSend = title.trim().length > 0 && message.trim().length > 0;
 
   const send = () => {
     if (!canSend) {
-      Alert.alert('Missing information', 'Please fill in both the title and message.');
+      Alert.alert(t('missingInfo'), t('fillTitleMessage'));
       return;
     }
     Alert.alert(
-      '📣 Announcement Ready',
-      `"${title}" · ${priority} priority\nTo: ${audienceLabel}\n\nWill be dispatched once the municipal backend API is connected.`,
+      t('announcementReadyTitle'),
+      `"${title}" · ${priorityLabel(t, priority)}\n${t('toLabel')} ${audienceLabel}\n\n${t('dispatchNote')}`,
       [{ text: 'OK', onPress: () => { setTitle(''); setMessage(''); setPreview(false); } }],
     );
   };
@@ -84,14 +103,14 @@ export default function AdminAnnouncements() {
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* Header */}
       <View style={styles.topBar}>
-        <Text style={styles.screenTitle}>Announcements</Text>
+        <Text style={styles.screenTitle}>{t('announcementsScreen')}</Text>
         <View style={styles.tabRow}>
           <Pressable onPress={() => setTab('compose')} style={[styles.tab, tab === 'compose' && styles.tabActive]}>
-            <Text style={[styles.tabText, tab === 'compose' && styles.tabTextActive]}>Compose</Text>
+            <Text style={[styles.tabText, tab === 'compose' && styles.tabTextActive]}>{t('composeTab')}</Text>
           </Pressable>
           <Pressable onPress={() => setTab('published')} style={[styles.tab, tab === 'published' && styles.tabActive]}>
             <Text style={[styles.tabText, tab === 'published' && styles.tabTextActive]}>
-              Published ({announcements.length})
+              {t('publishedTab')} ({announcements.length})
             </Text>
           </Pressable>
         </View>
@@ -106,11 +125,11 @@ export default function AdminAnnouncements() {
         >
           {/* Title */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Announcement Title</Text>
+            <Text style={styles.fieldLabel}>{t('announcementTitle')}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Enter a clear, concise title…"
+              placeholder={t('announcementTitlePlaceholder')}
               placeholderTextColor={COLORS.textPlaceholder}
               style={styles.textField}
             />
@@ -118,11 +137,11 @@ export default function AdminAnnouncements() {
 
           {/* Message */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Message Body</Text>
+            <Text style={styles.fieldLabel}>{t('messageBody')}</Text>
             <TextInput
               value={message}
               onChangeText={setMessage}
-              placeholder="Full announcement text…"
+              placeholder={t('messageBodyPlaceholder')}
               multiline
               placeholderTextColor={COLORS.textPlaceholder}
               style={[styles.textField, styles.textArea]}
@@ -132,10 +151,11 @@ export default function AdminAnnouncements() {
 
           {/* Priority */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Priority Level</Text>
+            <Text style={styles.fieldLabel}>{t('priorityLevel')}</Text>
             <View style={styles.prioRow}>
               {PRIORITY_OPTS.map((p) => {
                 const active = priority === p.key;
+                const prioLabel = priorityLabel(t, p.key);
                 return (
                   <Pressable
                     key={p.key}
@@ -143,7 +163,7 @@ export default function AdminAnnouncements() {
                     style={[styles.prioChip, active && { backgroundColor: p.bg, borderColor: p.color }]}
                   >
                     <MaterialCommunityIcons name={p.icon} size={14} color={active ? p.color : COLORS.textMuted} />
-                    <Text style={[styles.prioText, active && { color: p.color, fontWeight: '800' }]}>{p.key}</Text>
+                    <Text style={[styles.prioText, active && { color: p.color, fontWeight: '800' }]}>{prioLabel}</Text>
                   </Pressable>
                 );
               })}
@@ -152,7 +172,7 @@ export default function AdminAnnouncements() {
 
           {/* Audience — group level */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Target Audience</Text>
+            <Text style={styles.fieldLabel}>{t('targetAudience')}</Text>
             <View style={styles.audienceGrid}>
               {AUDIENCE_GROUPS.map((g) => {
                 const active = audience === g.groupKey;
@@ -177,14 +197,14 @@ export default function AdminAnnouncements() {
           {hasChildren && (
             <Animated.View entering={FadeInDown.duration(280)} style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>
-                Specific {selectedGroup?.label.replace('All ', '')} (optional)
+                {t('specificLabel')} {selectedGroup?.subLabel} ({t('optionalLabel')})
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subChipRow}>
                 <Pressable
                   onPress={() => setSubTarget(null)}
                   style={[styles.subChip, !subTarget && styles.subChipActive]}
                 >
-                  <Text style={[styles.subChipText, !subTarget && styles.subChipTextActive]}>All</Text>
+                  <Text style={[styles.subChipText, !subTarget && styles.subChipTextActive]}>{t('all')}</Text>
                 </Pressable>
                 {selectedGroup!.children!.map((child) => (
                   <Pressable
@@ -203,11 +223,11 @@ export default function AdminAnnouncements() {
           <View style={styles.futureRow}>
             <Pressable style={styles.futureBtn}>
               <MaterialCommunityIcons name="calendar-clock-outline" size={16} color={COLORS.textMuted} />
-              <Text style={styles.futureBtnText}>Schedule (coming soon)</Text>
+              <Text style={styles.futureBtnText}>{t('scheduleComingSoon')}</Text>
             </Pressable>
             <Pressable style={styles.futureBtn}>
               <MaterialCommunityIcons name="paperclip" size={16} color={COLORS.textMuted} />
-              <Text style={styles.futureBtnText}>Attach file</Text>
+              <Text style={styles.futureBtnText}>{t('attachFile')}</Text>
             </Pressable>
           </View>
 
@@ -216,13 +236,13 @@ export default function AdminAnnouncements() {
             <Animated.View entering={FadeInDown.duration(300)} style={styles.previewCard}>
               <View style={styles.previewHeader}>
                 <MaterialCommunityIcons name="eye-outline" size={14} color={COLORS.primary} />
-                <Text style={styles.previewHeading}>Preview</Text>
+                <Text style={styles.previewHeading}>{t('previewLabel')}</Text>
               </View>
               <View style={[styles.previewBadge, { backgroundColor: PRIORITY_CARD[priority]?.bg ?? '#F1F5F9' }]}>
-                <Text style={[styles.previewBadgeText, { color: PRIORITY_CARD[priority]?.text ?? '#475569' }]}>{priority}</Text>
+                <Text style={[styles.previewBadgeText, { color: PRIORITY_CARD[priority]?.text ?? '#475569' }]}>{priorityLabel(t, priority)}</Text>
               </View>
               <Text style={styles.previewTitle}>{title}</Text>
-              <Text style={styles.previewBody}>{message || '(no message)'}</Text>
+              <Text style={styles.previewBody}>{message || `(${t('noMessagePlaceholder')})`}</Text>
               <Text style={styles.previewAudience}>→ {audienceLabel}</Text>
             </Animated.View>
           )}
@@ -239,7 +259,7 @@ export default function AdminAnnouncements() {
                 color={preview ? COLORS.primary : COLORS.textMuted}
               />
               <Text style={[styles.previewToggleText, preview && { color: COLORS.primary }]}>
-                {preview ? 'Hide preview' : 'Preview'}
+                {preview ? t('hidePreview') : t('previewLabel')}
               </Text>
             </Pressable>
 
@@ -250,42 +270,68 @@ export default function AdminAnnouncements() {
             >
               <LinearGradient colors={['#0B4F8A', '#2E86DE']} style={styles.sendBtnGrad}>
                 <MaterialCommunityIcons name="send-outline" size={17} color="#fff" />
-                <Text style={styles.sendBtnText}>Send Announcement</Text>
+                <Text style={styles.sendBtnText}>{t('sendAnnouncement')}</Text>
               </LinearGradient>
             </Pressable>
           </View>
         </ScrollView>
       ) : (
         /* Published list */
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
-          {announcements.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <MaterialCommunityIcons name="bullhorn-outline" size={32} color={COLORS.textMuted} />
-              <Text style={styles.emptyTitle}>No announcements yet</Text>
-            </View>
-          ) : (
-            announcements.map((a, idx) => {
-              const s = PRIORITY_CARD[a.priority] ?? PRIORITY_CARD.Normal;
+        <View style={{ flex: 1 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pubFilterRow} style={styles.pubFilterScroll}>
+            {FILTER_OPTS.map((f) => {
+              const active = publishedFilter === f.key;
+              const count = f.key === 'All' ? announcements.length : announcements.filter((a) => a.priority === f.key).length;
               return (
-                <Animated.View key={a.id} entering={FadeInLeft.duration(360).delay(idx * 60)}>
-                  <View style={styles.annCard}>
-                    <View style={[styles.annAccent, { backgroundColor: s.text }]} />
-                    <View style={styles.annBody}>
-                      <View style={styles.annTop}>
-                        <View style={[styles.badge, { backgroundColor: s.bg }]}>
-                          <Text style={[styles.badgeText, { color: s.text }]}>{a.priority}</Text>
-                        </View>
-                        <Text style={styles.annDate}>{a.date}</Text>
-                      </View>
-                      <Text style={styles.annTitle}>{a.title}</Text>
-                      <Text style={styles.annText}>{a.body}</Text>
-                    </View>
+                <Pressable
+                  key={f.key}
+                  onPress={() => setPublishedFilter(f.key)}
+                  style={[styles.pubFilterChip, active && { backgroundColor: f.color, borderColor: f.color }]}
+                >
+                  <MaterialCommunityIcons name={f.icon} size={13} color={active ? '#fff' : f.color} />
+                  <Text style={[styles.pubFilterChipText, { color: active ? '#fff' : f.color }]}>
+                    {priorityLabel(t, f.key)}
+                  </Text>
+                  <View style={[styles.pubFilterCount, active && { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+                    <Text style={[styles.pubFilterCountText, active && { color: '#fff' }]}>{count}</Text>
                   </View>
-                </Animated.View>
+                </Pressable>
               );
-            })
-          )}
-        </ScrollView>
+            })}
+          </ScrollView>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
+            {filteredAnnouncements.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <MaterialCommunityIcons name="bullhorn-outline" size={32} color={COLORS.textMuted} />
+                <Text style={styles.emptyTitle}>
+                  {publishedFilter === 'All' ? t('noAnnouncementsYet') : t('noMatchingAnnouncements').replace('{priority}', priorityLabel(t, publishedFilter))}
+                </Text>
+              </View>
+            ) : (
+              filteredAnnouncements.map((a, idx) => {
+                const s = PRIORITY_CARD[a.priority] ?? PRIORITY_CARD.Normal;
+                return (
+                  <Animated.View key={a.id} entering={FadeInLeft.duration(360).delay(idx * 60)}>
+                    <View style={styles.annCard}>
+                      <View style={[styles.annAccent, { backgroundColor: s.text }]} />
+                      <View style={styles.annBody}>
+                        <View style={styles.annTop}>
+                          <View style={[styles.badge, { backgroundColor: s.bg }]}>
+                            <Text style={[styles.badgeText, { color: s.text }]}>{priorityLabel(t, a.priority)}</Text>
+                          </View>
+                          <Text style={styles.annDate}>{a.date}</Text>
+                        </View>
+                        <Text style={styles.annTitle}>{a.title}</Text>
+                        <Text style={styles.annText}>{a.body}</Text>
+                      </View>
+                    </View>
+                  </Animated.View>
+                );
+              })
+            )}
+          </ScrollView>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -397,4 +443,19 @@ const styles = StyleSheet.create({
 
   emptyCard: { backgroundColor: COLORS.card, borderRadius: 20, padding: 32, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: COLORS.border },
   emptyTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textMuted },
+
+  /* Published filter chips */
+  pubFilterScroll: { backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  pubFilterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+  pubFilterChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
+    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: COLORS.border,
+  },
+  pubFilterChipText: { fontSize: 12, fontWeight: '700' },
+  pubFilterCount: {
+    minWidth: 18, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 999,
+    backgroundColor: 'rgba(15,23,42,0.06)', alignItems: 'center', justifyContent: 'center',
+  },
+  pubFilterCountText: { fontSize: 10, fontWeight: '900', color: COLORS.textMuted },
 });

@@ -8,28 +8,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const WARDS = Array.from({ length: 10 }, (_, i) => `Ward ${i + 1}`);
 
-const WARD_LABELS: Record<string, string> = {
-  'Ward 1': 'Malvan Town',
-  'Ward 2': 'Malvan Bazaar',
-  'Ward 3': 'Malvan Beach',
-  'Ward 4': 'Devbag',
-  'Ward 5': 'Achara',
-  'Ward 6': 'Kumbharmath',
-  'Ward 7': 'Dhuriwada',
-  'Ward 8': 'Tondavali',
-  'Ward 9': 'Saraswati Nagar',
-  'Ward 10': 'Bhagawati',
+const WARD_LABEL_KEYS: Record<string, string> = {
+  'Ward 1': 'wardNameMalvanTown',
+  'Ward 2': 'wardNameMalvanBazaar',
+  'Ward 3': 'wardNameMalvanBeach',
+  'Ward 4': 'wardNameDevbag',
+  'Ward 5': 'wardNameAchara',
+  'Ward 6': 'wardNameKumbharmath',
+  'Ward 7': 'wardNameDhuriwada',
+  'Ward 8': 'wardNameTondavali',
+  'Ward 9': 'wardNameSaraswatiNagar',
+  'Ward 10': 'wardNameBhagawati',
 };
 
 const MEDAL_COLORS = ['#F59E0B', '#94A3B8', '#B45309'];
-const MEDAL_LABELS = ['Gold', 'Silver', 'Bronze'];
 
 export default function BestWardsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
+  const MEDAL_LABELS = [t('goldLabel'), t('silverLabel'), t('bronzeLabel')];
 
   const ranked = useMemo(() => {
     const data = WARDS.map((ward) => {
@@ -40,10 +42,11 @@ export default function BestWardsScreen() {
       const rate     = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;
       // Score: resolution rate weighted, minus emergency penalty
       const score    = rate - emergency * 5 + (wc.length > 0 ? 10 : 0);
-      return { ward, label: WARD_LABELS[ward] ?? ward, total: wc.length, resolved, pending, emergency, rate, score };
+      const labelKey = WARD_LABEL_KEYS[ward];
+      return { ward, label: labelKey ? t(labelKey) : ward, total: wc.length, resolved, pending, emergency, rate, score };
     });
     return data.sort((a, b) => b.score - a.score);
-  }, [complaints]);
+  }, [complaints, t]);
 
   const top3    = ranked.slice(0, 3);
   const rest    = ranked.slice(3);
@@ -52,8 +55,8 @@ export default function BestWardsScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Best Wards</Text>
-        <Text style={styles.headerSub}>Ranked by resolution rate & performance</Text>
+        <Text style={styles.headerTitle}>{t('bestWards')}</Text>
+        <Text style={styles.headerSub}>{t('rankedByPerformance')}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
@@ -62,7 +65,7 @@ export default function BestWardsScreen() {
           <LinearGradient colors={['#0B4F8A', '#1A6BB5']} style={styles.avgBanner}>
             <MaterialCommunityIcons name="city-variant-outline" size={28} color="rgba(255,255,255,0.8)" />
             <View>
-              <Text style={styles.avgLabel}>City Average Resolution Rate</Text>
+              <Text style={styles.avgLabel}>{t('cityAvgResolutionRate')}</Text>
               <Text style={styles.avgVal}>{cityAvg}%</Text>
             </View>
             <View style={styles.avgBadge}>
@@ -72,18 +75,18 @@ export default function BestWardsScreen() {
         </Animated.View>
 
         {/* Podium */}
-        <Text style={styles.sectionTitle}>🏆 Top 3 Performing Wards</Text>
+        <Text style={styles.sectionTitle}>{t('top3PerformingWards')}</Text>
         <Animated.View entering={FadeInDown.duration(400).delay(60)} style={styles.podium}>
           {/* Silver — 2nd */}
-          <PodiumCard item={top3[1]} rank={2} onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
+          <PodiumCard item={top3[1]} rank={2} medalLabels={MEDAL_LABELS} onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
           {/* Gold — 1st */}
-          <PodiumCard item={top3[0]} rank={1} featured onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
+          <PodiumCard item={top3[0]} rank={1} featured medalLabels={MEDAL_LABELS} onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
           {/* Bronze — 3rd */}
-          <PodiumCard item={top3[2]} rank={3} onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
+          <PodiumCard item={top3[2]} rank={3} medalLabels={MEDAL_LABELS} onPress={() => router.push({ pathname: '/(admin)/ward-wise' } as any)} />
         </Animated.View>
 
         {/* Ranked list */}
-        <Text style={styles.sectionTitle}>Full Ward Rankings</Text>
+        <Text style={styles.sectionTitle}>{t('fullWardRankings')}</Text>
         {ranked.map((item, idx) => (
           <Animated.View key={item.ward} entering={FadeInDown.duration(360).delay(80 + idx * 40)}>
             <Pressable
@@ -125,9 +128,9 @@ export default function BestWardsScreen() {
 
               {/* Stats */}
               <View style={styles.miniStats}>
-                <MiniStat label="Total" value={item.total} />
-                <MiniStat label="Done" value={item.resolved} color="#10B981" />
-                <MiniStat label="Open" value={item.pending} color="#F59E0B" />
+                <MiniStat label={t('totalLabel')} value={item.total} />
+                <MiniStat label={t('doneLabel')} value={item.resolved} color="#10B981" />
+                <MiniStat label={t('openLabel')} value={item.pending} color="#F59E0B" />
               </View>
 
               <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.textMuted} />
@@ -140,9 +143,11 @@ export default function BestWardsScreen() {
           <View style={styles.needsImprovCard}>
             <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#EA580C" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.needsTitle}>Needs Attention</Text>
+              <Text style={styles.needsTitle}>{t('needsAttention')}</Text>
               <Text style={styles.needsText}>
-                {ranked.filter((w) => w.rate < 40).length} ward{ranked.filter((w) => w.rate < 40).length !== 1 ? 's' : ''} below 40% resolution rate. Consider direct intervention.
+                {t('wardsBelowThresholdMsg')
+                  .replace('{count}', String(ranked.filter((w) => w.rate < 40).length))
+                  .replace('{plural}', ranked.filter((w) => w.rate < 40).length !== 1 ? 's' : '')}
               </Text>
             </View>
           </View>
@@ -156,11 +161,13 @@ function PodiumCard({
   item,
   rank,
   featured,
+  medalLabels,
   onPress,
 }: {
   item?: { ward: string; label: string; rate: number; total: number };
   rank: number;
   featured?: boolean;
+  medalLabels: string[];
   onPress: () => void;
 }) {
   if (!item) return <View style={styles.podiumEmpty} />;
@@ -179,7 +186,7 @@ function PodiumCard({
         <Text style={[styles.podiumWardName, { color: featured ? 'rgba(255,255,255,0.9)' : COLORS.textMuted }]} numberOfLines={1}>
           {item.ward}
         </Text>
-        <Text style={[styles.podiumMedal, { color: medalColor }]}>{MEDAL_LABELS[rank - 1]}</Text>
+        <Text style={[styles.podiumMedal, { color: medalColor }]}>{medalLabels[rank - 1]}</Text>
       </LinearGradient>
     </Pressable>
   );

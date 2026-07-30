@@ -15,6 +15,7 @@ import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 // All 10 municipal wards of Malvan
 const ALL_WARDS = [
@@ -31,8 +32,17 @@ const STAT_COLORS = [
   { color: '#0EA5E9', bg: '#E0F2FE', icon: 'arrow-up-bold-outline' as const },
 ];
 
+function statusLabel(t: (key: string) => string, status: string): string {
+  return ({ Pending: t('pending'), 'In Progress': t('inProgress'), Resolved: t('resolved') } as Record<string, string>)[status] ?? status;
+}
+
+function wardDisplay(t: (key: string) => string, ward: string): string {
+  return ward.replace(/^Ward\b/, t('ward2'));
+}
+
 export default function DepartmentDashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profile, complaints } = useDepartment();
 
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
@@ -56,12 +66,12 @@ export default function DepartmentDashboard() {
   const escalated  = visible.filter((c) => c.is_escalated).length;
 
   const stats = [
-    ['Total',        visible.length, 0],
-    ['Pending',      pending,        1],
-    ['In Progress',  active,         2],
-    ['Resolved',     resolved,       3],
-    ['High Priority', highPrio,      4],
-    ['Escalated',    escalated,      5],
+    ['total',       t('totalLabel'),        visible.length, 0],
+    ['pending',     t('pending'),           pending,        1],
+    ['inProgress',  t('inProgress'),        active,         2],
+    ['resolved',    t('resolved'),          resolved,       3],
+    ['highPrio',    t('highPriorityLabel'), highPrio,       4],
+    ['escalated',   t('escalated'),         escalated,      5],
   ] as const;
 
   const meta = DEPT_META[profile?.department ?? ''];
@@ -72,7 +82,7 @@ export default function DepartmentDashboard() {
     .slice(0, 4);
 
   return (
-    <DepartmentScreen title="Dashboard" tab="dashboard">
+    <DepartmentScreen title={t('dashboard')} tab="dashboard">
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -91,24 +101,24 @@ export default function DepartmentDashboard() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroWelcome}>
-                  Welcome back, {profile?.name?.split(' ')[0]}
+                  {t('welcomeBack')} {profile?.name?.split(' ')[0]}
                 </Text>
                 <Text style={styles.heroDept} numberOfLines={2}>
                   {profile?.department}
                 </Text>
               </View>
             </View>
-            <Text style={styles.heroSub}>All 10 wards · Department workspace</Text>
+            <Text style={styles.heroSub}>{t('allWardsWorkspace')}</Text>
           </View>
         </Animated.View>
 
         {/* ── Stats grid ── */}
         <View style={styles.statsGrid}>
-          {stats.map(([label, value, colorIdx], i) => {
+          {stats.map(([key, label, value, colorIdx], i) => {
             const s = STAT_COLORS[colorIdx as number];
             return (
               <Animated.View
-                key={label}
+                key={key}
                 entering={FadeInDown.duration(340).delay(60 + i * 45)}
                 style={styles.statWrap}
               >
@@ -123,9 +133,9 @@ export default function DepartmentDashboard() {
         </View>
 
         {/* ── Ward filter cards ── */}
-        <Text style={styles.sectionTitle}>Filter by Ward</Text>
+        <Text style={styles.sectionTitle}>{t('filterByWard')}</Text>
         <Text style={styles.sectionSub}>
-          Tap a ward to view its complaints. Tap again to clear.
+          {t('tapWardFilter')}
         </Text>
         <ScrollView
           horizontal
@@ -143,7 +153,7 @@ export default function DepartmentDashboard() {
               color={selectedWard === null ? COLORS.white : COLORS.primary}
             />
             <Text style={[styles.wardChipText, selectedWard === null && styles.wardChipTextActive]}>
-              All Wards
+              {t('allWardsChip')}
             </Text>
             <Text style={[styles.wardChipCount, selectedWard === null && styles.wardChipCountActive]}>
               {mine.length}
@@ -170,7 +180,7 @@ export default function DepartmentDashboard() {
                     />
                   </View>
                   <Text style={[styles.wardCardName, isActive && styles.wardCardNameActive]}>
-                    {ward}
+                    {wardDisplay(t, ward)}
                   </Text>
                   <View style={[styles.wardCardBadge, isActive && styles.wardCardBadgeActive]}>
                     <Text style={[styles.wardCardBadgeText, isActive && styles.wardCardBadgeTextActive]}>
@@ -188,7 +198,7 @@ export default function DepartmentDashboard() {
           <GlassCard style={styles.rateCard}>
             <View style={styles.rateRow}>
               <Text style={styles.rateLabel}>
-                Resolution Rate{selectedWard ? ` · ${selectedWard}` : ' · All Wards'}
+                {t('resolutionRate')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ` · ${t('allWardsChip')}`}
               </Text>
               <Text style={[styles.rateVal, { color: resolutionRate >= 70 ? COLORS.success : '#F59E0B' }]}>
                 {resolutionRate}%
@@ -206,22 +216,22 @@ export default function DepartmentDashboard() {
               />
             </View>
             <Text style={styles.rateSub}>
-              {resolved} resolved out of {visible.length} total
+              {resolved} {t('resolvedOf')} {visible.length} {t('total')}
             </Text>
           </GlassCard>
         </Animated.View>
 
         {/* ── Pending complaints ── */}
         <Text style={styles.sectionTitle}>
-          Pending Complaints{selectedWard ? ` · ${selectedWard}` : ''}
+          {t('pendingComplaints')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ''}
         </Text>
 
         {recentComplaints.length === 0 ? (
           <Animated.View entering={FadeInDown.duration(340).delay(240)} style={styles.emptyCard}>
             <MaterialCommunityIcons name="check-all" size={30} color={COLORS.success} />
-            <Text style={styles.emptyTitle}>All caught up!</Text>
+            <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
             <Text style={styles.emptyText}>
-              No pending complaints{selectedWard ? ` in ${selectedWard}` : ''} right now.
+              {t('noPendingComplaints')}{selectedWard ? ` — ${wardDisplay(t, selectedWard)}` : ''} {t('rightNow')}
             </Text>
           </Animated.View>
         ) : (
@@ -242,7 +252,7 @@ export default function DepartmentDashboard() {
                 }]} />
                 <View style={styles.complaintBody}>
                   <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
-                  <Text style={styles.complaintMeta}>{c.ward} · {c.category}</Text>
+                  <Text style={styles.complaintMeta}>{wardDisplay(t, c.ward)} · {t(c.category)}</Text>
                 </View>
                 <View style={[styles.statusPill, {
                   backgroundColor:
@@ -254,7 +264,7 @@ export default function DepartmentDashboard() {
                       c.status === 'Pending'     ? '#F59E0B' :
                       c.status === 'In Progress' ? COLORS.primary : COLORS.success,
                   }]}>
-                    {c.status}
+                    {statusLabel(t, c.status)}
                   </Text>
                 </View>
               </Pressable>
@@ -269,7 +279,7 @@ export default function DepartmentDashboard() {
             style={styles.reviewBtn}
           >
             <MaterialCommunityIcons name="clipboard-text-outline" size={18} color={COLORS.white} />
-            <Text style={styles.reviewBtnText}>Review All Complaints</Text>
+            <Text style={styles.reviewBtnText}>{t('reviewAllComplaints')}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -311,7 +321,7 @@ const styles = StyleSheet.create({
   sectionSub: { fontSize: 11.5, fontWeight: '600', color: COLORS.textMuted, marginBottom: 8, marginTop: -8 },
 
   /* Ward row */
-  wardRow: { gap: 8, paddingBottom: 4, paddingRight: 4 },
+  wardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 4, paddingRight: 4 },
 
   /* All wards chip */
   wardChip: {

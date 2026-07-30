@@ -8,24 +8,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const WARDS = Array.from({ length: 10 }, (_, i) => `Ward ${i + 1}`);
 
-const WARD_LABELS: Record<string, string> = {
-  'Ward 1': 'Malvan Town',
-  'Ward 2': 'Malvan Bazaar',
-  'Ward 3': 'Malvan Beach',
-  'Ward 4': 'Devbag',
-  'Ward 5': 'Achara',
-  'Ward 6': 'Kumbharmath',
-  'Ward 7': 'Dhuriwada',
-  'Ward 8': 'Tondavali',
-  'Ward 9': 'Saraswati Nagar',
-  'Ward 10': 'Bhagawati',
+const WARD_LABEL_KEYS: Record<string, string> = {
+  'Ward 1': 'wardNameMalvanTown',
+  'Ward 2': 'wardNameMalvanBazaar',
+  'Ward 3': 'wardNameMalvanBeach',
+  'Ward 4': 'wardNameDevbag',
+  'Ward 5': 'wardNameAchara',
+  'Ward 6': 'wardNameKumbharmath',
+  'Ward 7': 'wardNameDhuriwada',
+  'Ward 8': 'wardNameTondavali',
+  'Ward 9': 'wardNameSaraswatiNagar',
+  'Ward 10': 'wardNameBhagawati',
 };
 
 export default function WardWiseScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   const wardData = useMemo(() =>
@@ -35,9 +37,10 @@ export default function WardWiseScreen() {
       const pending   = wc.filter((c) => c.status === 'Pending').length;
       const emergency = wc.filter((c) => c.priority === 'Emergency').length;
       const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;
-      return { ward, label: WARD_LABELS[ward] ?? ward, total: wc.length, resolved, pending, emergency, rate };
+      const labelKey = WARD_LABEL_KEYS[ward];
+      return { ward, label: labelKey ? t(labelKey) : ward, total: wc.length, resolved, pending, emergency, rate };
     }),
-  [complaints]);
+  [complaints, t]);
 
   const totalAll    = complaints.length;
   const resolvedAll = complaints.filter((c) => c.status === 'Resolved').length;
@@ -48,8 +51,8 @@ export default function WardWiseScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Ward Wise</Text>
-        <Text style={styles.headerSub}>All {WARDS.length} Municipal Wards</Text>
+        <Text style={styles.headerTitle}>{t('wardWiseLabel')}</Text>
+        <Text style={styles.headerSub}>{t('allMunicipalWardsHeader').replace('{count}', String(WARDS.length))}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
@@ -57,19 +60,19 @@ export default function WardWiseScreen() {
         <Animated.View entering={FadeInDown.duration(380).delay(0)}>
           <LinearGradient colors={['#0B4F8A', '#2E86DE']} style={styles.summaryCard}>
             <View style={styles.summaryRow}>
-              <SummaryItem label="Total" value={totalAll} light />
+              <SummaryItem label={t('totalLabel')} value={totalAll} light />
               <View style={styles.sumDivider} />
-              <SummaryItem label="Resolved" value={resolvedAll} light />
+              <SummaryItem label={t('resolved')} value={resolvedAll} light />
               <View style={styles.sumDivider} />
-              <SummaryItem label="Pending" value={pendingAll} light />
+              <SummaryItem label={t('pending')} value={pendingAll} light />
               <View style={styles.sumDivider} />
-              <SummaryItem label="Rate" value={`${rateAll}%`} light />
+              <SummaryItem label={t('rateLabel')} value={`${rateAll}%`} light />
             </View>
-            <Text style={styles.summaryLabel}>City-wide overview — all wards combined</Text>
+            <Text style={styles.summaryLabel}>{t('cityWideOverviewAllWards')}</Text>
           </LinearGradient>
         </Animated.View>
 
-        <Text style={styles.sectionTitle}>Ward Performance</Text>
+        <Text style={styles.sectionTitle}>{t('wardPerformance')}</Text>
 
         {wardData.map((item, idx) => (
           <Animated.View key={item.ward} entering={FadeInDown.duration(360).delay(60 + idx * 45)}>
@@ -89,7 +92,7 @@ export default function WardWiseScreen() {
                 {item.emergency > 0 && (
                   <View style={styles.emergBadge}>
                     <MaterialCommunityIcons name="alert-circle" size={11} color="#DC2626" />
-                    <Text style={styles.emergText}>{item.emergency} emergency</Text>
+                    <Text style={styles.emergText}>{t('emergencyCountSuffix').replace('{count}', String(item.emergency))}</Text>
                   </View>
                 )}
                 <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
@@ -97,9 +100,9 @@ export default function WardWiseScreen() {
 
               {/* Stats row */}
               <View style={styles.statsRow}>
-                <StatPill label="Total" value={item.total} color={COLORS.primary} bg="#EFF6FF" />
-                <StatPill label="Resolved" value={item.resolved} color="#10B981" bg="#ECFDF5" />
-                <StatPill label="Pending" value={item.pending} color="#F59E0B" bg="#FFF8ED" />
+                <StatPill label={t('totalLabel')} value={item.total} color={COLORS.primary} bg="#EFF6FF" />
+                <StatPill label={t('resolved')} value={item.resolved} color="#10B981" bg="#ECFDF5" />
+                <StatPill label={t('pending')} value={item.pending} color="#F59E0B" bg="#FFF8ED" />
               </View>
 
               {/* Resolution bar */}
@@ -115,7 +118,7 @@ export default function WardWiseScreen() {
                     ]}
                   />
                 </View>
-                <Text style={styles.barLabel}>{item.rate}% resolved</Text>
+                <Text style={styles.barLabel}>{item.rate}% {t('resolved').toLowerCase()}</Text>
               </View>
             </Pressable>
           </Animated.View>

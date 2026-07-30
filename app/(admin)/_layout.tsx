@@ -4,6 +4,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-nativ
 
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 function TabIcon({
   name,
@@ -48,6 +49,7 @@ const tabStyles = StyleSheet.create({
 });
 
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const { ready, isAuthenticated, profile, complaints } = useOfficial();
 
   if (!ready) {
@@ -93,7 +95,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
+          title: t('dashboard'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'view-dashboard' : 'view-dashboard-outline'} color={color} focused={focused} />
           ),
@@ -102,7 +104,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="ward-wise"
         options={{
-          title: 'Ward Wise',
+          title: t('wardWiseLabel'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'map' : 'map-outline'} color={color} focused={focused} />
           ),
@@ -111,7 +113,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="complaints"
         options={{
-          title: 'Complaints',
+          title: t('complaintsTitle'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               name={focused ? 'clipboard-text' : 'clipboard-text-outline'}
@@ -125,7 +127,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="announcements"
         options={{
-          title: 'Announce',
+          title: t('tabAnnounce'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'bullhorn' : 'bullhorn-outline'} color={color} focused={focused} />
           ),
@@ -135,7 +137,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'More',
+          title: t('moreLabel'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'dots-grid' : 'dots-horizontal-circle-outline'} color={color} focused={focused} />
           ),
@@ -153,6 +155,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="settings"        options={{ href: null }} />
       <Tabs.Screen name="complaint-explorer" options={{ href: null }} />
       <Tabs.Screen name="about"              options={{ href: null }} />
+      <Tabs.Screen name="notification"       options={{ href: null }} />
     </Tabs>
   );
 }

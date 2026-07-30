@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 interface HeroBannerProps {
   name: string;
@@ -27,14 +28,15 @@ export default function HeroBanner({
   resolvedCount = 0,
   successRate = '0%',
 }: HeroBannerProps) {
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState('');
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return { label: 'Good Morning', icon: 'sunny-outline' as const };
-    if (hour < 17) return { label: 'Good Afternoon', icon: 'sunny' as const };
-    return { label: 'Good Evening', icon: 'moon-outline' as const };
-  }, []);
+    if (hour < 12) return { label: t('goodMorning'), icon: 'sunny-outline' as const };
+    if (hour < 17) return { label: t('goodAfternoon'), icon: 'sunny' as const };
+    return { label: t('goodEvening'), icon: 'moon-outline' as const };
+  }, [t]);
 
   useEffect(() => {
     const dateText = new Intl.DateTimeFormat('en-IN', {
@@ -71,7 +73,7 @@ export default function HeroBanner({
           <View style={styles.overlay}>
             <View style={styles.greetingRow}>
               <Ionicons name={greeting.icon} size={14} color="#4FC3F7" />
-              <Text style={styles.greetingText}>{greeting.label},</Text>
+              <Text style={styles.greetingText}>{greeting.label}</Text>
             </View>
 
             <Text style={styles.nameText} numberOfLines={1}>
@@ -79,7 +81,7 @@ export default function HeroBanner({
             </Text>
 
             <Text style={styles.roleText}>
-              {designation || 'Nagarsevak (Ward Representative)'}
+              {designation || t('nagarsevakDesignation')}
             </Text>
 
             <View style={styles.chipRow}>
@@ -104,19 +106,19 @@ export default function HeroBanner({
       <Pressable onPress={onViewComplaints} style={styles.statsCard}>
         <View style={styles.statColumn}>
           <Text style={styles.statVal}>{filedCount}</Text>
-          <Text style={styles.statLbl}>Filed</Text>
+          <Text style={styles.statLbl}>{t('filed')}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statColumn}>
           <Text style={styles.statVal}>{resolvedCount}</Text>
-          <Text style={styles.statLbl}>Resolved</Text>
+          <Text style={styles.statLbl}>{t('resolved')}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statColumn}>
           <Text style={styles.statVal}>
             {typeof successRate === 'number' ? `${successRate}%` : successRate}
           </Text>
-          <Text style={styles.statLbl}>Success</Text>
+          <Text style={styles.statLbl}>{t('successRate')}</Text>
         </View>
       </Pressable>
     </View>

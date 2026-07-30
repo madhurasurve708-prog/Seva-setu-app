@@ -8,9 +8,11 @@ import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function DepartmentProfile() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profile, logout } = useDepartment();
 
   const meta = DEPT_META[profile?.department ?? ''];
@@ -23,32 +25,32 @@ export default function DepartmentProfile() {
     } catch {
       // nothing to dismiss
     }
-    router.replace('/(auth)/department-login');
+    router.replace('/(auth)/role-selection');
   };
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm('Sign out of Department Portal?')) {
+      if (typeof window !== 'undefined' && window.confirm(t('logoutDepartmentConfirmation'))) {
         void doLogout();
       }
       return;
     }
-    Alert.alert('Log out', 'Sign out of the Department Officer Portal?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logout'), t('logoutDepartmentConfirmation'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
   const infoRows: { label: string; value: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }[] = [
     {
-      label: 'Department',
+      label: t('department'),
       value: profile?.department ?? '—',
       icon: (meta?.icon ?? 'office-building-outline') as any,
     },
-    { label: 'Role',        value: 'Department Officer',  icon: 'shield-account-outline' },
-    { label: 'Phone',       value: profile?.phone ?? '—', icon: 'phone-outline' },
-    { label: 'Email',       value: profile?.email ?? '—', icon: 'email-outline' },
-    { label: 'Employee ID', value: profile?.employeeId ?? '—', icon: 'card-account-details-outline' },
+    { label: t('roleLabel'),   value: t('deptOfficer'),      icon: 'shield-account-outline' },
+    { label: t('phoneLabel'), value: profile?.phone ?? '—', icon: 'phone-outline' },
+    { label: t('email'),       value: profile?.email ?? '—', icon: 'email-outline' },
+    { label: t('employeeId'), value: profile?.employeeId ?? '—', icon: 'card-account-details-outline' },
   ];
 
   const menuItems: {
@@ -56,15 +58,15 @@ export default function DepartmentProfile() {
     icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
     onPress: () => void;
   }[] = [
-    { label: 'Settings',          icon: 'cog-outline',           onPress: () => router.push('/(dept)/settings') },
-    { label: 'Help & FAQs',       icon: 'help-circle-outline',   onPress: () => router.push('/(dept)/help') },
-    { label: 'Privacy Policy',    icon: 'file-document-outline', onPress: () => router.push('/(dept)/privacy-policy') },
-    { label: 'Terms & Conditions',icon: 'handshake-outline',     onPress: () => router.push('/(dept)/terms') },
-    { label: 'About Seva Setu',   icon: 'information-outline',   onPress: () => router.push('/(dept)/about') },
+    { label: t('settings'),         icon: 'cog-outline',           onPress: () => router.push('/(dept)/settings') },
+    { label: t('helpFAQs'),         icon: 'help-circle-outline',   onPress: () => router.push('/(dept)/help') },
+    { label: t('privacyPolicy'),    icon: 'file-document-outline', onPress: () => router.push('/(dept)/privacy-policy') },
+    { label: t('termsConditions'),  icon: 'handshake-outline',     onPress: () => router.push('/(dept)/terms') },
+    { label: t('aboutSevaSetu'),    icon: 'information-outline',   onPress: () => router.push('/(dept)/about') },
   ];
 
   return (
-    <DepartmentScreen title="My Profile" tab="profile">
+    <DepartmentScreen title={t('myProfile')} tab="profile">
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -79,7 +81,7 @@ export default function DepartmentProfile() {
               </Text>
             </View>
             <Text style={styles.heroName}>{profile?.name ?? 'Officer'}</Text>
-            <Text style={styles.heroRole}>Department Officer</Text>
+            <Text style={styles.heroRole}>{t('deptOfficer')}</Text>
 
             {/* Dept badge */}
             <View style={[styles.deptBadge, { backgroundColor: meta?.bg ?? '#EFF6FF' }]}>
@@ -100,7 +102,7 @@ export default function DepartmentProfile() {
           <GlassCard style={styles.infoCard}>
             {infoRows.map((row, idx) => (
               <View
-                key={row.label}
+                key={row.icon}
                 style={[
                   styles.infoRow,
                   idx === infoRows.length - 1 && { borderBottomWidth: 0 },
@@ -123,7 +125,7 @@ export default function DepartmentProfile() {
           <GlassCard style={styles.menuCard}>
             {menuItems.map((item, idx) => (
               <Pressable
-                key={item.label}
+                key={item.icon}
                 onPress={item.onPress}
                 style={({ pressed }) => [
                   styles.menuRow,
@@ -148,7 +150,7 @@ export default function DepartmentProfile() {
             style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.85 }]}
           >
             <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutText}>Log out</Text>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

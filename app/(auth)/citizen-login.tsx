@@ -10,7 +10,6 @@ import {
     Animated,
     Dimensions,
     KeyboardAvoidingView,
-    LayoutAnimation,
     Modal,
     Platform,
     Pressable,
@@ -19,14 +18,9 @@ import {
     StyleSheet,
     Text,
     TextInput,
-    UIManager,
     View,
 } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -106,7 +100,6 @@ export default function CitizenLoginScreen() {
   const isOtpComplete = useMemo(() => otp.every((d) => d.length === 1), [otp]);
 
   const animateToStep = useCallback((next: Step) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: -20, duration: 120, useNativeDriver: true }),
@@ -141,7 +134,7 @@ export default function CitizenLoginScreen() {
       setTimeout(() => {
         animateToStep(3);
         startCountdown();
-        setTimeout(() => otpRefs.current[0]?.focus(), 150);
+        setTimeout(() => otpRefs.current[0]?.focus(), 420);
       }, 350);
     }, 900);
   }, [isMobileValid, animateToStep, startCountdown, t]);
@@ -293,9 +286,9 @@ export default function CitizenLoginScreen() {
   return (
     <View style={authStyles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <KeyboardAvoidingView style={authStyles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}>
-        <AuthHero compact title={t('citizenLogin')} subtitle="Seva Setu - Malvan" showLogo={true} onBack={goBackStep} />
+      <AuthHero compact title={t('citizenLogin')} subtitle="Seva Setu - Malvan" showLogo={true} onBack={goBackStep} />
 
+      <KeyboardAvoidingView style={authStyles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <AuthSheet>
           <View style={styles.dotsRow}>
             {[1, 2, 3, 4].map((n) => (
@@ -678,6 +671,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     width: '100%',
+    overflow: 'hidden',
     ...SHADOWS.button,
   },
   primaryBtnText: {

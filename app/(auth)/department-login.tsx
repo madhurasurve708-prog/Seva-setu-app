@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
+    overflow: 'hidden',
     ...SHADOWS.soft,
   },
   deptRowPressed: {
