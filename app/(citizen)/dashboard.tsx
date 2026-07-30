@@ -1,5 +1,6 @@
 // app/(citizen)/dashboard.tsx
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
+import LanguageToggle from '@/components/common/LanguageToggle';
 import { ANNOUNCEMENTS, CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
@@ -94,15 +95,18 @@ export default function Dashboard() {
               <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
             </View>
           </View>
-          <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
-            {profile?.avatar || profile?.profileImage ? (
-              <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
-            ) : (
-              <View style={styles.headerAvatar}>
-                <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
-              </View>
-            )}
-          </Pressable>
+          <View style={styles.headerRight}>
+            <LanguageToggle size={36} variant="light" />
+            <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
+              {profile?.avatar || profile?.profileImage ? (
+                <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
+              ) : (
+                <View style={styles.headerAvatar}>
+                  <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
+                </View>
+              )}
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
 
@@ -420,6 +424,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

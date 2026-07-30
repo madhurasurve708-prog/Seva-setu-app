@@ -61,20 +61,20 @@ export default function AdminLoginScreen() {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <AuthHero
+        title={t('nagaradhyaksha')}
+        subtitle="Malvan Municipal Council — Admin Portal"
+        badge={t('restrictedAccess')}
+        icon="shield-crown"
+        showLogo
+        onBack={() => router.back()}
+        compact
+      />
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <AuthHero
-          title={t('nagaradhyaksha')}
-          subtitle="Malvan Municipal Council — Admin Portal"
-          badge={t('restrictedAccess')}
-          icon="shield-crown"
-          showLogo
-          onBack={() => router.back()}
-          compact
-        />
-
         <AuthSheet>
           <ScrollView
             keyboardShouldPersistTaps="handled"

@@ -5,55 +5,57 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AdminShell } from '@/components/admin/admin-shell';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const REPORT_TYPES = [
-  { title: 'Ward Performance Report',      desc: 'Ward-wise resolution rates and pending complaint workloads.',    icon: 'map-outline'             as const, color: '#2563EB', bg: '#DBEAFE' },
-  { title: 'Department Performance',       desc: 'Assignment and resolution trends by municipal department.',     icon: 'domain'                  as const, color: '#7C3AED', bg: '#EDE9FE' },
-  { title: 'Escalation Register',          desc: 'Full escalation history with action owners and timestamps.',    icon: 'arrow-up-bold-circle-outline' as const, color: '#DC2626', bg: '#FEF2F2' },
-  { title: 'Monthly Complaint Register',   desc: 'All complaint records in the current dataset.',                icon: 'clipboard-text-outline'  as const, color: '#10B981', bg: '#ECFDF5' },
-  { title: 'Citizen Grievance Summary',    desc: 'Top complainants, ward distribution and resolution averages.', icon: 'account-group-outline'   as const, color: '#EA580C', bg: '#FFEDD5' },
-  { title: 'Resolved Complaints Log',      desc: 'Closed complaints with resolution notes and officer details.', icon: 'check-all'               as const, color: '#0F766E', bg: '#F0FDFA' },
+  { id: 'ward',       titleKey: 'reportWardPerformanceTitle', descKey: 'reportWardPerformanceDesc', icon: 'map-outline'             as const, color: '#2563EB', bg: '#DBEAFE' },
+  { id: 'dept',       titleKey: 'reportDeptPerformanceTitle', descKey: 'reportDeptPerformanceDesc', icon: 'domain'                  as const, color: '#7C3AED', bg: '#EDE9FE' },
+  { id: 'escalation', titleKey: 'reportEscalationRegisterTitle', descKey: 'reportEscalationRegisterDesc', icon: 'arrow-up-bold-circle-outline' as const, color: '#DC2626', bg: '#FEF2F2' },
+  { id: 'monthly',    titleKey: 'reportMonthlyRegisterTitle', descKey: 'reportMonthlyRegisterDesc', icon: 'clipboard-text-outline'  as const, color: '#10B981', bg: '#ECFDF5' },
+  { id: 'citizen',    titleKey: 'reportCitizenSummaryTitle',  descKey: 'reportCitizenSummaryDesc',  icon: 'account-group-outline'   as const, color: '#EA580C', bg: '#FFEDD5' },
+  { id: 'resolved',   titleKey: 'reportResolvedLogTitle',     descKey: 'reportResolvedLogDesc',     icon: 'check-all'               as const, color: '#0F766E', bg: '#F0FDFA' },
 ];
 
 export default function ReportsScreen() {
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   const generate = (title: string) =>
     Alert.alert(
-      'Report Queued',
-      `"${title}" will be available to download once the municipal reporting endpoint is connected.`,
+      t('reportQueuedTitle'),
+      t('reportQueuedMsg').replace('{title}', title),
     );
 
   return (
-    <AdminShell title="Reports" showBack>
+    <AdminShell title={t('reports')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
         <Text style={styles.hint}>
-          Generate exports using current complaint filters and municipal administrator permissions.
+          {t('generateExportsHint')}
         </Text>
 
         {REPORT_TYPES.map((r, idx) => (
-          <Animated.View key={r.title} entering={FadeInDown.duration(340).delay(idx * 50)}>
+          <Animated.View key={r.id} entering={FadeInDown.duration(340).delay(idx * 50)}>
             <View style={styles.card}>
               <View style={[styles.iconCircle, { backgroundColor: r.bg }]}>
                 <MaterialCommunityIcons name={r.icon} size={20} color={r.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{r.title}</Text>
-                <Text style={styles.cardDesc}>{r.desc}</Text>
-                {r.title.includes('Monthly') && (
-                  <Text style={styles.countPill}>{complaints.length} records</Text>
+                <Text style={styles.cardTitle}>{t(r.titleKey)}</Text>
+                <Text style={styles.cardDesc}>{t(r.descKey)}</Text>
+                {r.id === 'monthly' && (
+                  <Text style={styles.countPill}>{t('recordsSuffix').replace('{count}', String(complaints.length))}</Text>
                 )}
               </View>
               <Pressable
-                onPress={() => generate(r.title)}
+                onPress={() => generate(t(r.titleKey))}
                 style={({ pressed }) => [styles.genBtn, { backgroundColor: r.bg }, pressed && { opacity: 0.85 }]}
               >
                 <MaterialCommunityIcons name="download-outline" size={14} color={r.color} />
-                <Text style={[styles.genBtnText, { color: r.color }]}>Export</Text>
+                <Text style={[styles.genBtnText, { color: r.color }]}>{t('exportLabel')}</Text>
               </Pressable>
             </View>
           </Animated.View>

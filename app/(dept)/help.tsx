@@ -4,59 +4,26 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
-const FAQS = [
-  {
-    q: 'How do I update the status of a complaint?',
-    a: 'Open the complaint from your Complaints tab. Use the action buttons (Pending / In Progress / Resolved) to update the status. You can also add a department note before saving.',
-    icon: 'clipboard-edit-outline' as const,
-    color: COLORS.primary,
-    bg: '#EFF6FF',
-  },
-  {
-    q: 'Which complaints are assigned to my department?',
-    a: 'Only complaints whose category maps to your department will appear in your Complaints tab. The category–department mapping is set by the Main Admin.',
-    icon: 'filter-outline' as const,
-    color: '#7C3AED',
-    bg: '#F5F3FF',
-  },
-  {
-    q: 'How do I escalate a complaint to the Nagaradhyaksha?',
-    a: 'Open the complaint details and tap "Escalate to Nagaradhyaksha" at the bottom. This marks the complaint as Escalated and routes it to the main admin for review.',
-    icon: 'arrow-up-bold-circle-outline' as const,
-    color: '#DC2626',
-    bg: '#FEF2F2',
-  },
-  {
-    q: 'Can I see complaints from all wards?',
-    a: 'Yes. Department Officers have access to complaints from all 10 municipal wards that belong to your department. Use the ward filter cards on the Dashboard to focus on a specific ward.',
-    icon: 'map-outline' as const,
-    color: '#0891B2',
-    bg: '#CFFAFE',
-  },
-  {
-    q: 'Why can\'t I create announcements?',
-    a: 'Announcements are published only by the Main Admin (Nagaradhyaksha). Your Announcements tab shows the latest notices from admin so you stay informed.',
-    icon: 'bullhorn-outline' as const,
-    color: '#EA580C',
-    bg: '#FFF7ED',
-  },
-  {
-    q: 'How do I logout?',
-    a: 'Go to Profile and tap the Logout button at the bottom, or go to Settings and tap Logout. You will be returned to the Department Login screen.',
-    icon: 'logout' as const,
-    color: '#16A34A',
-    bg: '#DCFCE7',
-  },
+const FAQ_DEFS = [
+  { qKey: 'deptFaq1Q', aKey: 'deptFaq1A', icon: 'clipboard-edit-outline' as const, color: COLORS.primary, bg: '#EFF6FF' },
+  { qKey: 'deptFaq2Q', aKey: 'deptFaq2A', icon: 'filter-outline' as const, color: '#7C3AED', bg: '#F5F3FF' },
+  { qKey: 'deptFaq3Q', aKey: 'deptFaq3A', icon: 'arrow-up-bold-circle-outline' as const, color: '#DC2626', bg: '#FEF2F2' },
+  { qKey: 'deptFaq4Q', aKey: 'deptFaq4A', icon: 'map-outline' as const, color: '#0891B2', bg: '#CFFAFE' },
+  { qKey: 'deptFaq5Q', aKey: 'deptFaq5A', icon: 'bullhorn-outline' as const, color: '#EA580C', bg: '#FFF7ED' },
+  { qKey: 'deptFaq6Q', aKey: 'deptFaq6A', icon: 'logout' as const, color: '#16A34A', bg: '#DCFCE7' },
 ];
 
 export default function DeptHelpScreen() {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState<number | null>(null);
+  const FAQS = FAQ_DEFS.map((f) => ({ q: t(f.qKey), a: t(f.aKey), icon: f.icon, color: f.color, bg: f.bg }));
 
   return (
-    <DepartmentScreen title="Help & FAQs" back>
+    <DepartmentScreen title={t('helpFAQs')} back>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
-        <Text style={styles.intro}>Tap any question to expand the answer.</Text>
+        <Text style={styles.intro}>{t('tapToExpand')}</Text>
         {FAQS.map((faq, idx) => (
           <AccordionCard
             key={idx}
@@ -70,7 +37,9 @@ export default function DeptHelpScreen() {
   );
 }
 
-function AccordionCard({ faq, isOpen, onToggle }: { faq: typeof FAQS[0]; isOpen: boolean; onToggle: () => void }) {
+type Faq = { q: string; a: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; bg: string };
+
+function AccordionCard({ faq, isOpen, onToggle }: { faq: Faq; isOpen: boolean; onToggle: () => void }) {
   const progress = useSharedValue(0);
   const handle = () => {
     progress.value = withTiming(isOpen ? 0 : 1, { duration: 220 });

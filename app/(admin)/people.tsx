@@ -7,8 +7,10 @@ import { AdminShell } from '@/components/admin/admin-shell';
 import GlassCard from '@/components/common/GlassCard';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function PeopleScreen() {
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
   const [blocked,  setBlocked]  = useState<string[]>([]);
   const [search,   setSearch]   = useState('');
@@ -33,22 +35,22 @@ export default function PeopleScreen() {
     const isBlocked = blocked.includes(phone);
     const opts: Alert['alert'] extends (title: string, message: string, buttons: infer B) => void ? B : never = [
       {
-        text: 'Issue Warning',
-        onPress: () => Alert.alert('Warning Issued', `${name} has received a conduct warning.`),
+        text: t('issueWarning'),
+        onPress: () => Alert.alert(t('warningIssued'), t('conductWarningMsg').replace('{name}', name)),
       },
       {
-        text: isBlocked ? 'Unblock User' : 'Block User',
+        text: isBlocked ? t('unblockUser') : t('blockUser'),
         style: isBlocked ? 'default' : 'destructive',
         onPress: () =>
           setBlocked((prev) =>
             prev.includes(phone) ? prev.filter((x) => x !== phone) : [...prev, phone],
           ),
       },
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('cancel'), style: 'cancel' },
     ];
 
     if (Platform.OS === 'web') {
-      const action = window.confirm(`Moderate ${name}?\nOK = Block/Unblock, Cancel = dismiss`);
+      const action = window.confirm(t('moderateConfirmMsg').replace('{name}', name));
       if (action) {
         setBlocked((prev) =>
           prev.includes(phone) ? prev.filter((x) => x !== phone) : [...prev, phone],
@@ -57,11 +59,11 @@ export default function PeopleScreen() {
       return;
     }
 
-    Alert.alert(`Moderate ${name}`, 'Choose an action for this citizen account.', opts);
+    Alert.alert(t('moderateTitle').replace('{name}', name), t('chooseActionMsg'), opts);
   };
 
   return (
-    <AdminShell title="Citizens" showBack>
+    <AdminShell title={t('citizens')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -73,15 +75,15 @@ export default function PeopleScreen() {
           <View style={styles.bannerRow}>
             <View style={[styles.bannerStat, { backgroundColor: '#EFF6FF' }]}>
               <Text style={[styles.bannerVal, { color: COLORS.primary }]}>{citizens.length}</Text>
-              <Text style={styles.bannerLbl}>Total Citizens</Text>
+              <Text style={styles.bannerLbl}>{t('totalCitizens')}</Text>
             </View>
             <View style={[styles.bannerStat, { backgroundColor: '#FEF2F2' }]}>
               <Text style={[styles.bannerVal, { color: COLORS.danger }]}>{blocked.length}</Text>
-              <Text style={styles.bannerLbl}>Blocked</Text>
+              <Text style={styles.bannerLbl}>{t('blockedLabel')}</Text>
             </View>
           </View>
           <Text style={styles.bannerNote}>
-            Moderation actions are recorded with timestamps in the municipal audit log.
+            {t('moderationAuditNote')}
           </Text>
         </GlassCard>
 
@@ -91,7 +93,7 @@ export default function PeopleScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by name or ward…"
+            placeholder={t('searchByNameWard')}
             placeholderTextColor={COLORS.textPlaceholder}
             style={styles.searchInput}
           />
@@ -115,11 +117,13 @@ export default function PeopleScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardName}>{c.name}</Text>
-                  <Text style={styles.cardMeta}>{c.ward} · {c.complaints} complaint{c.complaints !== 1 ? 's' : ''}</Text>
+                  <Text style={styles.cardMeta}>
+                    {c.ward} · {t('complaintsCountSuffix').replace('{count}', String(c.complaints)).replace('{plural}', c.complaints !== 1 ? 's' : '')}
+                  </Text>
                   {isBlocked && (
                     <View style={styles.blockedPill}>
                       <MaterialCommunityIcons name="block-helper" size={10} color={COLORS.danger} />
-                      <Text style={styles.blockedText}>Blocked</Text>
+                      <Text style={styles.blockedText}>{t('blockedLabel')}</Text>
                     </View>
                   )}
                 </View>

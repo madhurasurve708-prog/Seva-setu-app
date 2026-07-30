@@ -7,48 +7,52 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import GlassCard from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
-const SECTIONS = [
+const SECTION_DEFS = [
   {
     number: '01',
-    title: 'Privacy for Municipal Representatives',
+    titleKey: 'deptPrivacySec1Title',
     icon: 'account-tie-outline' as const,
     color: COLORS.primary,
     bg: '#EFF6FF',
-    paragraphs: [
-      'All municipal representatives, including Nagarsevaks and administrative department officers, are governed by public service privacy guidelines.',
-      'Your representative profile, email ID, assigned ward, and related details are visible internally and synchronized directly with the Malvan Municipal Council desks.',
-    ],
+    paraKeys: ['deptPrivacySec1Para1', 'deptPrivacySec1Para2'],
     contact: null as string | null,
   },
   {
     number: '02',
-    title: 'Data Protection & Activity Logs',
+    titleKey: 'deptPrivacySec2Title',
     icon: 'database-lock-outline' as const,
     color: '#7C3AED',
     bg: '#F5F3FF',
-    paragraphs: [
-      'To maintain accountability and administrative audit trails, all status changes, notes, images, and escalation requests are securely logged with details of the performing officer.',
-      'This data is stored encrypted under the official Council public governance database rules and is strictly shared only with authorized council leaders.',
-    ],
+    paraKeys: ['deptPrivacySec2Para1', 'deptPrivacySec2Para2'],
     contact: null as string | null,
   },
   {
     number: '03',
-    title: 'Contact Information',
+    titleKey: 'deptPrivacySec3Title',
     icon: 'email-outline' as const,
     color: '#0891B2',
     bg: '#CFFAFE',
-    paragraphs: [
-      'For inquiries regarding municipal privacy guidelines or administrative account management, please reach out to the Council administrative data desk.',
-    ],
+    paraKeys: ['deptPrivacySec3Para1'],
     contact: 'support@malvanmunicipal.in',
   },
 ];
 
 export default function DeptPrivacyPolicyScreen() {
+  const { t } = useTranslation();
+  const SECTIONS = SECTION_DEFS.map((s) => ({
+    number: s.number,
+    title: t(s.titleKey),
+    icon: s.icon,
+    color: s.color,
+    bg: s.bg,
+    paragraphs: s.paraKeys.map((k) => t(k)),
+    contact: s.contact,
+  }));
+
   return (
-    <DepartmentScreen title="Privacy Policy" back>
+    <DepartmentScreen title={t('privacyPolicy')} back>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -56,7 +60,7 @@ export default function DeptPrivacyPolicyScreen() {
       >
         <View style={styles.datePill}>
           <MaterialCommunityIcons name="calendar-outline" size={13} color={COLORS.textMuted} />
-          <Text style={styles.dateText}>Last Updated: July 2026</Text>
+          <Text style={styles.dateText}>{t('deptPrivacyLastUpdated')}</Text>
         </View>
 
         {SECTIONS.map((s) => (

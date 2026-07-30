@@ -7,8 +7,10 @@ import GlassCard from '@/components/common/GlassCard';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function AdminAnalyticsScreen() {
+  const { t } = useTranslation();
   const { complaints } = useOfficial();
 
   const total      = complaints.length;
@@ -19,16 +21,16 @@ export default function AdminAnalyticsScreen() {
   const rate       = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   const STAT_ITEMS = [
-    { label: 'Total',        value: total,      color: COLORS.primary, icon: 'clipboard-list-outline' as const, bg: '#EFF6FF' },
-    { label: 'Resolved',     value: resolved,   color: '#10B981',      icon: 'check-circle-outline'   as const, bg: '#ECFDF5' },
-    { label: 'Pending',      value: pending,    color: '#F59E0B',      icon: 'clock-outline'           as const, bg: '#FFF8ED' },
-    { label: 'In Progress',  value: inProgress, color: '#2563EB',      icon: 'progress-wrench'         as const, bg: '#EFF6FF' },
-    { label: 'Escalated',    value: escalated,  color: '#DC2626',      icon: 'alert-octagon-outline'   as const, bg: '#FEF2F2' },
-    { label: 'Success Rate', value: `${rate}%`, color: '#7C3AED',      icon: 'chart-donut'             as const, bg: '#F5F3FF' },
+    { key: 'total',      label: t('totalLabel'),  value: total,      color: COLORS.primary, icon: 'clipboard-list-outline' as const, bg: '#EFF6FF' },
+    { key: 'resolved',   label: t('resolved'),    value: resolved,   color: '#10B981',      icon: 'check-circle-outline'   as const, bg: '#ECFDF5' },
+    { key: 'pending',    label: t('pending'),     value: pending,    color: '#F59E0B',      icon: 'clock-outline'           as const, bg: '#FFF8ED' },
+    { key: 'inProgress', label: t('inProgress'),  value: inProgress, color: '#2563EB',      icon: 'progress-wrench'         as const, bg: '#EFF6FF' },
+    { key: 'escalated',  label: t('escalated'),   value: escalated,  color: '#DC2626',      icon: 'alert-octagon-outline'   as const, bg: '#FEF2F2' },
+    { key: 'successRate',label: t('successRate'), value: `${rate}%`, color: '#7C3AED',      icon: 'chart-donut'             as const, bg: '#F5F3FF' },
   ];
 
   return (
-    <AdminShell title="Analytics" showBack>
+    <AdminShell title={t('analytics')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -37,7 +39,7 @@ export default function AdminAnalyticsScreen() {
         {/* Stats */}
         <View style={styles.statsGrid}>
           {STAT_ITEMS.map((s, idx) => (
-            <Animated.View key={s.label} entering={FadeInDown.duration(360).delay(idx * 55)} style={styles.statWrap}>
+            <Animated.View key={s.key} entering={FadeInDown.duration(360).delay(idx * 55)} style={styles.statWrap}>
               <View style={[styles.statCard, { backgroundColor: s.bg, borderColor: `${s.color}22` }]}>
                 <View style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}>
                   <MaterialCommunityIcons name={s.icon} size={16} color={s.color} />
@@ -52,17 +54,19 @@ export default function AdminAnalyticsScreen() {
         {/* Resolution bar */}
         <GlassCard style={styles.rateCard}>
           <View style={styles.rateRow}>
-            <Text style={styles.rateLabel}>City-wide Resolution Rate</Text>
+            <Text style={styles.rateLabel}>{t('cityWideResolutionRate')}</Text>
             <Text style={[styles.rateVal, { color: rate >= 70 ? COLORS.success : '#F59E0B' }]}>{rate}%</Text>
           </View>
           <View style={styles.progressBg}>
             <View style={[styles.progressFill, { width: `${rate}%`, backgroundColor: rate >= 70 ? COLORS.success : '#F59E0B' }]} />
           </View>
-          <Text style={styles.rateSub}>{resolved} resolved of {total} total complaints</Text>
+          <Text style={styles.rateSub}>
+            {t('resolvedOfTotalComplaints').replace('{resolved}', String(resolved)).replace('{total}', String(total))}
+          </Text>
         </GlassCard>
 
         {/* Category bars */}
-        <Text style={styles.sectionTitle}>Category Breakdown</Text>
+        <Text style={styles.sectionTitle}>{t('categoryBreakdown')}</Text>
         <GlassCard style={styles.catCard}>
           {categories.filter((c) => c.id !== 'all').map((cat, idx) => {
             const count = complaints.filter((c) => c.category === cat.id).length;
@@ -70,7 +74,7 @@ export default function AdminAnalyticsScreen() {
             const isLast = idx === categories.length - 2;
             return (
               <View key={cat.id} style={[styles.catRow, isLast && { borderBottomWidth: 0 }]}>
-                <Text style={styles.catLabel} numberOfLines={1}>{cat.label}</Text>
+                <Text style={styles.catLabel} numberOfLines={1}>{t(cat.id)}</Text>
                 <View style={styles.barBg}>
                   <View style={[styles.barFill, { width: `${pct}%` }]} />
                 </View>
@@ -82,8 +86,8 @@ export default function AdminAnalyticsScreen() {
 
         <GlassCard style={styles.comingSoon}>
           <MaterialCommunityIcons name="chart-timeline-variant-shimmer" size={26} color={COLORS.accent} />
-          <Text style={styles.comingSoonTitle}>Trend Charts Coming Soon</Text>
-          <Text style={styles.comingSoonText}>Monthly comparison, ward ranking graphs and citizen satisfaction index after backend integration.</Text>
+          <Text style={styles.comingSoonTitle}>{t('trendChartsComingSoon')}</Text>
+          <Text style={styles.comingSoonText}>{t('trendChartsDesc')}</Text>
         </GlassCard>
       </ScrollView>
     </AdminShell>

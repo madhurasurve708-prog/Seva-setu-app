@@ -7,6 +7,7 @@ import GlassCard from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 // Priority display config — mirrors official portal style
 const PRIORITY_STYLES: Record<string, {
@@ -25,6 +26,7 @@ type Tab = typeof TABS[number];
 
 export default function DepartmentAnnouncements() {
   const { announcements } = useOfficial();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
 
   const filtered = tab === 'All'
@@ -32,13 +34,11 @@ export default function DepartmentAnnouncements() {
     : announcements.filter((a) => a.priority === tab);
 
   return (
-    <DepartmentScreen title="Announcements" tab="announcements">
+    <DepartmentScreen title={t('announcementsTitle')} tab="announcements">
       {/* ── Read-only notice banner ── */}
       <View style={styles.infoBanner}>
         <MaterialCommunityIcons name="information-outline" size={15} color="#1E6FD9" />
-        <Text style={styles.infoText}>
-          Notices published by Main Admin (Nagaradhyaksha) · Read-only
-        </Text>
+        <Text style={styles.infoText}>{t('readOnlyNotice')}</Text>
       </View>
 
       {/* ── Priority tabs ── */}
@@ -73,9 +73,9 @@ export default function DepartmentAnnouncements() {
         {filtered.length === 0 ? (
           <View style={styles.emptyCard}>
             <MaterialCommunityIcons name="bell-off-outline" size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>No announcements</Text>
+            <Text style={styles.emptyTitle}>{t('noAnnouncementsMsg')}</Text>
             <Text style={styles.emptyText}>
-              No {tab.toLowerCase()} notices have been published yet.
+              {t('noNoticesPublished').replace('{tab}', tab.toLowerCase())}
             </Text>
           </View>
         ) : (

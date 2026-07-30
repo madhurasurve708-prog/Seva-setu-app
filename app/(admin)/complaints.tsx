@@ -14,9 +14,18 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import type { Complaint } from '@/data/complaints';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const STATUSES   = ['All', 'Pending', 'In Progress', 'Resolved'] as const;
 const PRIORITIES = ['All', 'Emergency', 'High', 'Medium', 'Low'] as const;
+
+function statusLabel(t: (key: string) => string, key: string): string {
+  return ({ All: t('all'), Pending: t('pending'), 'In Progress': t('inProgress'), Resolved: t('resolved') } as Record<string, string>)[key] ?? key;
+}
+
+function priorityLabel(t: (key: string) => string, key: string): string {
+  return ({ All: t('all'), Emergency: t('priorityEmergency'), High: t('priorityHigh'), Medium: t('priorityMedium'), Low: t('priorityLow') } as Record<string, string>)[key] ?? key;
+}
 
 const CAT_PAL: Record<string, { color: string; bg: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }> = {
   water:        { color: '#2563EB', bg: '#DBEAFE', icon: 'water' },
@@ -46,6 +55,7 @@ const STAT_S: Record<string, { bg: string; text: string; icon: React.ComponentPr
 
 export default function AdminComplaints() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ ward?: string; category?: string; department?: string; status?: string }>();
   const { complaints, updateComplaintStatus, softDeleteComplaint } = useOfficial();
 
@@ -58,9 +68,9 @@ export default function AdminComplaints() {
   const [noteText,  setNoteText]  = useState('');
 
   const ctxLabel =
-    params.ward       ? `Ward: ${params.ward}` :
-    params.category   ? `Category: ${params.category}` :
-    params.department ? `Dept: ${params.department}` : null;
+    params.ward       ? `${t('ctxWardLabel')} ${params.ward}` :
+    params.category   ? `${t('ctxCategoryLabel')} ${params.category}` :
+    params.department ? `${t('ctxDeptLabel')} ${params.department}` : null;
 
   const filtered = useMemo(() =>
     complaints.filter((c) => {
@@ -92,13 +102,13 @@ export default function AdminComplaints() {
     const { id, type } = noteModal;
     if (type === 'remove') {
       await softDeleteComplaint(id, 'Nagaradhyaksha', noteText || 'Removed by admin');
-      Alert.alert('Removed', 'Complaint archived.');
+      Alert.alert(t('removedTitle'), t('complaintArchivedMsg'));
     } else if (type === 'note') {
       await updateComplaintStatus(id, complaints.find((c) => c.id === id)!.status, noteText);
-      Alert.alert('Note added', 'Your note has been saved.');
+      Alert.alert(t('noteAddedTitle'), t('noteSavedMsg'));
     } else {
-      Alert.alert(type === 'block' ? 'User Blocked' : 'User Restricted',
-        'Action logged. Backend enforcement applies once the municipal API is connected.');
+      Alert.alert(type === 'block' ? t('userBlockedTitle') : t('userRestrictedTitle'),
+        t('actionLoggedMsg'));
     }
     setNoteModal(null);
     setNoteText('');
@@ -108,7 +118,7 @@ export default function AdminComplaints() {
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.topBar}>
         <View style={s.topBarLeft}>
-          <Text style={s.screenTitle}>Complaints</Text>
+          <Text style={s.screenTitle}>{t('complaintsTitle')}</Text>
           {ctxLabel && <View style={s.ctxBadge}><Text style={s.ctxBadgeText}>{ctxLabel}</Text></View>}
         </View>
         <View style={s.countBubble}><Text style={s.countBubbleText}>{filtered.length}</Text></View>
@@ -119,7 +129,7 @@ export default function AdminComplaints() {
         <View style={s.searchBar}>
           <MaterialCommunityIcons name="magnify" size={18} color={COLORS.textMuted} />
           <TextInput value={search} onChangeText={setSearch}
-            placeholder="Search by ID, title, citizen, location…"
+            placeholder={t('searchComplaintsAdmin')}
             placeholderTextColor={COLORS.textPlaceholder} style={s.searchInput} />
           {search.length > 0 && (
             <Pressable onPress={() => setSearch('')} hitSlop={8}>
@@ -130,9 +140,9 @@ export default function AdminComplaints() {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.chipRow} style={s.chipScroll}>
-          <FChip label="All" active={!params.category} onPress={() => router.setParams({ category: undefined })} />
+          <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
           {categories.filter((c) => c.id !== 'all').map((c) => (
-            <FChip key={c.id} label={c.label} active={params.category === c.id}
+            <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
               onPress={() => router.setParams({ category: c.id })} />
           ))}
         </ScrollView>
@@ -141,7 +151,7 @@ export default function AdminComplaints() {
           {STATUSES.map((st) => (
             <Pressable key={st} onPress={() => setStatus(st)}
               style={[s.filterChip, status === st && s.filterChipActive]}>
-              <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{st}</Text>
+              <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{statusLabel(t, st)}</Text>
             </Pressable>
           ))}
           {/* Escalated toggle */}
@@ -155,7 +165,7 @@ export default function AdminComplaints() {
               color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
             />
             <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
-              Escalated
+              {t('escalated')}
             </Text>
           </Pressable>
         </View>
@@ -164,7 +174,7 @@ export default function AdminComplaints() {
           {PRIORITIES.map((p) => (
             <Pressable key={p} onPress={() => setPriority(p)}
               style={[s.filterChip, priority === p && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-              <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{p}</Text>
+              <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{priorityLabel(t, p)}</Text>
             </Pressable>
           ))}
         </View>
@@ -172,13 +182,14 @@ export default function AdminComplaints() {
         {filtered.length === 0 ? (
           <View style={s.emptyCard}>
             <MaterialCommunityIcons name="clipboard-search-outline" size={32} color={COLORS.textMuted} />
-            <Text style={s.emptyTitle}>No matching complaints</Text>
-            <Text style={s.emptyText}>Adjust your search or filters.</Text>
+            <Text style={s.emptyTitle}>{t('noMatchingComplaintsAdmin')}</Text>
+            <Text style={s.emptyText}>{t('adjustFiltersAdmin')}</Text>
           </View>
         ) : (
           filtered.map((c, idx) => (
             <Animated.View key={c.id} entering={FadeInDown.duration(320).delay(idx * 30)}>
               <PremiumCard
+                t={t}
                 complaint={c}
                 expanded={activeId === c.id}
                 onToggle={() => setActiveId(activeId === c.id ? null : c.id)}
@@ -195,14 +206,15 @@ export default function AdminComplaints() {
         )}
       </ScrollView>
 
-      <ActionModal visible={!!noteModal} type={noteModal?.type ?? 'note'}
+      <ActionModal t={t} visible={!!noteModal} type={noteModal?.type ?? 'note'}
         note={noteText} onChangeNote={setNoteText}
         onClose={() => setNoteModal(null)} onSubmit={submitModal} />
     </SafeAreaView>
   );
 }
 
-function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscalate, onArchive, onRestrict, onBlock, onStatusChange }: {
+function PremiumCard({ t, complaint: c, expanded, onToggle, onView, onNote, onEscalate, onArchive, onRestrict, onBlock, onStatusChange }: {
+  t: (key: string) => string;
   complaint: Complaint; expanded: boolean; onToggle: () => void;
   onView: () => void; onNote: () => void; onEscalate: () => void;
   onArchive: () => void; onRestrict: () => void; onBlock: () => void;
@@ -229,7 +241,7 @@ function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscal
             {c.is_escalated && (
               <View style={cs.escalBadge}>
                 <MaterialCommunityIcons name="arrow-up-bold-circle" size={11} color="#DC2626" />
-                <Text style={cs.escalText}>Escalated</Text>
+                <Text style={cs.escalText}>{t('escalated')}</Text>
               </View>
             )}
           </View>
@@ -241,11 +253,11 @@ function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscal
 
       <View style={cs.badgesRow}>
         <View style={[cs.badge, { backgroundColor: prio.bg, borderColor: prio.border }]}>
-          <Text style={[cs.badgeText, { color: prio.text }]}>{c.priority}</Text>
+          <Text style={[cs.badgeText, { color: prio.text }]}>{priorityLabel(t, c.priority)}</Text>
         </View>
         <View style={[cs.badge, { backgroundColor: stat.bg, borderColor: 'transparent' }]}>
           <MaterialCommunityIcons name={stat.icon} size={11} color={stat.text} />
-          <Text style={[cs.badgeText, { color: stat.text }]}>{c.status}</Text>
+          <Text style={[cs.badgeText, { color: stat.text }]}>{statusLabel(t, c.status)}</Text>
         </View>
         {c.assignedDepartment && (
           <View style={[cs.badge, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
@@ -265,12 +277,12 @@ function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscal
 
       {expanded && (
         <Animated.View entering={FadeInDown.duration(220)} style={cs.panel}>
-          <Text style={cs.panelLabel}>Description</Text>
+          <Text style={cs.panelLabel}>{t('descriptionLabel')}</Text>
           <Text style={cs.panelText}>{c.description}</Text>
 
           {c.notes.length > 0 && (
             <View>
-              <Text style={cs.panelLabel}>Activity Timeline</Text>
+              <Text style={cs.panelLabel}>{t('activityTimeline')}</Text>
               {c.notes.map((note, ni) => (
                 <View key={note.id} style={cs.tlItem}>
                   <View style={cs.tlDot} />
@@ -285,7 +297,7 @@ function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscal
             </View>
           )}
 
-          <Text style={cs.panelLabel}>Change Status</Text>
+          <Text style={cs.panelLabel}>{t('changeStatus')}</Text>
           <View style={cs.statusRow}>
             {(['Pending', 'In Progress', 'Resolved'] as Complaint['status'][]).map((st) => {
               const ss = STAT_S[st]; const active = c.status === st;
@@ -293,23 +305,23 @@ function PremiumCard({ complaint: c, expanded, onToggle, onView, onNote, onEscal
                 <Pressable key={st} onPress={() => onStatusChange(st)}
                   style={[cs.statusBtn, { backgroundColor: ss.bg, borderColor: active ? ss.text : 'transparent', borderWidth: active ? 2 : 1 }]}>
                   <MaterialCommunityIcons name={ss.icon} size={13} color={ss.text} />
-                  <Text style={[cs.statusBtnText, { color: ss.text }]}>{st}</Text>
+                  <Text style={[cs.statusBtnText, { color: ss.text }]}>{statusLabel(t, st)}</Text>
                 </Pressable>
               );
             })}
           </View>
 
           <View style={cs.actionGrid}>
-            <ABtn icon="eye-outline"                    label="View"     color="#2563EB" onPress={onView} />
-            <ABtn icon="note-text-outline"              label="Note"     color="#EA580C" onPress={onNote} />
-            <ABtn icon="arrow-up-bold-circle-outline"   label="Escalate" color="#DC2626" onPress={onEscalate} />
-            <ABtn icon="archive-outline"                label="Archive"  color="#7C3AED" onPress={onArchive} />
+            <ABtn icon="eye-outline"                    label={t('view')}        color="#2563EB" onPress={onView} />
+            <ABtn icon="note-text-outline"              label={t('noteLabel')}   color="#EA580C" onPress={onNote} />
+            <ABtn icon="arrow-up-bold-circle-outline"   label={t('escalateBtn')} color="#DC2626" onPress={onEscalate} />
+            <ABtn icon="archive-outline"                label={t('archiveLabel')} color="#7C3AED" onPress={onArchive} />
           </View>
 
           <View style={cs.modRow}>
-            <MBtn icon="account-clock-outline"  label="Restrict" onPress={onRestrict} />
-            <MBtn icon="account-cancel-outline" label="Block"    onPress={onBlock}    danger />
-            <MBtn icon="delete-outline"         label="Remove"   onPress={onArchive}  danger />
+            <MBtn icon="account-clock-outline"  label={t('restrictShort')} onPress={onRestrict} />
+            <MBtn icon="account-cancel-outline" label={t('blockShort')}    onPress={onBlock}    danger />
+            <MBtn icon="delete-outline"         label={t('removeShort')}   onPress={onArchive}  danger />
           </View>
         </Animated.View>
       )}
@@ -350,16 +362,17 @@ function MBtn({ icon, label, onPress, danger }: {
   );
 }
 
-function ActionModal({ visible, type, note, onChangeNote, onClose, onSubmit }: {
+function ActionModal({ t, visible, type, note, onChangeNote, onClose, onSubmit }: {
+  t: (key: string) => string;
   visible: boolean; type: 'note' | 'restrict' | 'block' | 'remove';
-  note: string; onChangeNote: (t: string) => void;
+  note: string; onChangeNote: (val: string) => void;
   onClose: () => void; onSubmit: () => void;
 }) {
   const cfg = {
-    note:     { title: 'Add Note',        placeholder: 'Write your note…',       icon: 'note-text-outline'     as const, color: '#EA580C' },
-    restrict: { title: 'Restrict User',   placeholder: 'Reason for restriction…', icon: 'account-clock-outline' as const, color: '#D97706' },
-    block:    { title: 'Block User',      placeholder: 'Reason for blocking…',    icon: 'account-cancel-outline' as const, color: '#DC2626' },
-    remove:   { title: 'Remove Complaint',placeholder: 'Reason for removal…',    icon: 'delete-outline'        as const, color: '#DC2626' },
+    note:     { title: t('addNoteTitle'),   placeholder: t('writeNotePlaceholder'),       icon: 'note-text-outline'     as const, color: '#EA580C' },
+    restrict: { title: t('restrictUser'),   placeholder: t('restrictReasonPlaceholder'),  icon: 'account-clock-outline' as const, color: '#D97706' },
+    block:    { title: t('blockUser'),      placeholder: t('blockReasonPlaceholder'),     icon: 'account-cancel-outline' as const, color: '#DC2626' },
+    remove:   { title: t('removeComplaint'),placeholder: t('removeReasonPlaceholder'),    icon: 'delete-outline'        as const, color: '#DC2626' },
   }[type];
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -379,7 +392,7 @@ function ActionModal({ visible, type, note, onChangeNote, onClose, onSubmit }: {
           placeholderTextColor={COLORS.textPlaceholder} multiline
           style={ms.input} textAlignVertical="top" />
         <Pressable onPress={onSubmit} style={[ms.submitBtn, { backgroundColor: cfg.color }]}>
-          <Text style={ms.submitText}>Confirm</Text>
+          <Text style={ms.submitText}>{t('confirmAction')}</Text>
         </Pressable>
       </Animated.View>
     </Modal>
