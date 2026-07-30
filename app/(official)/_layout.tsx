@@ -1,10 +1,15 @@
 import { COLORS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { Redirect, Stack } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
+import { usePanelBackHandler } from '@/hooks/usePanelBackHandler';
 
 export default function OfficialLayout() {
   const { ready, isAuthenticated, profile } = useOfficial();
+  const colorScheme = useColorScheme();
+
+  // Custom hook to handle Android hardware back press navigation and double-press to exit
+  usePanelBackHandler('official');
 
   if (!ready) {
     return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background }}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
@@ -17,7 +22,12 @@ export default function OfficialLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colorScheme === 'dark' ? '#071A2D' : '#F8FAFC' },
+      }}
+    >
       <Stack.Screen name="dashboard" />
       <Stack.Screen name="complaints" />
       <Stack.Screen name="complaint-details" />

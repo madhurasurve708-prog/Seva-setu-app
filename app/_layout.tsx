@@ -13,13 +13,31 @@ import { LocalizationProvider } from '@/providers/localization-provider';
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  const customDefaultTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: '#F8FAFC',
+    },
+  };
+
+  const customDarkTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: '#071A2D',
+    },
+  };
+
+  const theme = colorScheme === 'dark' ? customDarkTheme : customDefaultTheme;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={theme}>
       <LocalizationProvider>
         <CitizenProvider>
           <OfficialProvider>
             <DepartmentProvider>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colorScheme === 'dark' ? '#071A2D' : '#F8FAFC' } }}>
               <Stack.Screen name="(auth)" options={{ animation: 'none' }} />
               <Stack.Screen name="(citizen)" />
               <Stack.Screen name="(official)" />
