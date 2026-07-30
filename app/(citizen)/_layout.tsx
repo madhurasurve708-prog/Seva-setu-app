@@ -1,10 +1,15 @@
 import { Redirect, Stack } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
 import { useCitizen } from '@/providers/citizen-provider';
 import { COLORS } from '@/constants/theme';
+import { usePanelBackHandler } from '@/hooks/usePanelBackHandler';
 
 export default function CitizenLayout() {
   const { ready, profile } = useCitizen();
+  const colorScheme = useColorScheme();
+  
+  // Custom hook to handle Android hardware back press navigation and double-press to exit
+  usePanelBackHandler('citizen');
 
   if (!ready) {
     return (
@@ -18,5 +23,12 @@ export default function CitizenLayout() {
     return <Redirect href="/(auth)/role-selection" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colorScheme === 'dark' ? '#071A2D' : '#F8FAFC' },
+      }}
+    />
+  );
 }
