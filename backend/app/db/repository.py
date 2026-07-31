@@ -75,6 +75,141 @@ class ComplaintRepository:
         return db_complaint
 
     @staticmethod
+    def get_department_status_counts(db: Session, category_names: list[str]) -> dict[str, int]:
+        """Get complaint counts for categories belonging to a department."""
+        from sqlalchemy import func
+        
+        # Get category IDs for the department
+        category_ids = [c.id for c in db.query(Category).filter(Category.name.in_(category_names)).all()]
+        
+        if not category_ids:
+            return {
+                "total_complaints": 0,
+                "pending": 0,
+                "in_progress": 0,
+                "resolved": 0,
+            }
+        
+        results = (
+            db.query(Complaint.status, func.count(Complaint.id))
+            .filter(Complaint.category_id.in_(category_ids))
+            .group_by(Complaint.status)
+            .all()
+        )
+        
+        counts = {"Pending": 0, "In Progress": 0, "Resolved": 0}
+        total = 0
+        for status_val, count in results:
+            if status_val in counts:
+                counts[status_val] = count
+            total += count
+        return {
+            "total_complaints": total,
+            "pending": counts["Pending"],
+            "in_progress": counts["In Progress"],
+            "resolved": counts["Resolved"],
+        }
+
+    @staticmethod
+    def get_department_complaints(
+        db: Session,
+        category_names: list[str],
+        status_filter: str | None = None,
+        priority_filter: str | None = None,
+        ward_filter: int | None = None,
+        search_query: str | None = None,
+        sort_newest: bool = True,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Complaint]:
+        """Get complaints for a department with filtering and pagination."""
+        from sqlalchemy import or_
+        
+        # Get category IDs for the department
+        category_ids = [c.id for c in db.query(Category).filter(Category.name.in_(category_names)).all()]
+        
+        if not category_ids:
+            return []
+        
+        query = (
+            db.query(Complaint)
+            .options(
+                joinedload(Complaint.citizen),
+                joinedload(Complaint.ward),
+                joinedload(Complaint.category),
+            )
+            .filter(Complaint.category_id.in_(category_ids))
+        )
+        
+        if status_filter:
+            query = query.filter(Complaint.status == status_filter)
+        
+        if priority_filter:
+            query = query.filter(Complaint.priority == priority_filter)
+        
+        if ward_filter:
+            query = query.filter(Complaint.ward_id == ward_filter)
+        
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    Complaint.title.ilike(search_pattern),
+                    Complaint.description.ilike(search_pattern),
+                )
+            )
+        
+        order_clause = desc(Complaint.created_at) if sort_newest else Complaint.created_at.asc()
+        query = query.order_by(order_clause)
+        
+        return query.offset(offset).limit(limit).all()
+
+    @staticmethod
+    def get_complaint_by_id_for_department(
+        db: Session,
+        complaint_id: int,
+        category_names: list[str],
+    ) -> Complaint | None:
+        """Get a specific complaint if it belongs to the department's categories."""
+        # Get category IDs for the department
+        category_ids = [c.id for c in db.query(Category).filter(Category.name.in_(category_names)).all()]
+        
+        if not category_ids:
+            return None
+        
+        return (
+            db.query(Complaint)
+            .options(
+                joinedload(Complaint.citizen),
+                joinedload(Complaint.ward),
+                joinedload(Complaint.category),
+            )
+            .filter(
+                Complaint.id == complaint_id,
+                Complaint.category_id.in_(category_ids)
+            )
+            .first()
+        )
+
+    @staticmethod
+    def get_department_escalated_count(db: Session, category_names: list[str]) -> int:
+        """Get count of escalated complaints for a department."""
+        # Get category IDs for the department
+        category_ids = [c.id for c in db.query(Category).filter(Category.name.in_(category_names)).all()]
+        
+        if not category_ids:
+            return 0
+        
+        # Count unique complaints that have escalations
+        return (
+            db.query(ComplaintEscalation.complaint_id)
+            .join(Complaint)
+            .filter(Complaint.category_id.in_(category_ids))
+            .distinct()
+            .count()
+        )
+
+    @staticmethod
     def get_complaints_by_supabase_user(
         db: Session,
         supabase_user_id: str,
