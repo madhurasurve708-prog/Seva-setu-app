@@ -92,7 +92,13 @@ export default function DepartmentCredentialsScreen() {
         title={t('departmentLogin')}
         subtitle="Malvan Municipal Council"
         showLogo={true}
-        onBack={() => router.back()}
+        onBack={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(auth)/department-login');
+          }
+        }}
       />
 
       <AuthSheet>
@@ -128,7 +134,13 @@ export default function DepartmentCredentialsScreen() {
                 ) : null}
               </View>
               <Pressable
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(auth)/department-login');
+                  }
+                }}
                 style={styles.changeDeptBtn}
                 hitSlop={8}
               >

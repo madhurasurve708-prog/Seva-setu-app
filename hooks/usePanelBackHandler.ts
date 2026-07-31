@@ -46,9 +46,9 @@ export function usePanelBackHandler(panelName: 'citizen' | 'official' | 'dept') 
         ],
         dept: [
           '/(dept)/complaints',
+          '/(dept)/announcements',
           '/(dept)/analytics',
           '/(dept)/profile',
-          '/(dept)/settings',
         ],
       };
 
@@ -70,6 +70,24 @@ export function usePanelBackHandler(panelName: 'citizen' | 'official' | 'dept') 
       if (router.canGoBack()) {
         router.back();
         return true; // handled
+      }
+
+      // Fallback: If can't go back, check specific subpages
+      if (panelName === 'dept') {
+        const cleanPath = currentPath.replace(/\/$/, '');
+        if (cleanPath.endsWith('/settings')) {
+          router.replace('/(dept)/profile');
+          return true; // handled
+        }
+        if (
+          cleanPath.endsWith('/help') ||
+          cleanPath.endsWith('/privacy-policy') ||
+          cleanPath.endsWith('/terms') ||
+          cleanPath.endsWith('/about')
+        ) {
+          router.replace('/(dept)/settings');
+          return true; // handled
+        }
       }
 
       // Fallback: If can't go back, go to Dashboard
