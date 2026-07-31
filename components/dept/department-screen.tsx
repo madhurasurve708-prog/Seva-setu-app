@@ -3,7 +3,7 @@ import { COLORS, SHADOWS } from '@/constants/theme';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import type { PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +25,7 @@ export function DepartmentScreen({
   children,
 }: PropsWithChildren<{ title: string; tab?: string; back?: boolean }>) {
   const router = useRouter() as any;
+  const pathname = usePathname();
   const { profile, complaints } = useDepartment();
   const { t } = useTranslation();
 
@@ -38,7 +39,46 @@ export function DepartmentScreen({
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           {back && (
-            <Pressable onPress={() => router.back()} style={styles.headButton} hitSlop={8}>
+            <Pressable
+              onPress={() => {
+                const cleanPath = pathname.replace(/\/$/, '');
+                if (cleanPath.endsWith('/settings')) {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(dept)/profile');
+                  }
+                } else if (
+                  cleanPath.endsWith('/help') ||
+                  cleanPath.endsWith('/privacy-policy') ||
+                  cleanPath.endsWith('/terms') ||
+                  cleanPath.endsWith('/about')
+                ) {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(dept)/settings');
+                  }
+                } else if (
+                  cleanPath.endsWith('/complaint-details') ||
+                  cleanPath.endsWith('/notification')
+                ) {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(dept)/dashboard');
+                  }
+                } else {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(dept)/dashboard');
+                  }
+                }
+              }}
+              style={styles.headButton}
+              hitSlop={8}
+            >
               <MaterialCommunityIcons name="arrow-left" size={23} color={COLORS.white} />
             </Pressable>
           )}

@@ -40,7 +40,13 @@ export default function DepartmentLoginScreen() {
         subtitle="Malvan Municipal Council"
         badge={t('departmentAccess')}
         showLogo={true}
-        onBack={() => router.back()}
+        onBack={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(auth)/role-selection');
+          }
+        }}
       />
 
       <AuthSheet>
