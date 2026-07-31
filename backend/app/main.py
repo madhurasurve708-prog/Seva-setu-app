@@ -11,6 +11,7 @@ from app.api.nagarsevak import router as nagarsevak_router
 from app.api.nagarsevak_complaint import router as nagarsevak_complaint_router
 from app.api.announcement import router as announcement_router
 from app.api.department_officer import router as department_officer_router
+from app.api.department_officer_complaint import router as department_officer_complaint_router
 
 # Import all models so SQLAlchemy registers them with Base.metadata
 # before create_all() runs. Must happen before the app starts.
@@ -46,6 +47,7 @@ app.include_router(nagarsevak_router)
 app.include_router(nagarsevak_complaint_router)
 app.include_router(announcement_router)
 app.include_router(department_officer_router)
+app.include_router(department_officer_complaint_router)
 
 
 @app.get("/")

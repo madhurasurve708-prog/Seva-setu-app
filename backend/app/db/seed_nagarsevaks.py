@@ -62,7 +62,7 @@ CATEGORIES_DATA = [
 # ward_number is used only to look up the ward_id dynamically; it is not stored.
 NAGARSEVAKS_DATA = [
     # Ward 1
-    {"name": "Mamata Vandkar",           "phone_number": "8208454975", "ward_number": "1"},
+    {"name": "Mamata Waradkar",           "phone_number": "8208454975", "ward_number": "1"},
     {"name": "Mandar Keni",              "phone_number": "9637778901", "ward_number": "1"},
     {"name": "Darshana Kasavkar",        "phone_number": "9405497503", "ward_number": "1"},
     # Ward 2
@@ -73,7 +73,7 @@ NAGARSEVAKS_DATA = [
     {"name": "Neena Mumbarkar",          "phone_number": "9422584790", "ward_number": "3"},
     # Ward 4
     {"name": "Siddharth Jadhav",         "phone_number": "9373616290", "ward_number": "4"},
-    {"name": "Punam Chavan",             "phone_number": "9404689316", "ward_number": "4"},
+    {"name": "Poonam Chavan",             "phone_number": "9404689316", "ward_number": "4"},
     # Ward 5
     {"name": "Mahendra Mhadgut",         "phone_number": "9404944446", "ward_number": "5"},
     {"name": "Mahananda Khanolkar",      "phone_number": "9423806158", "ward_number": "5"},
@@ -93,7 +93,7 @@ NAGARSEVAKS_DATA = [
     {"name": "Tapaswi Mayekar",          "phone_number": "9404598281", "ward_number": "10"},
     {"name": "Bhagyashree Mayekar",      "phone_number": "7738768702", "ward_number": "10"},
     {"name": "Mahesh Kandalagavkar",     "phone_number": "9823856769", "ward_number": "10"},
-    {"name": "Ravikirn Torskar",         "phone_number": "9422633518", "ward_number": "10"},
+    {"name": "Ravikiran Torskar",         "phone_number": "9422633518", "ward_number": "10"},
 ]
 
 
