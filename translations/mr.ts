@@ -344,6 +344,7 @@ export const mr: Record<string, string> = {
 
   // Announcements
   announcementsTitle: "घोषणा",
+  complaintsTitle: "तक्रारी",
   municipalNotifications: "नगरपालिका मंडळाच्या सूचना",
   noticeLabel: "सूचना",
 
