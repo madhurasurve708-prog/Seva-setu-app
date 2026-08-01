@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.security import decode_token_payload
+from app.core.constants import Role
 from app.schemas.department_officer import VALID_DEPARTMENT_KEYS
 
 # Separate HTTPBearer instance so Swagger shows a distinct auth scheme
@@ -30,7 +31,7 @@ def get_current_department_officer(
         if not payload:
             raise ValueError("empty payload")
         # Enforce role — rejects nagarsevak tokens sharing the same secret
-        if payload.get("role") != "department_officer":
+        if payload.get("role") != Role.DEPARTMENT_OFFICER:
             raise ValueError("wrong role")
         department = str(payload["sub"])
         if department not in VALID_DEPARTMENT_KEYS:

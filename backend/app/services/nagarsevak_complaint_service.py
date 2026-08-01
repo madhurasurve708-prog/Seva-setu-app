@@ -19,15 +19,7 @@ CATEGORY_TO_DEPARTMENT = {
 from app.models.nagarsevak import Nagarsevak
 from app.utils.storage import upload_image_to_storage
 from app.core.content_validation import ensure_appropriate_text
-
-ALLOWED_IMAGE_TYPES: dict[str, str] = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-}
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
-
-VALID_STATUSES = {"Pending", "In Progress", "Resolved"}
+from app.core.constants import ComplaintStatus, ImageValidation
 
 
 def _build_detail_dict(complaint) -> dict:
@@ -90,10 +82,10 @@ class NagarsevakComplaintService:
     def update_complaint_status(
         db: Session, nagarsevak: Nagarsevak, complaint_id: int, new_status: str
     ) -> dict:
-        if new_status not in VALID_STATUSES:
+        if new_status not in ComplaintStatus.VALID_STATUSES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status '{new_status}'. Allowed: {', '.join(VALID_STATUSES)}",
+                detail=f"Invalid status '{new_status}'. Allowed: {', '.join(ComplaintStatus.VALID_STATUSES)}",
             )
 
         complaint = ComplaintRepository.get_complaint_by_id_and_ward(
@@ -108,12 +100,12 @@ class NagarsevakComplaintService:
         current_status = complaint.status
 
         # Enforce forward-only status transitions
-        if current_status == "In Progress" and new_status == "Pending":
+        if current_status == ComplaintStatus.IN_PROGRESS and new_status == ComplaintStatus.PENDING:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid status transition. Cannot go back from In Progress.",
             )
-        if current_status == "Resolved" and new_status != "Resolved":
+        if current_status == ComplaintStatus.RESOLVED and new_status != ComplaintStatus.RESOLVED:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid status transition. Resolved complaints cannot be changed.",
@@ -159,19 +151,19 @@ class NagarsevakComplaintService:
 
         public_url = None
         if file_bytes:
-            if len(file_bytes) > MAX_IMAGE_SIZE_BYTES:
+            if len(file_bytes) > ImageValidation.MAX_IMAGE_SIZE_BYTES:
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail=f"File size exceeds the maximum allowed limit of "
-                           f"{MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB.",
+                           f"{ImageValidation.MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB.",
                 )
-            if content_type not in ALLOWED_IMAGE_TYPES:
+            if content_type not in ImageValidation.ALLOWED_IMAGE_TYPES:
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail=f"Unsupported file type '{content_type}'. "
                            f"Allowed types: JPEG, PNG, WebP.",
                 )
-            extension = ALLOWED_IMAGE_TYPES[content_type]
+            extension = ImageValidation.ALLOWED_IMAGE_TYPES[content_type]
             object_path = f"complaints/{complaint_id}/notes/{uuid.uuid4().hex}.{extension}"
             public_url = upload_image_to_storage(
                 file_bytes=file_bytes,

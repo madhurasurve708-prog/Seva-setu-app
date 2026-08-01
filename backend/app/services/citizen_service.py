@@ -5,15 +5,7 @@ from app.models.citizen import Citizen
 from app.models.ward import Ward
 from app.schemas.citizen import CitizenProfileCreate
 from app.utils.storage import upload_image_to_storage, PROFILE_PHOTOS_BUCKET
-
-# Allowed MIME types and their canonical file extensions
-ALLOWED_IMAGE_TYPES: dict[str, str] = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-}
-
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+from app.core.constants import ImageValidation
 
 
 class CitizenService:
@@ -79,14 +71,14 @@ class CitizenService:
             )
 
         # 3. Enforce maximum file size
-        if len(file_bytes) > MAX_IMAGE_SIZE_BYTES:
+        if len(file_bytes) > ImageValidation.MAX_IMAGE_SIZE_BYTES:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File size exceeds the maximum allowed limit of {MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB.",
+                detail=f"File size exceeds the maximum allowed limit of {ImageValidation.MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB.",
             )
 
         # 4. Reject unsupported MIME types
-        if content_type not in ALLOWED_IMAGE_TYPES:
+        if content_type not in ImageValidation.ALLOWED_IMAGE_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                 detail=f"Unsupported file type '{content_type}'. Allowed types: JPEG, PNG, WebP.",
@@ -95,7 +87,7 @@ class CitizenService:
         # 5. Upload to Supabase Storage.
         #    Object path is deterministic per citizen — re-uploading replaces the
         #    existing photo (upsert=true inside upload_image_to_storage).
-        extension = ALLOWED_IMAGE_TYPES[content_type]
+        extension = ImageValidation.ALLOWED_IMAGE_TYPES[content_type]
         object_path = f"citizens/{citizen.id}.{extension}"
 
         photo_url = upload_image_to_storage(

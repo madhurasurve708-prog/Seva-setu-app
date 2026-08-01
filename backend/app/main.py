@@ -12,6 +12,12 @@ from app.api.nagarsevak_complaint import router as nagarsevak_complaint_router
 from app.api.announcement import router as announcement_router
 from app.api.department_officer import router as department_officer_router
 from app.api.department_officer_complaint import router as department_officer_complaint_router
+from app.api.department_officer_announcement import router as department_officer_announcement_router
+from app.api.main_admin import router as main_admin_router
+from app.api.main_admin_complaint import router as main_admin_complaint_router
+from app.api.main_admin_analytics import router as main_admin_analytics_router
+from app.api.main_admin_audit import router as main_admin_audit_router
+from app.api.main_admin_reports import router as main_admin_reports_router
 
 # Import all models so SQLAlchemy registers them with Base.metadata
 # before create_all() runs. Must happen before the app starts.
@@ -48,6 +54,12 @@ app.include_router(nagarsevak_complaint_router)
 app.include_router(announcement_router)
 app.include_router(department_officer_router)
 app.include_router(department_officer_complaint_router)
+app.include_router(department_officer_announcement_router)
+app.include_router(main_admin_router)
+app.include_router(main_admin_complaint_router)
+app.include_router(main_admin_analytics_router)
+app.include_router(main_admin_audit_router)
+app.include_router(main_admin_reports_router)
 
 
 @app.get("/")

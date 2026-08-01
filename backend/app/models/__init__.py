@@ -16,6 +16,7 @@ from app.models.announcement import Announcement
 from app.models.announcement_read import AnnouncementRead
 from app.models.notification import Notification
 from app.models.department_officer import DepartmentOfficer
+from app.models.main_admin import MainAdmin
 
 __all__ = [
     "Ward",
@@ -29,4 +30,5 @@ __all__ = [
     "AnnouncementRead",
     "Notification",
     "DepartmentOfficer",
+    "MainAdmin",
 ]

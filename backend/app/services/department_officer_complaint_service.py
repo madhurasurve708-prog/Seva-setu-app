@@ -1,22 +1,13 @@
+import uuid
 from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.db.repository import ComplaintRepository
+from app.db.repository import ComplaintRepository, ComplaintHistoryRepository, ComplaintEscalationRepository
 from app.dependencies.department_auth import DepartmentOfficerContext
-
-# Reuse the existing category-to-department mapping from nagarsevak_complaint_service
-CATEGORY_TO_DEPARTMENT = {
-    "Water": "पाणी पुरवठा विभाग",
-    "Garbage": "स्वच्छता व घनकचरा विभाग",
-    "Gutter": "स्वच्छता व घनकचरा विभाग",
-    "Drainage": "बांधकाम विभाग",
-    "Road": "बांधकाम विभाग",
-    "Street Lights": "विद्युत विभाग",
-    "Animals": "आरोग्य विभाग",
-    "Tree": "उद्याने व बाग विभाग",
-    "Traffic": "बांधकाम विभाग",
-    "Other": "आरोग्य विभाग",
-}
+from app.services.nagarsevak_complaint_service import CATEGORY_TO_DEPARTMENT
+from app.utils.storage import upload_image_to_storage
+from app.core.content_validation import ensure_appropriate_text
+from app.core.constants import ComplaintStatus, ImageValidation
 
 
 def _get_category_names_for_department(department_name: str) -> list[str]:
@@ -144,3 +135,255 @@ class DepartmentOfficerComplaintService:
             )
         
         return _build_detail_dict(complaint, context.department_name)
+
+    @staticmethod
+    def update_complaint_status(
+        db: Session,
+        context: DepartmentOfficerContext,
+        complaint_id: int,
+        new_status: str,
+    ) -> dict:
+        """Update complaint status for department officer's department."""
+        if new_status not in ComplaintStatus.VALID_STATUSES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status '{new_status}'. Allowed: {', '.join(ComplaintStatus.VALID_STATUSES)}",
+            )
+
+        category_names = _get_category_names_for_department(context.department_name)
+        
+        if not category_names:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No categories found for this department.",
+            )
+
+        complaint = ComplaintRepository.get_complaint_by_id_for_department(
+            db=db,
+            complaint_id=complaint_id,
+            category_names=category_names,
+        )
+
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found or does not belong to your department.",
+            )
+
+        current_status = complaint.status
+
+        # Enforce forward-only status transitions
+        if current_status == ComplaintStatus.IN_PROGRESS and new_status == ComplaintStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid status transition. Cannot go back from In Progress.",
+            )
+        if current_status == ComplaintStatus.RESOLVED and new_status != ComplaintStatus.RESOLVED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid status transition. Resolved complaints cannot be changed.",
+            )
+
+        if current_status != new_status:
+            ComplaintRepository.update_complaint_status(db, complaint, new_status)
+            ComplaintHistoryRepository.create_note(
+                db=db,
+                complaint_id=complaint.id,
+                author_role="Department",
+                author_name=context.department_name,
+                author_id=None,  # Department officers don't have individual IDs yet
+                note_text=f"Status updated from '{current_status}' to '{new_status}'",
+            )
+
+        return _build_detail_dict(complaint, context.department_name)
+
+    @staticmethod
+    def add_complaint_note(
+        db: Session,
+        context: DepartmentOfficerContext,
+        complaint_id: int,
+        note_text: str,
+        file_bytes: Optional[bytes] = None,
+        content_type: Optional[str] = None,
+    ) -> dict:
+        """Add a note to a complaint for department officer's department."""
+        category_names = _get_category_names_for_department(context.department_name)
+        
+        if not category_names:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No categories found for this department.",
+            )
+
+        complaint = ComplaintRepository.get_complaint_by_id_for_department(
+            db=db,
+            complaint_id=complaint_id,
+            category_names=category_names,
+        )
+
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found or does not belong to your department.",
+            )
+
+        if not note_text or not note_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Note text cannot be empty.",
+            )
+        ensure_appropriate_text(note_text, "Note text")
+
+        public_url = None
+        if file_bytes:
+            if len(file_bytes) > ImageValidation.MAX_IMAGE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"File size exceeds the maximum allowed limit of "
+                           f"{ImageValidation.MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB.",
+                )
+            if content_type not in ImageValidation.ALLOWED_IMAGE_TYPES:
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail=f"Unsupported file type '{content_type}'. "
+                           f"Allowed types: JPEG, PNG, WebP.",
+                )
+            extension = ImageValidation.ALLOWED_IMAGE_TYPES[content_type]
+            object_path = f"complaints/{complaint_id}/notes/{uuid.uuid4().hex}.{extension}"
+            public_url = upload_image_to_storage(
+                file_bytes=file_bytes,
+                content_type=content_type,
+                object_path=object_path,
+            )
+
+        note = ComplaintHistoryRepository.create_note(
+            db=db,
+            complaint_id=complaint_id,
+            author_role="Department",
+            author_name=context.department_name,
+            author_id=None,  # Department officers don't have individual IDs yet
+            note_text=note_text.strip(),
+            image_url=public_url,
+        )
+
+        return {
+            "author_name": note.author_name,
+            "author_role": note.author_role,
+            "created_at": note.created_at,
+            "note_text": note.note_text,
+            "image_url": note.image_url,
+        }
+
+    @staticmethod
+    def get_complaint_timeline(
+        db: Session,
+        context: DepartmentOfficerContext,
+        complaint_id: int,
+    ) -> list[dict]:
+        """Get complaint timeline for department officer's department."""
+        category_names = _get_category_names_for_department(context.department_name)
+        
+        if not category_names:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No categories found for this department.",
+            )
+
+        complaint = ComplaintRepository.get_complaint_by_id_for_department(
+            db=db,
+            complaint_id=complaint_id,
+            category_names=category_names,
+        )
+
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found or does not belong to your department.",
+            )
+
+        history = ComplaintHistoryRepository.get_history_for_complaint(db, complaint_id)
+        return [
+            {
+                "author_name": item.author_name,
+                "author_role": item.author_role,
+                "created_at": item.created_at,
+                "note_text": item.note_text,
+                "image_url": item.image_url,
+            }
+            for item in history
+        ]
+
+    @staticmethod
+    def escalate_complaint(
+        db: Session,
+        context: DepartmentOfficerContext,
+        complaint_id: int,
+        escalation_target: str,
+        escalation_note: str,
+    ) -> dict:
+        """Escalate a complaint for department officer's department."""
+        # Validate target
+        if escalation_target not in {"Main Admin", "Department"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid escalation target '{escalation_target}'. Allowed targets are 'Main Admin' or 'Department'.",
+            )
+
+        if not escalation_note or not escalation_note.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Escalation note cannot be empty.",
+            )
+        ensure_appropriate_text(escalation_note, "Escalation note")
+
+        category_names = _get_category_names_for_department(context.department_name)
+        
+        if not category_names:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No categories found for this department.",
+            )
+
+        complaint = ComplaintRepository.get_complaint_by_id_for_department(
+            db=db,
+            complaint_id=complaint_id,
+            category_names=category_names,
+        )
+
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found or does not belong to your department.",
+            )
+
+        # Create escalation record
+        escalation = ComplaintEscalationRepository.create_escalation(
+            db=db,
+            complaint_id=complaint_id,
+            escalated_by_role="Department",
+            escalated_by_id=0,  # Department officers don't have individual IDs yet
+            escalated_by_name=context.department_name,
+            escalated_to=escalation_target,
+            escalation_note=escalation_note.strip(),
+        )
+
+        # Create history entry
+        ComplaintHistoryRepository.create_note(
+            db=db,
+            complaint_id=complaint_id,
+            author_role="Department",
+            author_name=context.department_name,
+            author_id=None,
+            note_text=f"Escalated to {escalation_target}: {escalation_note.strip()}",
+        )
+
+        return {
+            "id": escalation.id,
+            "complaint_id": escalation.complaint_id,
+            "escalated_by_role": escalation.escalated_by_role,
+            "escalated_by_id": escalation.escalated_by_id,
+            "escalated_by_name": escalation.escalated_by_name,
+            "escalated_to": escalation.escalated_to,
+            "escalation_note": escalation.escalation_note,
+            "created_at": escalation.created_at,
+        }
