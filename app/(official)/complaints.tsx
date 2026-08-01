@@ -9,9 +9,9 @@ import {
     TextInput,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import ComplaintCard from '@/components/official/ComplaintCard';
+import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
@@ -51,14 +51,11 @@ export default function ComplaintsScreen() {
   }), [complaints]);
 
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <OfficialScreen title="Ward Complaints" tab="complaints" hideHeader={true}>
       {/* ── Header ── */}
       <View style={styles.headerBar}>
         <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
-          </Pressable>
-          <View>
+          <View style={{ marginLeft: 4 }}>
             <Text style={styles.headerTitle}>Ward Complaints</Text>
             <Text style={styles.headerSub}>Nagarsevak ward review</Text>
           </View>
@@ -122,18 +119,19 @@ export default function ComplaintsScreen() {
 
         {/* ── Status tabs ── */}
         <View style={styles.statusRow}>
-          {STATUS_TABS.map((s) => {
-            const active = status === s;
+          {STATUS_TABS.map((item) => {
+            const active = status === item;
             return (
               <Pressable
-                key={s}
-                onPress={() => setStatus(s)}
+                key={item}
+                onPress={() => setStatus(item)}
                 style={[styles.statusTab, active && styles.statusTabActive]}
               >
                 <Text style={[styles.statusTabText, active && styles.statusTabTextActive]}>
-                  {s}{' '}
+                  {item === 'All' ? 'All' : item}
+                  {' · '}
                   <Text style={[styles.statusCount, active && styles.statusCountActive]}>
-                    ({counts[s]})
+                    {counts[item]}
                   </Text>
                 </Text>
               </Pressable>
@@ -141,80 +139,91 @@ export default function ComplaintsScreen() {
           })}
         </View>
 
-        {/* ── Results ── */}
-        {filtered.length === 0 ? (
+        <Text style={styles.resultCount}>
+          Showing {filtered.length} complaint{filtered.length === 1 ? '' : 's'}
+        </Text>
+
+        {filtered.map((complaint) => (
+          <ComplaintCard
+            key={complaint.id}
+            complaint={complaint}
+            onView={() =>
+              router.push({
+                pathname: '/(official)/complaint-details',
+                params: { id: complaint.id },
+              } as any)
+            }
+            onNotes={() =>
+              router.push({
+                pathname: '/(official)/add-note',
+                params: { id: complaint.id },
+              } as any)
+            }
+            onEscalate={() =>
+              router.push({
+                pathname: '/(official)/escalate',
+                params: { id: complaint.id },
+              } as any)
+            }
+          />
+        ))}
+
+        {filtered.length === 0 && (
           <View style={styles.emptyCard}>
-            <MaterialCommunityIcons name="clipboard-search-outline" size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>No matching complaints</Text>
+            <Ionicons name="search" size={32} color={COLORS.textMuted} />
+            <Text style={styles.emptyTitle}>No Complaints Found</Text>
             <Text style={styles.emptyText}>
-              Try adjusting your search or filters.
+              Try adjusting your search query or filters.
             </Text>
           </View>
-        ) : (
-          <>
-            <Text style={styles.resultCount}>
-              {filtered.length} complaint{filtered.length !== 1 ? 's' : ''} found
-            </Text>
-            {filtered.map((complaint) => (
-              <ComplaintCard
-                key={complaint.id}
-                complaint={complaint}
-                onView={() =>
-                  router.push({
-                    pathname: '/(official)/complaint-details',
-                    params: { id: complaint.id },
-                  } as any)
-                }
-                onNotes={() =>
-                  router.push({
-                    pathname: '/(official)/add-note',
-                    params: { id: complaint.id },
-                  } as any)
-                }
-                onEscalate={() =>
-                  router.push({
-                    pathname: '/(official)/escalate',
-                    params: { id: complaint.id },
-                  } as any)
-                }
-              />
-            ))}
-          </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </OfficialScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.background },
+  root: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
 
+  /* Header */
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     ...SHADOWS.sm,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
+    gap: 8,
   },
-  headerTitle: { ...TYPOGRAPHY.h3, fontSize: 15, color: COLORS.text },
-  headerSub: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginTop: 1 },
+  headerTitle: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  headerSub: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 1,
+  },
 
-  content: { padding: 16, paddingBottom: 44 },
+  /* Content */
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
 
+  /* Search */
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',

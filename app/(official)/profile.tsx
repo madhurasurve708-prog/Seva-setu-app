@@ -10,11 +10,11 @@ import {
     Text,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CustomTextInput from '@/components/common/CustomTextInput';
 import GlassCard from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
+import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { OfficialProfile, useOfficial } from '@/providers/official-provider';
 
@@ -94,19 +94,17 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <OfficialScreen title="My Profile" tab="profile" hideHeader={true}>
       {/* Header — matches CitizenScreen header exactly */}
-      <SafeAreaView style={styles.safeHeader} edges={['top']}>
+      <View style={styles.headerWrap}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={12}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
-          </Pressable>
+          <View style={styles.headerBtn} />
           <Text style={styles.headerTitle}>My Profile</Text>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{profile.avatarInitial}</Text>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       <ScrollView
         style={styles.body}
@@ -138,7 +136,7 @@ export default function ProfileScreen() {
           <CustomTextInput
             icon="account-outline"
             label="Full Name"
-            placeholder="Enter your name"
+            placeholder="Enter full name"
             value={name}
             onChangeText={setName}
           />
@@ -146,17 +144,16 @@ export default function ProfileScreen() {
           <CustomTextInput
             icon="phone-outline"
             label="Phone Number"
-            placeholder="e.g. 9420105073"
+            placeholder="Enter phone number"
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
-            maxLength={10}
           />
 
           <CustomTextInput
             icon="email-outline"
-            label="Email Address"
-            placeholder="e.g. name@malvan.gov.in"
+            label="Email Address (Optional)"
+            placeholder="Enter email address"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -164,103 +161,89 @@ export default function ProfileScreen() {
           />
 
           <CustomTextInput
-            icon="translate"
-            label="Language"
-            placeholder="e.g. English / मराठी"
-            value={language}
-            onChangeText={setLanguage}
-          />
-
-          <CustomTextInput
             icon="lock-outline"
-            label="Change Password"
-            placeholder="Enter new password (optional)"
+            label="Change Password (Optional)"
+            placeholder="Enter new password"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
         </GlassCard>
 
-        {/* Read-only demographics */}
-        <GlassCard style={styles.demoCard}>
-          <Text style={styles.demoHeading}>Official Demographics</Text>
-          <Text style={styles.demoSubtext}>
-            Role and ward info is attached from your municipal registration record.
-          </Text>
-
-          <View style={styles.demoGrid}>
-            <ReadOnlyField
-              icon="map-marker-outline"
-              label="WARD"
-              value={profile.ward || 'Ward 2'}
-            />
-            <ReadOnlyField
-              icon="shield-account-outline"
-              label="ROLE"
-              value="Nagarsevak (Ward Representative)"
-            />
+        {/* Read-only workspace information */}
+        <Text style={styles.sectionHeader}>Workspace Information</Text>
+        <GlassCard style={styles.roCard}>
+          <View style={styles.roGroup}>
+            <View style={styles.roLabelRow}>
+              <MaterialCommunityIcons name="badge-account-horizontal-outline" size={15} color={COLORS.textMuted} />
+              <Text style={styles.roLabel}>Employee / Official ID</Text>
+            </View>
+            <View style={styles.roField}>
+              <Text style={styles.roValue}>{profile.employeeId}</Text>
+              <MaterialCommunityIcons name="lock" size={14} color="#94A3B8" />
+            </View>
           </View>
 
-          <View style={styles.demoGrid}>
-            <ReadOnlyField
-              icon="home-city-outline"
-              label="MUNICIPALITY"
-              value="Malvan"
-            />
-            <ReadOnlyField
-              icon="map-marker-radius-outline"
-              label="LOCALITY"
-              value={profile.locality || 'Malvan Bazaar'}
-            />
+          <View style={styles.roGroup}>
+            <View style={styles.roLabelRow}>
+              <MaterialCommunityIcons name="account-cog-outline" size={15} color={COLORS.textMuted} />
+              <Text style={styles.roLabel}>Designation / Role</Text>
+            </View>
+            <View style={styles.roField}>
+              <Text style={styles.roValue}>{profile.designation}</Text>
+              <MaterialCommunityIcons name="lock" size={14} color="#94A3B8" />
+            </View>
           </View>
+
+          <View style={styles.roGroup}>
+            <View style={styles.roLabelRow}>
+              <MaterialCommunityIcons name="map-marker-outline" size={15} color={COLORS.textMuted} />
+              <Text style={styles.roLabel}>Assigned Ward</Text>
+            </View>
+            <View style={styles.roField}>
+              <Text style={styles.roValue}>{profile.ward}</Text>
+              <MaterialCommunityIcons name="lock" size={14} color="#94A3B8" />
+            </View>
+          </View>
+
+          {profile.department ? (
+            <View style={styles.roGroup}>
+              <View style={styles.roLabelRow}>
+                <MaterialCommunityIcons name="office-building" size={15} color={COLORS.textMuted} />
+                <Text style={styles.roLabel}>Assigned Department</Text>
+              </View>
+              <View style={styles.roField}>
+                <Text style={styles.roValue}>{profile.department}</Text>
+                <MaterialCommunityIcons name="lock" size={14} color="#94A3B8" />
+              </View>
+            </View>
+          ) : null}
         </GlassCard>
 
-        <PrimaryButton
-          label={saving ? 'Saving…' : 'Save Changes'}
-          loading={saving}
-          onPress={handleSave}
-          style={styles.saveBtn}
-        />
+        {/* Action Buttons */}
+        <View style={{ marginTop: 12 }}>
+          <PrimaryButton
+            label={saving ? 'Saving...' : 'Save Profile Changes'}
+            onPress={handleSave}
+            disabled={saving}
+            style={styles.saveBtn}
+          />
 
-        <Pressable
-          onPress={handleLogout}
-          disabled={loggingOut}
-          style={({ pressed }) => [
-            styles.logoutButton,
-            pressed && styles.logoutPressed,
-            loggingOut && styles.logoutDisabled,
-          ]}
-        >
-          <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
-          <Text style={styles.logoutText}>
-            {loggingOut ? 'Logging out…' : 'Logout'}
-          </Text>
-        </Pressable>
+          <Pressable
+            onPress={handleLogout}
+            disabled={loggingOut}
+            style={({ pressed }) => [
+              styles.logoutButton,
+              pressed && styles.logoutPressed,
+              loggingOut && styles.logoutDisabled,
+            ]}
+          >
+            <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
+            <Text style={styles.logoutText}>{loggingOut ? 'Logging out...' : 'Log Out of Portal'}</Text>
+          </Pressable>
+        </View>
       </ScrollView>
-    </View>
-  );
-}
-
-function ReadOnlyField({
-  icon,
-  label,
-  value,
-}: {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.roContainer}>
-      <View style={styles.roLabelRow}>
-        <MaterialCommunityIcons name={icon} size={13} color={COLORS.textMuted} />
-        <Text style={styles.roLabel}>{label}</Text>
-      </View>
-      <View style={styles.roField}>
-        <Text style={styles.roValue} numberOfLines={1}>{value}</Text>
-        <MaterialCommunityIcons name="lock-outline" size={13} color={COLORS.textMuted} />
-      </View>
-    </View>
+    </OfficialScreen>
   );
 }
 
@@ -269,8 +252,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  safeHeader: {
+  body: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 32,
+    gap: 18,
+  },
+
+  /* Header */
+  headerWrap: {
     backgroundColor: COLORS.primary,
+    paddingTop: Platform.OS === 'ios' ? 44 : 20, // Manual safe area spacer to avoid double wrapping in stacks
   },
   header: {
     height: 58,
@@ -283,9 +277,6 @@ const styles = StyleSheet.create({
   headerBtn: {
     width: 36,
     height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
   },
   headerTitle: {
     flex: 1,
@@ -311,90 +302,71 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
   },
-  body: {
-    flex: 1,
-  },
-  content: {
-    padding: 18,
-    paddingBottom: 50,
-  },
 
-  // Avatar section
+  /* Avatar Upload */
   avatarSection: {
     alignItems: 'center',
-    marginVertical: 20,
+    gap: 10,
+    marginTop: 8,
   },
   avatarPressable: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
     position: 'relative',
     ...SHADOWS.medium,
-    borderWidth: 3,
-    borderColor: COLORS.white,
   },
   avatarPlaceholder: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 50,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: COLORS.primary,
   },
   avatarInitials: {
-    color: COLORS.white,
+    fontSize: 34,
     fontWeight: '800',
-    fontSize: 38,
+    color: COLORS.primary,
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.primaryLight,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    bottom: 2,
+    right: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2.5,
+    borderWidth: 2,
     borderColor: COLORS.white,
   },
   avatarLabel: {
-    fontSize: 12,
-    color: COLORS.accent,
+    fontSize: 12.5,
+    color: COLORS.textMuted,
     fontWeight: '700',
-    marginTop: 10,
   },
 
-  // Form card
+  /* Form */
   formCard: {
     padding: 16,
-    marginBottom: 14,
+    gap: 14,
   },
 
-  // Demographics card
-  demoCard: {
+  /* Read-only info */
+  sectionHeader: {
+    ...TYPOGRAPHY.h3,
+    fontSize: 14,
+    color: COLORS.text,
+    marginBottom: -4,
+    marginLeft: 2,
+  },
+  roCard: {
     padding: 16,
-    marginBottom: 20,
+    gap: 14,
   },
-  demoHeading: {
-    ...TYPOGRAPHY.captionBold,
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  demoSubtext: {
-    ...TYPOGRAPHY.caption,
-    fontSize: 11.5,
-    lineHeight: 16,
-    marginBottom: 14,
-  },
-  demoGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-  },
-  roContainer: {
-    flex: 1,
+  roGroup: {
+    gap: 6,
   },
   roLabelRow: {
     flexDirection: 'row',
