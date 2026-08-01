@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
+from app.core.constants import ComplaintStatus
 
 
 class NagarsevakComplaintDashboard(BaseModel):
@@ -47,7 +48,7 @@ class NagarsevakComplaintDetail(BaseModel):
 
 
 class ComplaintStatusUpdate(BaseModel):
-    status: Literal["Pending", "In Progress", "Resolved"] = Field(
+    status: Literal[ComplaintStatus.PENDING, ComplaintStatus.IN_PROGRESS, ComplaintStatus.RESOLVED] = Field(
         ..., description="New status; transitions must move forward."
     )
 

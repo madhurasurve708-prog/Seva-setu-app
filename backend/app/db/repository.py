@@ -1,5 +1,6 @@
-from sqlalchemy import desc, or_, and_
+from sqlalchemy import desc, or_, and_, func, case
 from sqlalchemy.orm import Session, joinedload
+from datetime import date
 from app.models.citizen import Citizen
 from app.models.complaint import Complaint
 from app.models.category import Category
@@ -11,7 +12,10 @@ from app.models.announcement import Announcement
 from app.models.announcement_read import AnnouncementRead
 from app.models.notification import Notification
 from app.models.department_officer import DepartmentOfficer
+from app.models.main_admin import MainAdmin
+from app.models.audit_log import AuditLog
 from app.schemas.citizen import CitizenProfileCreate
+from app.core.constants import ComplaintStatus
 
 
 class CitizenRepository:
@@ -38,12 +42,133 @@ class CitizenRepository:
         return db.query(Citizen).filter(Citizen.phone_number == phone_number).first()
 
     @staticmethod
+    def get_by_id(db: Session, citizen_id: int) -> Citizen | None:
+        return (
+            db.query(Citizen)
+            .options(joinedload(Citizen.ward))
+            .filter(Citizen.id == citizen_id)
+            .first()
+        )
+
+    @staticmethod
     def update_profile_photo_url(
         db: Session,
         citizen: Citizen,
         photo_url: str,
     ) -> Citizen:
         citizen.profile_photo_url = photo_url
+        db.commit()
+        db.refresh(citizen)
+        return citizen
+
+    @staticmethod
+    def search_citizens(
+        db: Session,
+        search_query: str | None = None,
+        ward_id: int | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Citizen]:
+        """Search citizens with filters for Main Admin."""
+        query = db.query(Citizen).filter(Citizen.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    Citizen.full_name.ilike(search_pattern),
+                    Citizen.phone_number.ilike(search_pattern),
+                )
+            )
+
+        if ward_id:
+            query = query.filter(Citizen.ward_id == ward_id)
+
+        if is_active is not None:
+            query = query.filter(Citizen.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(Citizen.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(Citizen.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(Citizen.is_archived == is_archived)
+
+        return query.offset(offset).limit(limit).all()
+
+    @staticmethod
+    def search_citizens_count(
+        db: Session,
+        search_query: str | None = None,
+        ward_id: int | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+    ) -> int:
+        """Get count of citizens matching search filters."""
+        query = db.query(Citizen).filter(Citizen.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    Citizen.full_name.ilike(search_pattern),
+                    Citizen.phone_number.ilike(search_pattern),
+                )
+            )
+
+        if ward_id:
+            query = query.filter(Citizen.ward_id == ward_id)
+
+        if is_active is not None:
+            query = query.filter(Citizen.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(Citizen.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(Citizen.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(Citizen.is_archived == is_archived)
+
+        return query.count()
+
+    @staticmethod
+    def update_user_state(
+        db: Session,
+        citizen: Citizen,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        is_deleted: bool | None = None,
+    ) -> Citizen:
+        """Update citizen state flags with validation."""
+        if is_active is not None:
+            citizen.is_active = is_active
+        if is_blocked is not None:
+            citizen.is_blocked = is_blocked
+        if is_restricted is not None:
+            citizen.is_restricted = is_restricted
+        if is_archived is not None:
+            citizen.is_archived = is_archived
+        if is_deleted is not None:
+            citizen.is_deleted = is_deleted
+            # If deleted, ensure user is blocked, archived, and inactive
+            if is_deleted:
+                citizen.is_blocked = True
+                citizen.is_archived = True
+                citizen.is_active = False
+                citizen.is_restricted = False
+
         db.commit()
         db.refresh(citizen)
         return citizen
@@ -67,7 +192,7 @@ class ComplaintRepository:
             title=title,
             description=description,
             manual_location=manual_location,
-            status="Pending",  # Automatically determined on creation
+            status=ComplaintStatus.PENDING,  # Automatically determined on creation
         )
         db.add(db_complaint)
         db.commit()
@@ -97,7 +222,7 @@ class ComplaintRepository:
             .all()
         )
         
-        counts = {"Pending": 0, "In Progress": 0, "Resolved": 0}
+        counts = {ComplaintStatus.PENDING: 0, ComplaintStatus.IN_PROGRESS: 0, ComplaintStatus.RESOLVED: 0}
         total = 0
         for status_val, count in results:
             if status_val in counts:
@@ -105,9 +230,9 @@ class ComplaintRepository:
             total += count
         return {
             "total_complaints": total,
-            "pending": counts["Pending"],
-            "in_progress": counts["In Progress"],
-            "resolved": counts["Resolved"],
+            "pending": counts[ComplaintStatus.PENDING],
+            "in_progress": counts[ComplaintStatus.IN_PROGRESS],
+            "resolved": counts[ComplaintStatus.RESOLVED],
         }
 
     @staticmethod
@@ -311,7 +436,7 @@ class ComplaintRepository:
             .group_by(Complaint.status)
             .all()
         )
-        counts = {"Pending": 0, "In Progress": 0, "Resolved": 0}
+        counts = {ComplaintStatus.PENDING: 0, ComplaintStatus.IN_PROGRESS: 0, ComplaintStatus.RESOLVED: 0}
         total = 0
         for status_val, count in results:
             if status_val in counts:
@@ -319,10 +444,84 @@ class ComplaintRepository:
             total += count
         return {
             "total_complaints": total,
-            "pending": counts["Pending"],
-            "in_progress": counts["In Progress"],
-            "resolved": counts["Resolved"],
+            "pending": counts[ComplaintStatus.PENDING],
+            "in_progress": counts[ComplaintStatus.IN_PROGRESS],
+            "resolved": counts[ComplaintStatus.RESOLVED],
         }
+
+    @staticmethod
+    def get_all_complaints(
+        db: Session,
+        ward_filter: int | None = None,
+        category_filter: int | None = None,
+        status_filter: str | None = None,
+        sort_newest: bool = True,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Complaint]:
+        """Get all complaints for Main Admin with optional filters and pagination."""
+        from sqlalchemy import or_
+        
+        query = (
+            db.query(Complaint)
+            .options(
+                joinedload(Complaint.citizen),
+                joinedload(Complaint.ward),
+                joinedload(Complaint.category),
+            )
+        )
+        
+        if ward_filter:
+            query = query.filter(Complaint.ward_id == ward_filter)
+        
+        if category_filter:
+            query = query.filter(Complaint.category_id == category_filter)
+        
+        if status_filter:
+            query = query.filter(Complaint.status == status_filter)
+        
+        order_clause = desc(Complaint.created_at) if sort_newest else Complaint.created_at.asc()
+        query = query.order_by(order_clause)
+        
+        return query.offset(offset).limit(limit).all()
+
+    @staticmethod
+    def get_all_complaints_count(
+        db: Session,
+        ward_filter: int | None = None,
+        category_filter: int | None = None,
+        status_filter: str | None = None,
+    ) -> int:
+        """Get total count of complaints for Main Admin with optional filters."""
+        query = db.query(Complaint)
+        
+        if ward_filter:
+            query = query.filter(Complaint.ward_id == ward_filter)
+        
+        if category_filter:
+            query = query.filter(Complaint.category_id == category_filter)
+        
+        if status_filter:
+            query = query.filter(Complaint.status == status_filter)
+        
+        return query.count()
+
+    @staticmethod
+    def get_complaint_by_id(
+        db: Session,
+        complaint_id: int,
+    ) -> Complaint | None:
+        """Generic complaint lookup - reusable across all user types."""
+        return (
+            db.query(Complaint)
+            .options(
+                joinedload(Complaint.citizen),
+                joinedload(Complaint.ward),
+                joinedload(Complaint.category),
+            )
+            .filter(Complaint.id == complaint_id)
+            .first()
+        )
 
 
 class ComplaintHistoryRepository:
@@ -425,6 +624,118 @@ class NagarsevakRepository:
         db.refresh(nagarsevak)
         return nagarsevak
 
+    @staticmethod
+    def search_nagarsevaks(
+        db: Session,
+        search_query: str | None = None,
+        ward_id: int | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Nagarsevak]:
+        """Search nagarsevaks with filters for Main Admin."""
+        query = db.query(Nagarsevak).filter(Nagarsevak.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    Nagarsevak.name.ilike(search_pattern),
+                    Nagarsevak.phone_number.ilike(search_pattern),
+                )
+            )
+
+        if ward_id:
+            query = query.filter(Nagarsevak.ward_id == ward_id)
+
+        if is_active is not None:
+            query = query.filter(Nagarsevak.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(Nagarsevak.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(Nagarsevak.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(Nagarsevak.is_archived == is_archived)
+
+        return query.offset(offset).limit(limit).all()
+
+    @staticmethod
+    def search_nagarsevaks_count(
+        db: Session,
+        search_query: str | None = None,
+        ward_id: int | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+    ) -> int:
+        """Get count of nagarsevaks matching search filters."""
+        query = db.query(Nagarsevak).filter(Nagarsevak.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    Nagarsevak.name.ilike(search_pattern),
+                    Nagarsevak.phone_number.ilike(search_pattern),
+                )
+            )
+
+        if ward_id:
+            query = query.filter(Nagarsevak.ward_id == ward_id)
+
+        if is_active is not None:
+            query = query.filter(Nagarsevak.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(Nagarsevak.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(Nagarsevak.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(Nagarsevak.is_archived == is_archived)
+
+        return query.count()
+
+    @staticmethod
+    def update_user_state(
+        db: Session,
+        nagarsevak: Nagarsevak,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        is_deleted: bool | None = None,
+    ) -> Nagarsevak:
+        """Update nagarsevak state flags with validation."""
+        if is_active is not None:
+            nagarsevak.is_active = is_active
+        if is_blocked is not None:
+            nagarsevak.is_blocked = is_blocked
+        if is_restricted is not None:
+            nagarsevak.is_restricted = is_restricted
+        if is_archived is not None:
+            nagarsevak.is_archived = is_archived
+        if is_deleted is not None:
+            nagarsevak.is_deleted = is_deleted
+            # If deleted, ensure user is blocked, archived, and inactive
+            if is_deleted:
+                nagarsevak.is_blocked = True
+                nagarsevak.is_archived = True
+                nagarsevak.is_active = False
+                nagarsevak.is_restricted = False
+
+        db.commit()
+        db.refresh(nagarsevak)
+        return nagarsevak
+
 
 class ComplaintEscalationRepository:
     @staticmethod
@@ -470,6 +781,28 @@ class ComplaintEscalationRepository:
             .all()
         )
 
+    @staticmethod
+    def get_escalated_complaints_count(db: Session) -> int:
+        """Get count of distinct escalated complaints (for Main Admin dashboard)."""
+        return (
+            db.query(ComplaintEscalation.complaint_id)
+            .distinct()
+            .count()
+        )
+
+    @staticmethod
+    def get_escalations_by_complaint_id(
+        db: Session,
+        complaint_id: int,
+    ) -> list[ComplaintEscalation]:
+        """Get all escalations for a specific complaint."""
+        return (
+            db.query(ComplaintEscalation)
+            .filter(ComplaintEscalation.complaint_id == complaint_id)
+            .order_by(desc(ComplaintEscalation.created_at))
+            .all()
+        )
+
 
 class AnnouncementRepository:
     @staticmethod
@@ -480,12 +813,16 @@ class AnnouncementRepository:
         return (
             db.query(Announcement)
             .filter(
-                or_(
-                    Announcement.target_type == "everyone",
-                    Announcement.target_type == "all_nagarsevaks",
-                    and_(
-                        Announcement.target_type == "ward_nagarsevaks",
-                        Announcement.target_ward_id == ward_id,
+                and_(
+                    Announcement.is_deleted == False,
+                    Announcement.is_archived == False,
+                    or_(
+                        Announcement.target_type == "everyone",
+                        Announcement.target_type == "all_nagarsevaks",
+                        and_(
+                            Announcement.target_type == "ward_nagarsevaks",
+                            Announcement.target_ward_id == ward_id,
+                        ),
                     ),
                 )
             )
@@ -494,8 +831,105 @@ class AnnouncementRepository:
         )
 
     @staticmethod
+    def get_announcements_for_department_officer(
+        db: Session,
+    ) -> list[Announcement]:
+        """Get announcements targeted at department officers or everyone."""
+        return (
+            db.query(Announcement)
+            .filter(
+                and_(
+                    Announcement.is_deleted == False,
+                    Announcement.is_archived == False,
+                    or_(
+                        Announcement.target_type == "everyone",
+                        Announcement.target_type == "all_department_officers",
+                    ),
+                )
+            )
+            .order_by(desc(Announcement.created_at))
+            .all()
+        )
+
+    @staticmethod
+    def get_all_announcements(
+        db: Session,
+        include_archived: bool = False,
+        include_deleted: bool = False,
+    ) -> list[Announcement]:
+        """Get all announcements for Main Admin with optional filters."""
+        query = db.query(Announcement)
+
+        if not include_deleted:
+            query = query.filter(Announcement.is_deleted == False)
+        if not include_archived:
+            query = query.filter(Announcement.is_archived == False)
+
+        return query.order_by(Announcement.created_at.desc()).all()
+
+    @staticmethod
+    def get_all_announcements_count(
+        db: Session,
+        include_archived: bool = False,
+        include_deleted: bool = False,
+    ) -> int:
+        """Get total count of announcements for Main Admin with optional filters."""
+        query = db.query(Announcement)
+
+        if not include_deleted:
+            query = query.filter(Announcement.is_deleted == False)
+        if not include_archived:
+            query = query.filter(Announcement.is_archived == False)
+
+        return query.count()
+
+    @staticmethod
     def get_announcement_by_id(db: Session, announcement_id: int) -> Announcement | None:
         return db.query(Announcement).filter(Announcement.id == announcement_id).first()
+
+    @staticmethod
+    def archive_announcement(db: Session, announcement: Announcement) -> Announcement:
+        announcement.is_archived = True
+        db.commit()
+        db.refresh(announcement)
+        return announcement
+
+    @staticmethod
+    def unarchive_announcement(db: Session, announcement: Announcement) -> Announcement:
+        announcement.is_archived = False
+        db.commit()
+        db.refresh(announcement)
+        return announcement
+
+    @staticmethod
+    def update_announcement(
+        db: Session,
+        announcement: Announcement,
+        title: str | None = None,
+        description: str | None = None,
+        priority: str | None = None,
+        image_url: str | None = None,
+    ) -> Announcement:
+        """Update announcement fields (soft update, no history)."""
+        if title is not None:
+            announcement.title = title
+        if description is not None:
+            announcement.description = description
+        if priority is not None:
+            announcement.priority = priority
+        if image_url is not None:
+            announcement.image_url = image_url
+
+        db.commit()
+        db.refresh(announcement)
+        return announcement
+
+    @staticmethod
+    def delete_announcement(db: Session, announcement: Announcement) -> Announcement:
+        announcement.is_deleted = True
+        db.commit()
+        db.refresh(announcement)
+        return announcement
 
     @staticmethod
     def get_read_state(
@@ -633,3 +1067,631 @@ class DepartmentOfficerRepository:
         db.commit()
         db.refresh(officer)
         return officer
+
+    @staticmethod
+    def search_department_officers(
+        db: Session,
+        search_query: str | None = None,
+        department: str | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[DepartmentOfficer]:
+        """Search department officers with filters for Main Admin."""
+        query = db.query(DepartmentOfficer).filter(DepartmentOfficer.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    DepartmentOfficer.full_name.ilike(search_pattern),
+                    DepartmentOfficer.phone_number.ilike(search_pattern),
+                    DepartmentOfficer.email.ilike(search_pattern),
+                )
+            )
+
+        if department:
+            query = query.filter(DepartmentOfficer.department_name == department)
+
+        if is_active is not None:
+            query = query.filter(DepartmentOfficer.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(DepartmentOfficer.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(DepartmentOfficer.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(DepartmentOfficer.is_archived == is_archived)
+
+        return query.offset(offset).limit(limit).all()
+
+    @staticmethod
+    def search_department_officers_count(
+        db: Session,
+        search_query: str | None = None,
+        department: str | None = None,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+    ) -> int:
+        """Get count of department officers matching search filters."""
+        query = db.query(DepartmentOfficer).filter(DepartmentOfficer.is_deleted == False)
+
+        if search_query:
+            search_pattern = f"%{search_query}%"
+            query = query.filter(
+                or_(
+                    DepartmentOfficer.full_name.ilike(search_pattern),
+                    DepartmentOfficer.phone_number.ilike(search_pattern),
+                    DepartmentOfficer.email.ilike(search_pattern),
+                )
+            )
+
+        if department:
+            query = query.filter(DepartmentOfficer.department_name == department)
+
+        if is_active is not None:
+            query = query.filter(DepartmentOfficer.is_active == is_active)
+
+        if is_blocked is not None:
+            query = query.filter(DepartmentOfficer.is_blocked == is_blocked)
+
+        if is_restricted is not None:
+            query = query.filter(DepartmentOfficer.is_restricted == is_restricted)
+
+        if is_archived is not None:
+            query = query.filter(DepartmentOfficer.is_archived == is_archived)
+
+        return query.count()
+
+    @staticmethod
+    def update_user_state(
+        db: Session,
+        officer: DepartmentOfficer,
+        is_active: bool | None = None,
+        is_blocked: bool | None = None,
+        is_restricted: bool | None = None,
+        is_archived: bool | None = None,
+        is_deleted: bool | None = None,
+    ) -> DepartmentOfficer:
+        """Update department officer state flags with validation."""
+        if is_active is not None:
+            officer.is_active = is_active
+        if is_blocked is not None:
+            officer.is_blocked = is_blocked
+        if is_restricted is not None:
+            officer.is_restricted = is_restricted
+        if is_archived is not None:
+            officer.is_archived = is_archived
+        if is_deleted is not None:
+            officer.is_deleted = is_deleted
+            # If deleted, ensure user is blocked, archived, and inactive
+            if is_deleted:
+                officer.is_blocked = True
+                officer.is_archived = True
+                officer.is_active = False
+                officer.is_restricted = False
+
+        db.commit()
+        db.refresh(officer)
+        return officer
+
+
+class MainAdminRepository:
+    @staticmethod
+    def get_by_id(db: Session, admin_id: int) -> MainAdmin | None:
+        return (
+            db.query(MainAdmin)
+            .filter(MainAdmin.id == admin_id)
+            .first()
+        )
+
+    @staticmethod
+    def get_by_name(db: Session, name: str) -> MainAdmin | None:
+        # Trim whitespace for consistent lookups
+        normalized_name = name.strip()
+        if not normalized_name:
+            return None
+        return (
+            db.query(MainAdmin)
+            .filter(MainAdmin.name == normalized_name)
+            .first()
+        )
+
+    @staticmethod
+    def update_password_hash(
+        db: Session, admin: MainAdmin, password_hash: str
+    ) -> MainAdmin:
+        admin.password_hash = password_hash
+        db.commit()
+        db.refresh(admin)
+        return admin
+
+
+class AnalyticsRepository:
+    """Repository for analytics and reporting queries."""
+    
+    @staticmethod
+    def get_dashboard_statistics(db: Session) -> dict:
+        """Get municipality-wide complaint statistics."""
+        # Status counts
+        status_counts = (
+            db.query(Complaint.status, func.count(Complaint.id))
+            .group_by(Complaint.status)
+            .all()
+        )
+        
+        counts = {
+            ComplaintStatus.PENDING: 0,
+            ComplaintStatus.IN_PROGRESS: 0,
+            ComplaintStatus.RESOLVED: 0,
+            ComplaintStatus.CLOSED: 0,
+        }
+        total = 0
+        for status_val, count in status_counts:
+            if status_val in counts:
+                counts[status_val] = count
+            total += count
+        
+        # Escalated count
+        escalated_count = (
+            db.query(ComplaintEscalation.complaint_id)
+            .distinct()
+            .count()
+        )
+        
+        return {
+            "total_complaints": total,
+            "pending": counts[ComplaintStatus.PENDING],
+            "in_progress": counts[ComplaintStatus.IN_PROGRESS],
+            "resolved": counts[ComplaintStatus.RESOLVED],
+            "closed": counts[ComplaintStatus.CLOSED],
+            "escalated": escalated_count,
+        }
+    
+    @staticmethod
+    def get_today_statistics(db: Session) -> dict:
+        """Get complaint statistics for today."""
+        today = date.today()
+        
+        # Registered today
+        registered_today = (
+            db.query(func.count(Complaint.id))
+            .filter(func.date(Complaint.created_at) == today)
+            .scalar()
+        )
+        
+        # Resolved today
+        resolved_today = (
+            db.query(func.count(Complaint.id))
+            .filter(
+                func.date(Complaint.updated_at) == today,
+                Complaint.status == ComplaintStatus.RESOLVED
+            )
+            .scalar()
+        )
+        
+        # Closed today
+        closed_today = (
+            db.query(func.count(Complaint.id))
+            .filter(
+                func.date(Complaint.updated_at) == today,
+                Complaint.status == ComplaintStatus.CLOSED
+            )
+            .scalar()
+        )
+        
+        # Escalated today
+        escalated_today = (
+            db.query(func.count(ComplaintEscalation.id))
+            .filter(func.date(ComplaintEscalation.escalated_at) == today)
+            .scalar()
+        )
+        
+        return {
+            "registered_today": registered_today,
+            "resolved_today": resolved_today,
+            "closed_today": closed_today,
+            "escalated_today": escalated_today,
+        }
+    
+    @staticmethod
+    def get_monthly_statistics(db: Session) -> dict:
+        """Get complaint statistics for current month."""
+        today = date.today()
+        month_start = date(today.year, today.month, 1)
+        
+        # Registered this month
+        registered_month = (
+            db.query(func.count(Complaint.id))
+            .filter(Complaint.created_at >= month_start)
+            .scalar()
+        )
+        
+        # Resolved this month
+        resolved_month = (
+            db.query(func.count(Complaint.id))
+            .filter(
+                Complaint.updated_at >= month_start,
+                Complaint.status == ComplaintStatus.RESOLVED
+            )
+            .scalar()
+        )
+        
+        # Closed this month
+        closed_month = (
+            db.query(func.count(Complaint.id))
+            .filter(
+                Complaint.updated_at >= month_start,
+                Complaint.status == ComplaintStatus.CLOSED
+            )
+            .scalar()
+        )
+        
+        # Escalated this month
+        escalated_month = (
+            db.query(func.count(ComplaintEscalation.id))
+            .filter(ComplaintEscalation.escalated_at >= month_start)
+            .scalar()
+        )
+        
+        return {
+            "registered_month": registered_month,
+            "resolved_month": resolved_month,
+            "closed_month": closed_month,
+            "escalated_month": escalated_month,
+        }
+    
+    @staticmethod
+    def get_ward_performance(db: Session) -> list[dict]:
+        """Get ward performance statistics with ranking."""
+        results = (
+            db.query(
+                Ward.id,
+                Ward.ward_number,
+                Ward.ward_name,
+                func.count(Complaint.id).label("total_complaints"),
+                func.sum(case((Complaint.status == ComplaintStatus.RESOLVED, 1), else_=0)).label("resolved"),
+                func.sum(case((Complaint.status == ComplaintStatus.PENDING, 1), else_=0)).label("pending"),
+                func.avg(
+                    case(
+                        (Complaint.status == ComplaintStatus.RESOLVED, 
+                         func.julianday(Complaint.updated_at) - func.julianday(Complaint.created_at)),
+                        else_=None
+                    )
+                ).label("avg_resolution_days")
+            )
+            .join(Complaint, Ward.id == Complaint.ward_id)
+            .group_by(Ward.id, Ward.ward_number, Ward.ward_name)
+            .all()
+        )
+        
+        ward_stats = []
+        for result in results:
+            total = result.total_complaints or 0
+            resolved = result.resolved or 0
+            pending = result.pending or 0
+            avg_days = result.avg_resolution_days or 0
+            
+            resolution_percentage = (resolved / total * 100) if total > 0 else 0
+            
+            ward_stats.append({
+                "ward_id": result.id,
+                "ward_number": result.ward_number,
+                "ward_name": result.ward_name,
+                "total_complaints": total,
+                "resolved": resolved,
+                "pending": pending,
+                "avg_resolution_days": round(avg_days, 2),
+                "resolution_percentage": round(resolution_percentage, 2),
+            })
+        
+        # Sort by resolution percentage (highest first)
+        ward_stats.sort(key=lambda x: x["resolution_percentage"], reverse=True)
+        
+        return ward_stats
+    
+    @staticmethod
+    def get_department_performance(db: Session) -> list[dict]:
+        """Get department performance statistics."""
+        from app.core.constants import CATEGORY_TO_DEPARTMENT
+        
+        # Get all departments from Category → Department mapping
+        department_names = set(CATEGORY_TO_DEPARTMENT.values())
+        
+        department_stats = []
+        for dept_name in department_names:
+            # Get categories for this department
+            dept_categories = [cat for cat, dept in CATEGORY_TO_DEPARTMENT.items() if dept == dept_name]
+            
+            if not dept_categories:
+                continue
+            
+            # Count complaints for this department
+            total = (
+                db.query(func.count(Complaint.id))
+                .filter(Complaint.category_id.in_(dept_categories))
+                .scalar()
+            )
+            
+            if total == 0:
+                continue
+            
+            # Status breakdown
+            status_counts = (
+                db.query(Complaint.status, func.count(Complaint.id))
+                .filter(Complaint.category_id.in_(dept_categories))
+                .group_by(Complaint.status)
+                .all()
+            )
+            
+            counts = {
+                ComplaintStatus.PENDING: 0,
+                ComplaintStatus.IN_PROGRESS: 0,
+                ComplaintStatus.RESOLVED: 0,
+                ComplaintStatus.CLOSED: 0,
+            }
+            for status_val, count in status_counts:
+                if status_val in counts:
+                    counts[status_val] = count
+            
+            # Average resolution time
+            avg_resolution = (
+                db.query(
+                    func.avg(
+                        case(
+                            (Complaint.status == ComplaintStatus.RESOLVED,
+                             func.julianday(Complaint.updated_at) - func.julianday(Complaint.created_at)),
+                            else_=None
+                        )
+                    )
+                )
+                .filter(Complaint.category_id.in_(dept_categories))
+                .scalar()
+            ) or 0
+            
+            # Escalated count
+            escalated = (
+                db.query(func.count(ComplaintEscalation.id))
+                .join(Complaint, ComplaintEscalation.complaint_id == Complaint.id)
+                .filter(Complaint.category_id.in_(dept_categories))
+                .scalar()
+            )
+            
+            department_stats.append({
+                "department_name": dept_name,
+                "total_complaints": total,
+                "pending": counts[ComplaintStatus.PENDING],
+                "in_progress": counts[ComplaintStatus.IN_PROGRESS],
+                "resolved": counts[ComplaintStatus.RESOLVED],
+                "closed": counts[ComplaintStatus.CLOSED],
+                "escalated": escalated,
+                "avg_resolution_days": round(avg_resolution, 2),
+            })
+        
+        return department_stats
+    
+    @staticmethod
+    def get_monthly_trends(db: Session, months: int = 12) -> list[dict]:
+        """Get monthly complaint trends for the last N months."""
+        from datetime import timedelta
+        
+        results = []
+        today = date.today()
+        
+        for i in range(months):
+            # Calculate month start and end
+            if i == 0:
+                # Current month
+                month_start = date(today.year, today.month, 1)
+                month_end = today
+            else:
+                # Previous months
+                prev_month = today.replace(day=1) - timedelta(days=i)
+                month_start = date(prev_month.year, prev_month.month, 1)
+                # Get last day of the month
+                if prev_month.month == 12:
+                    month_end = date(prev_month.year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    month_end = date(prev_month.year, prev_month.month + 1, 1) - timedelta(days=1)
+            
+            # Total complaints in month
+            total = (
+                db.query(func.count(Complaint.id))
+                .filter(
+                    Complaint.created_at >= month_start,
+                    Complaint.created_at <= month_end
+                )
+                .scalar()
+            )
+            
+            # Resolved in month
+            resolved = (
+                db.query(func.count(Complaint.id))
+                .filter(
+                    Complaint.updated_at >= month_start,
+                    Complaint.updated_at <= month_end,
+                    Complaint.status == ComplaintStatus.RESOLVED
+                )
+                .scalar()
+            )
+            
+            # Closed in month
+            closed = (
+                db.query(func.count(Complaint.id))
+                .filter(
+                    Complaint.updated_at >= month_start,
+                    Complaint.updated_at <= month_end,
+                    Complaint.status == ComplaintStatus.CLOSED
+                )
+                .scalar()
+            )
+            
+            results.append({
+                "month": month_start.strftime("%Y-%m"),
+                "month_name": month_start.strftime("%B %Y"),
+                "total_complaints": total,
+                "resolved": resolved,
+                "closed": closed,
+            })
+        
+        # Reverse to show newest first
+        results.reverse()
+        
+        return results
+    
+    @staticmethod
+    def get_category_analytics(db: Session) -> list[dict]:
+        """Get complaint statistics by category."""
+        results = (
+            db.query(
+                Category.id,
+                Category.name,
+                func.count(Complaint.id).label("total_complaints"),
+                func.sum(case((Complaint.status == ComplaintStatus.PENDING, 1), else_=0)).label("pending"),
+                func.sum(case((Complaint.status == ComplaintStatus.RESOLVED, 1), else_=0)).label("resolved"),
+                func.sum(case((Complaint.status == ComplaintStatus.CLOSED, 1), else_=0)).label("closed"),
+            )
+            .join(Complaint, Category.id == Complaint.category_id)
+            .group_by(Category.id, Category.name)
+            .order_by(func.count(Complaint.id).desc())
+            .all()
+        )
+        
+        category_stats = []
+        for result in results:
+            category_stats.append({
+                "category_id": result.id,
+                "category_name": result.name,
+                "total_complaints": result.total_complaints or 0,
+                "pending": result.pending or 0,
+                "resolved": result.resolved or 0,
+                "closed": result.closed or 0,
+            })
+        
+        return category_stats
+
+
+class AuditLogRepository:
+    """Repository for audit log operations."""
+    
+    @staticmethod
+    def create_log(
+        db: Session,
+        admin_name: str,
+        admin_role: str,
+        action: str,
+        entity: str,
+        entity_id: int | None = None,
+        remarks: str | None = None,
+    ) -> AuditLog:
+        """Create a new audit log entry."""
+        log = AuditLog(
+            admin_name=admin_name,
+            admin_role=admin_role,
+            action=action,
+            entity=entity,
+            entity_id=entity_id,
+            remarks=remarks,
+        )
+        db.add(log)
+        db.commit()
+        db.refresh(log)
+        return log
+    
+    @staticmethod
+    def get_logs(
+        db: Session,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        admin_name: str | None = None,
+        action: str | None = None,
+        entity: str | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[AuditLog]:
+        """Get audit logs with optional filters."""
+        query = db.query(AuditLog)
+        
+        if date_from:
+            query = query.filter(AuditLog.created_at >= date_from)
+        if date_to:
+            query = query.filter(AuditLog.created_at <= date_to)
+        if admin_name:
+            query = query.filter(AuditLog.admin_name.ilike(f"%{admin_name}%"))
+        if action:
+            query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+        if entity:
+            query = query.filter(AuditLog.entity.ilike(f"%{entity}%"))
+        
+        return query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()
+    
+    @staticmethod
+    def get_logs_count(
+        db: Session,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        admin_name: str | None = None,
+        action: str | None = None,
+        entity: str | None = None,
+    ) -> int:
+        """Get total count of audit logs with optional filters."""
+        query = db.query(AuditLog)
+        
+        if date_from:
+            query = query.filter(AuditLog.created_at >= date_from)
+        if date_to:
+            query = query.filter(AuditLog.created_at <= date_to)
+        if admin_name:
+            query = query.filter(AuditLog.admin_name.ilike(f"%{admin_name}%"))
+        if action:
+            query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+        if entity:
+            query = query.filter(AuditLog.entity.ilike(f"%{entity}%"))
+        
+        return query.count()
+
+
+# Add dashboard statistics method to ComplaintRepository for Main Admin
+ComplaintRepository.get_global_status_counts = staticmethod(
+    lambda db: ComplaintRepository._get_global_status_counts(db)
+)
+
+@staticmethod
+def _get_global_status_counts(db: Session) -> dict[str, int]:
+    """Get complaint counts for all complaints (Main Admin dashboard)."""
+    from sqlalchemy import func
+    
+    results = (
+        db.query(Complaint.status, func.count(Complaint.id))
+        .group_by(Complaint.status)
+        .all()
+    )
+    
+    counts = {ComplaintStatus.PENDING: 0, ComplaintStatus.IN_PROGRESS: 0, ComplaintStatus.RESOLVED: 0}
+    total = 0
+    for status_val, count in results:
+        if status_val in counts:
+            counts[status_val] = count
+        total += count
+    
+    # Count escalated complaints (complaints that have escalation records)
+    escalated_count = (
+        db.query(ComplaintEscalation.complaint_id)
+        .distinct()
+        .count()
+    )
+    
+    return {
+        "total_complaints": total,
+        "pending": counts[ComplaintStatus.PENDING],
+        "in_progress": counts[ComplaintStatus.IN_PROGRESS],
+        "resolved": counts[ComplaintStatus.RESOLVED],
+        "escalated": escalated_count,
+    }
