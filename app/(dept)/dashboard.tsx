@@ -12,6 +12,7 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 import GlassCard from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
+import HeroBanner from '@/components/official/HeroBanner';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
@@ -88,226 +89,201 @@ export default function DepartmentDashboard() {
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        {/* ── Hero card ── */}
+        {/* ── Hero Banner ── */}
         <Animated.View entering={FadeInDown.duration(380)}>
-          <View style={[styles.hero, { backgroundColor: meta?.color ?? COLORS.primary }]}>
-            <View style={styles.heroTop}>
-              <View style={[styles.heroIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                <MaterialCommunityIcons
-                  name={(meta?.icon ?? 'office-building-outline') as any}
-                  size={22}
-                  color={COLORS.white}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.heroWelcome}>
-                  {t('welcomeBack')} {profile?.name?.split(' ')[0]}
-                </Text>
-                <Text style={styles.heroDept} numberOfLines={2}>
-                  {profile?.department}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.heroSub}>{t('allWardsWorkspace')}</Text>
-          </View>
+          <HeroBanner
+            name={profile?.name ?? ''}
+            wardLabel={t('allWardsWorkspace')}
+            designation={profile?.designation || profile?.roleLabel || t('departmentOfficer')}
+            department={profile?.department}
+            filedCount={visible.length}
+            resolvedCount={resolved}
+            successRate={`${resolutionRate}%`}
+            onViewComplaints={() => router.push('/(dept)/complaints')}
+          />
         </Animated.View>
 
-        {/* ── Stats grid ── */}
-        <View style={styles.statsGrid}>
-          {stats.map(([key, label, value, colorIdx], i) => {
-            const s = STAT_COLORS[colorIdx as number];
-            return (
-              <Animated.View
-                key={key}
-                entering={FadeInDown.duration(340).delay(60 + i * 45)}
-                style={styles.statWrap}
-              >
-                <GlassCard style={{ ...styles.statCard, backgroundColor: s.bg }}>
-                  <MaterialCommunityIcons name={s.icon} size={18} color={s.color} />
-                  <Text style={[styles.statNum, { color: s.color }]}>{value}</Text>
-                  <Text style={styles.statLabel}>{label}</Text>
-                </GlassCard>
-              </Animated.View>
-            );
-          })}
-        </View>
+        {/* ── Main content grid with horizontal padding ── */}
+        <View style={styles.mainContainer}>
+          {/* ── Stats grid ── */}
+          <View style={styles.statsGrid}>
+            {stats.map(([key, label, value, colorIdx], i) => {
+              const s = STAT_COLORS[colorIdx as number];
+              return (
+                <Animated.View
+                  key={key}
+                  entering={FadeInDown.duration(340).delay(60 + i * 45)}
+                  style={styles.statWrap}
+                >
+                  <GlassCard style={{ ...styles.statCard, backgroundColor: s.bg }}>
+                    <MaterialCommunityIcons name={s.icon} size={18} color={s.color} />
+                    <Text style={[styles.statNum, { color: s.color }]}>{value}</Text>
+                    <Text style={styles.statLabel}>{label}</Text>
+                  </GlassCard>
+                </Animated.View>
+              );
+            })}
+          </View>
 
-        {/* ── Ward filter cards ── */}
-        <Text style={styles.sectionTitle}>{t('filterByWard')}</Text>
-        <Text style={styles.sectionSub}>
-          {t('tapWardFilter')}
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.wardRow}
-        >
-          {/* All wards chip */}
-          <Pressable
-            onPress={() => setSelectedWard(null)}
-            style={[styles.wardChip, selectedWard === null && styles.wardChipActive]}
+          {/* ── Ward filter cards ── */}
+          <Text style={styles.sectionTitle}>{t('filterByWard')}</Text>
+          <Text style={styles.sectionSub}>
+            {t('tapWardFilter')}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.wardRow}
           >
-            <MaterialCommunityIcons
-              name="map-outline"
-              size={14}
-              color={selectedWard === null ? COLORS.white : COLORS.primary}
-            />
-            <Text style={[styles.wardChipText, selectedWard === null && styles.wardChipTextActive]}>
-              {t('allWardsChip')}
-            </Text>
-            <Text style={[styles.wardChipCount, selectedWard === null && styles.wardChipCountActive]}>
-              {mine.length}
-            </Text>
-          </Pressable>
+            {/* All wards chip */}
+            <Pressable
+              onPress={() => setSelectedWard(null)}
+              style={[styles.wardChip, selectedWard === null && styles.wardChipActive]}
+            >
+              <MaterialCommunityIcons
+                name="map-outline"
+                size={14}
+                color={selectedWard === null ? COLORS.white : COLORS.primary}
+              />
+              <Text style={[styles.wardChipText, selectedWard === null && styles.wardChipTextActive]}>
+                {t('allWardsChip')}
+              </Text>
+              <Text style={[styles.wardChipCount, selectedWard === null && styles.wardChipCountActive]}>
+                {mine.length}
+              </Text>
+            </Pressable>
 
-          {ALL_WARDS.map((ward, idx) => {
-            const wardCount = mine.filter((c) => c.ward === ward).length;
-            const isActive = selectedWard === ward;
-            return (
+            {ALL_WARDS.map((ward, idx) => {
+              const wardCount = mine.filter((c) => c.ward === ward).length;
+              const isActive = selectedWard === ward;
+              return (
+                <Animated.View
+                  key={ward}
+                  entering={FadeInRight.duration(300).delay(50 + idx * 35)}
+                >
+                  <Pressable
+                    onPress={() => setSelectedWard(isActive ? null : ward)}
+                    style={[styles.wardCard, isActive && styles.wardCardActive]}
+                  >
+                    <View style={[styles.wardCardIcon, isActive && styles.wardCardIconActive]}>
+                      <MaterialCommunityIcons
+                        name="map-marker-outline"
+                        size={16}
+                        color={isActive ? COLORS.white : COLORS.primary}
+                      />
+                    </View>
+                    <Text style={[styles.wardCardName, isActive && styles.wardCardNameActive]}>
+                      {wardDisplay(t, ward)}
+                    </Text>
+                    <View style={[styles.wardCardBadge, isActive && styles.wardCardBadgeActive]}>
+                      <Text style={[styles.wardCardBadgeText, isActive && styles.wardCardBadgeTextActive]}>
+                        {wardCount}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
+          </ScrollView>
+
+          {/* ── Resolution bar ── */}
+          <Animated.View entering={FadeInDown.duration(340).delay(200)}>
+            <GlassCard style={styles.rateCard}>
+              <View style={styles.rateRow}>
+                <Text style={styles.rateLabel}>
+                  {t('resolutionRate')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ` · ${t('allWardsChip')}`}
+                </Text>
+                <Text style={[styles.rateVal, { color: resolutionRate >= 70 ? COLORS.success : '#F59E0B' }]}>
+                  {resolutionRate}%
+                </Text>
+              </View>
+              <View style={styles.progressBg}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${resolutionRate}%` as any,
+                      backgroundColor: resolutionRate >= 70 ? COLORS.success : '#F59E0B',
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.rateSub}>
+                {resolved} {t('resolvedOf')} {visible.length} {t('total')}
+              </Text>
+            </GlassCard>
+          </Animated.View>
+
+          {/* ── Pending complaints ── */}
+          <Text style={styles.sectionTitle}>
+            {t('pendingComplaints')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ''}
+          </Text>
+
+          {recentComplaints.length === 0 ? (
+            <Animated.View entering={FadeInDown.duration(340).delay(240)} style={styles.emptyCard}>
+              <MaterialCommunityIcons name="check-all" size={30} color={COLORS.success} />
+              <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
+              <Text style={styles.emptyText}>
+                {t('noPendingComplaints')}{selectedWard ? ` — ${wardDisplay(t, selectedWard)}` : ''} {t('rightNow')}
+              </Text>
+            </Animated.View>
+          ) : (
+            recentComplaints.map((c, idx) => (
               <Animated.View
-                key={ward}
-                entering={FadeInRight.duration(300).delay(50 + idx * 35)}
+                key={c.id}
+                entering={FadeInDown.duration(320).delay(240 + idx * 55)}
               >
                 <Pressable
-                  onPress={() => setSelectedWard(isActive ? null : ward)}
-                  style={[styles.wardCard, isActive && styles.wardCardActive]}
+                  onPress={() => router.push({ pathname: '/(dept)/complaint-details', params: { id: c.id } } as any)}
+                  style={({ pressed }) => [styles.complaintCard, pressed && { opacity: 0.88 }]}
                 >
-                  <View style={[styles.wardCardIcon, isActive && styles.wardCardIconActive]}>
-                    <MaterialCommunityIcons
-                      name="map-marker-outline"
-                      size={16}
-                      color={isActive ? COLORS.white : COLORS.primary}
-                    />
+                  <View style={[styles.priorityDot, {
+                    backgroundColor:
+                      c.priority === 'Emergency' ? '#DC2626' :
+                      c.priority === 'High'      ? '#F59E0B' :
+                      COLORS.primary,
+                  }]} />
+                  <View style={styles.complaintBody}>
+                    <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
+                    <Text style={styles.complaintMeta}>{wardDisplay(t, c.ward)} · {t(c.category)}</Text>
                   </View>
-                  <Text style={[styles.wardCardName, isActive && styles.wardCardNameActive]}>
-                    {wardDisplay(t, ward)}
-                  </Text>
-                  <View style={[styles.wardCardBadge, isActive && styles.wardCardBadgeActive]}>
-                    <Text style={[styles.wardCardBadgeText, isActive && styles.wardCardBadgeTextActive]}>
-                      {wardCount}
+                  <View style={[styles.statusPill, {
+                    backgroundColor:
+                      c.status === 'Pending'     ? '#FFF8ED' :
+                      c.status === 'In Progress' ? '#EFF6FF' : '#ECFDF5',
+                  }]}>
+                    <Text style={[styles.statusPillText, {
+                      color:
+                        c.status === 'Pending'     ? '#F59E0B' :
+                        c.status === 'In Progress' ? COLORS.primary : COLORS.success,
+                    }]}>
+                      {statusLabel(t, c.status)}
                     </Text>
                   </View>
                 </Pressable>
               </Animated.View>
-            );
-          })}
-        </ScrollView>
+            ))
+          )}
 
-        {/* ── Resolution bar ── */}
-        <Animated.View entering={FadeInDown.duration(340).delay(200)}>
-          <GlassCard style={styles.rateCard}>
-            <View style={styles.rateRow}>
-              <Text style={styles.rateLabel}>
-                {t('resolutionRate')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ` · ${t('allWardsChip')}`}
-              </Text>
-              <Text style={[styles.rateVal, { color: resolutionRate >= 70 ? COLORS.success : '#F59E0B' }]}>
-                {resolutionRate}%
-              </Text>
-            </View>
-            <View style={styles.progressBg}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${resolutionRate}%` as any,
-                    backgroundColor: resolutionRate >= 70 ? COLORS.success : '#F59E0B',
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.rateSub}>
-              {resolved} {t('resolvedOf')} {visible.length} {t('total')}
-            </Text>
-          </GlassCard>
-        </Animated.View>
-
-        {/* ── Pending complaints ── */}
-        <Text style={styles.sectionTitle}>
-          {t('pendingComplaints')}{selectedWard ? ` · ${wardDisplay(t, selectedWard)}` : ''}
-        </Text>
-
-        {recentComplaints.length === 0 ? (
-          <Animated.View entering={FadeInDown.duration(340).delay(240)} style={styles.emptyCard}>
-            <MaterialCommunityIcons name="check-all" size={30} color={COLORS.success} />
-            <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
-            <Text style={styles.emptyText}>
-              {t('noPendingComplaints')}{selectedWard ? ` — ${wardDisplay(t, selectedWard)}` : ''} {t('rightNow')}
-            </Text>
-          </Animated.View>
-        ) : (
-          recentComplaints.map((c, idx) => (
-            <Animated.View
-              key={c.id}
-              entering={FadeInDown.duration(320).delay(240 + idx * 55)}
+          {/* ── Review all CTA ── */}
+          <Animated.View entering={FadeInDown.duration(320).delay(320)}>
+            <Pressable
+              onPress={() => router.push('/(dept)/complaints')}
+              style={styles.reviewBtn}
             >
-              <Pressable
-                onPress={() => router.push({ pathname: '/(dept)/complaint-details', params: { id: c.id } } as any)}
-                style={({ pressed }) => [styles.complaintCard, pressed && { opacity: 0.88 }]}
-              >
-                <View style={[styles.priorityDot, {
-                  backgroundColor:
-                    c.priority === 'Emergency' ? '#DC2626' :
-                    c.priority === 'High'      ? '#F59E0B' :
-                    COLORS.primary,
-                }]} />
-                <View style={styles.complaintBody}>
-                  <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
-                  <Text style={styles.complaintMeta}>{wardDisplay(t, c.ward)} · {t(c.category)}</Text>
-                </View>
-                <View style={[styles.statusPill, {
-                  backgroundColor:
-                    c.status === 'Pending'     ? '#FFF8ED' :
-                    c.status === 'In Progress' ? '#EFF6FF' : '#ECFDF5',
-                }]}>
-                  <Text style={[styles.statusPillText, {
-                    color:
-                      c.status === 'Pending'     ? '#F59E0B' :
-                      c.status === 'In Progress' ? COLORS.primary : COLORS.success,
-                  }]}>
-                    {statusLabel(t, c.status)}
-                  </Text>
-                </View>
-              </Pressable>
-            </Animated.View>
-          ))
-        )}
-
-        {/* ── Review all CTA ── */}
-        <Animated.View entering={FadeInDown.duration(320).delay(320)}>
-          <Pressable
-            onPress={() => router.push('/(dept)/complaints')}
-            style={styles.reviewBtn}
-          >
-            <MaterialCommunityIcons name="clipboard-text-outline" size={18} color={COLORS.white} />
-            <Text style={styles.reviewBtnText}>{t('reviewAllComplaints')}</Text>
-          </Pressable>
-        </Animated.View>
+              <MaterialCommunityIcons name="clipboard-text-outline" size={18} color={COLORS.white} />
+              <Text style={styles.reviewBtnText}>{t('reviewAllComplaints')}</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
       </ScrollView>
     </DepartmentScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 32, gap: 12 },
-
-  /* Hero */
-  hero: {
-    borderRadius: 20,
-    padding: 18,
-    ...SHADOWS.medium,
-  },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  heroIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  heroWelcome: { color: COLORS.white, fontSize: 19, fontWeight: '800', lineHeight: 24 },
-  heroDept: { color: 'rgba(255,255,255,0.85)', fontSize: 12.5, fontWeight: '700', marginTop: 2, lineHeight: 17 },
-  heroSub: { color: 'rgba(255,255,255,0.72)', fontSize: 11.5, fontWeight: '600' },
+  content: { paddingBottom: 32 },
+  mainContainer: { paddingHorizontal: 16, gap: 12 },
 
   /* Stats */
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
