@@ -6,17 +6,80 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import type { PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 const TAB_DEFS = [
-  ['dashboard',     'home-variant-outline',    'dashboard'],
-  ['complaints',    'clipboard-text-outline',  'complaintsTitle'],
-  ['announcements', 'bullhorn-outline',        'noticesTab'],
-  ['analytics',     'chart-bar',               'analytics'],
-  ['profile',       'account-outline',         'profile'],
+  ['dashboard',     'home-variant-outline',   'home-variant',    'dashboard'],
+  ['complaints',    'clipboard-text-outline', 'clipboard-text',  'complaintsTitle'],
+  ['announcements', 'bullhorn-outline',       'bullhorn',        'noticesTab'],
+  ['analytics',     'chart-bar',              'chart-bar',       'analytics'],
+  ['profile',       'account-outline',        'account',         'profile'],
 ] as const;
 
 type TabRoute = typeof TAB_DEFS[number][0];
+
+function TabButton({
+  route,
+  icon,
+  iconActive,
+  labelKey,
+  active,
+  onPress,
+}: {
+  route: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconActive: keyof typeof MaterialCommunityIcons.glyphMap;
+  labelKey: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  const scale = useSharedValue(1);
+  const lift = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: lift.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9, { damping: 14, stiffness: 300 });
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 14, stiffness: 300 });
+  };
+
+  lift.value = withTiming(active ? -3 : 0, { duration: 200 });
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      android_ripple={{ color: 'rgba(46,134,222,0.12)', borderless: true, radius: 26 }}
+      style={styles.tabButton}
+      hitSlop={4}
+    >
+      <Animated.View style={[styles.tabInner, animatedStyle]}>
+        <View style={[styles.iconWrap, active && styles.iconWrapActive]}>
+          <MaterialCommunityIcons
+            name={active ? iconActive : icon}
+            size={18}
+            color={active ? COLORS.white : COLORS.textMuted}
+          />
+        </View>
+        <Text style={[styles.tabText, active && styles.tabActive]} numberOfLines={1}>
+          {t(labelKey)}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export function DepartmentScreen({
   title,
@@ -28,6 +91,7 @@ export function DepartmentScreen({
   const pathname = usePathname();
   const { profile, complaints } = useDepartment();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const pendingCount = complaints.filter(
     (c) => c.assignedDepartment === profile?.department && c.status === 'Pending' && !c.is_deleted,
@@ -97,38 +161,30 @@ export function DepartmentScreen({
       </SafeAreaView>
 
       {/* ── Body ── */}
-      <View style={styles.body}>{children}</View>
+      <View style={[styles.body, !back && { paddingBottom: 84 }]}>{children}</View>
 
       {/* ── Bottom nav (only when not a back-stack screen) ── */}
       {!back && (
-        <SafeAreaView edges={['bottom']} style={styles.nav}>
-          <View style={styles.navRow}>
-            {TAB_DEFS.map(([route, icon, labelKey]) => {
+        <View pointerEvents="box-none" style={[styles.navWrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+          <View style={styles.navBar}>
+            {TAB_DEFS.map(([route, icon, iconActive, labelKey]) => {
               const active = tab === route;
               return (
-                <Pressable
+                <TabButton
                   key={route}
-                  onPress={() => router.replace(`/(dept)/${route}` as never)}
-                  style={styles.tab}
-                >
-                  <MaterialCommunityIcons
-                    name={icon}
-                    size={22}
-                    color={active ? COLORS.primary : COLORS.textMuted}
-                  />
-                  <Text
-                    style={[styles.tabText, active && styles.tabActive]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.75}
-                  >
-                    {t(labelKey)}
-                  </Text>
-                </Pressable>
+                  route={route}
+                  icon={icon}
+                  iconActive={iconActive}
+                  labelKey={labelKey}
+                  active={active}
+                  onPress={() => {
+                    if (!active) router.replace(`/(dept)/${route}` as never);
+                  }}
+                />
               );
             })}
           </View>
-        </SafeAreaView>
+        </View>
       )}
     </View>
   );
@@ -206,34 +262,59 @@ const styles = StyleSheet.create({
   /* Body */
   body: { flex: 1 },
 
-  /* Bottom nav */
-  nav: {
-    backgroundColor: COLORS.card,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    ...SHADOWS.sm,
+  /* Bottom nav floating */
+  navWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    zIndex: 99,
   },
-  navRow: {
+  navBar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 6,
-    paddingBottom: 2,
-    paddingHorizontal: 4,
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderRadius: 22,
+    paddingVertical: 6,
+    paddingHorizontal: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.9)',
+    ...SHADOWS.xl,
   },
-  tab: {
+  tabButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    paddingVertical: 6,
-    paddingHorizontal: 2,
-    minWidth: 0,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+  },
+  iconWrap: {
+    width: 30,
+    height: 26,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapActive: {
+    backgroundColor: COLORS.primary,
+    ...SHADOWS.button,
   },
   tabText: {
-    fontSize: 9.5,
-    fontWeight: '600',
+    fontSize: 8.8,
+    fontWeight: '700',
     color: COLORS.textMuted,
+    marginTop: 2,
     textAlign: 'center',
   },
-  tabActive: { color: COLORS.primary, fontWeight: '800' },
+  tabActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
+  },
 });

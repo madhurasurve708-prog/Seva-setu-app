@@ -2,9 +2,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import GlassCard from '@/components/common/GlassCard';
+import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
@@ -30,12 +30,9 @@ export default function AnalyticsScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <OfficialScreen title="Analytics" tab="analytics" hideHeader={true}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, marginLeft: 4 }}>
           <Text style={styles.headerTitle}>Analytics</Text>
           <Text style={styles.headerSub}>{profile.ward} · {profile.locality}</Text>
         </View>
@@ -118,7 +115,7 @@ export default function AnalyticsScreen() {
           </Text>
         </GlassCard>
       </ScrollView>
-    </SafeAreaView>
+    </OfficialScreen>
   );
 }
 
@@ -127,19 +124,15 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 14, paddingVertical: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
     backgroundColor: COLORS.card,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
     ...SHADOWS.sm,
   },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
-  },
   headerTitle: { ...TYPOGRAPHY.h3, fontSize: 16, color: COLORS.text },
   headerSub: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginTop: 1 },
 
-  content: { padding: 16, paddingBottom: 44, gap: 14 },
+  content: { padding: 16, paddingBottom: 32, gap: 14 },
   sectionTitle: { ...TYPOGRAPHY.h3, fontSize: 14, color: COLORS.text, marginBottom: -4 },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

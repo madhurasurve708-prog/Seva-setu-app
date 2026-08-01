@@ -10,13 +10,12 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import LanguageToggle from "@/components/common/LanguageToggle";
 import ComplaintCard from "@/components/official/ComplaintCard";
 import HeroBanner from "@/components/official/HeroBanner";
 import ProfileDropdown from "@/components/official/ProfileDropdown";
-import Sidebar from "@/components/official/Sidebar";
+import { OfficialScreen } from "@/components/official/OfficialScreen";
 import { COLORS, SHADOWS, TYPOGRAPHY } from "@/constants/theme";
 import { categories } from "@/data/categories";
 import { useOfficial } from "@/providers/official-provider";
@@ -99,7 +98,6 @@ const STAT_ITEMS = (
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile, complaints, announcements, logout } = useOfficial();
   const { t } = useTranslation();
 
@@ -141,19 +139,6 @@ export default function DashboardScreen() {
     } as any);
   };
 
-  const getPriorityColor = (prio: string) => {
-    switch (prio) {
-      case "Emergency":
-        return { bg: "#FEF2F2", text: "#DC2626" };
-      case "High":
-        return { bg: "#FFF7ED", text: "#EA580C" };
-      case "Pinned":
-        return { bg: "#EFF6FF", text: "#1E6FD9" };
-      default:
-        return { bg: "#F1F5F9", text: "#475569" };
-    }
-  };
-
   const statItems = STAT_ITEMS(
     t,
     pending,
@@ -166,16 +151,10 @@ export default function DashboardScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.root} edges={["top"]}>
+    <OfficialScreen title={t("dashboard")} tab="dashboard" hideHeader={true}>
       {/* ── Header ── */}
       <View style={styles.headerBar}>
         <View style={styles.brandWrap}>
-          <Pressable
-            onPress={() => setSidebarOpen(true)}
-            style={styles.menuBtn}
-          >
-            <Ionicons name="menu" size={22} color={COLORS.primary} />
-          </Pressable>
           <Image
             source={require("@/assets/images/logo.jpeg")}
             style={styles.logo}
@@ -300,53 +279,84 @@ export default function DashboardScreen() {
                       color={CATEGORY_STYLE[cat.id]?.color ?? COLORS.primary}
                     />
                   </View>
-                  <Text style={styles.categoryLabel} numberOfLines={2}>
-                    {t(cat.id === "all" ? "all_cat" : cat.id)}
-                  </Text>
+                  <Text style={styles.categoryLabel}>{t(cat.labelKey)}</Text>
                 </Pressable>
               </Animated.View>
             ))}
           </ScrollView>
         </View>
 
-        {/* ── Latest Announcements ── */}
+        {/* ── Active Notices ── */}
         <View style={styles.section}>
           <SectionHeader
-            title={t("latestAnnouncements")}
+            title={t("noticesTitle")}
             actionLabel={t("viewAll")}
-            onAction={() => router.push("/(official)/announcements")}
+            onAction={() => router.push("/(official)/announcements" as any)}
           />
-          {announcements.slice(0, 2).map((a, idx) => {
-            const c = getPriorityColor(a.priority);
-            return (
-              <Animated.View
-                key={a.id}
-                entering={FadeInDown.duration(360).delay(60 + idx * 60)}
-              >
-                <View style={styles.announcementCard}>
-                  <View style={styles.announcementTopRow}>
-                    <View style={[styles.badge, { backgroundColor: c.bg }]}>
-                      <Text style={[styles.badgeText, { color: c.text }]}>
-                        {a.priority}
-                      </Text>
-                    </View>
-                    <Text style={styles.announcementDate}>{a.date}</Text>
+          {announcements.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <MaterialCommunityIcons
+                name="bullhorn-outline"
+                size={28}
+                color={COLORS.textMuted}
+              />
+              <Text style={styles.emptyTitle}>{t("noNoticesYet")}</Text>
+              <Text style={styles.emptyText}>{t("checkBackLater")}</Text>
+            </View>
+          ) : (
+            announcements.slice(0, 2).map((item) => (
+              <View key={item.id} style={styles.announcementCard}>
+                <View style={styles.announcementTopRow}>
+                  <View
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor:
+                          item.priority === "Emergency" ||
+                          item.priority === "High"
+                            ? "#FEF2F2"
+                            : "#F0FDF4",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        {
+                          color:
+                            item.priority === "Emergency" ||
+                            item.priority === "High"
+                              ? "#DC2626"
+                              : "#16A34A",
+                        },
+                      ]}
+                    >
+                      {item.priority === "Emergency"
+                        ? t("priorityEmergency")
+                        : item.priority === "High"
+                          ? t("priorityHigh")
+                          : t("priorityNormal")}
+                    </Text>
                   </View>
-                  <Text style={styles.announcementTitle}>{a.title}</Text>
-                  <Text style={styles.announcementBody} numberOfLines={2}>
-                    {a.body}
+                  <Text style={styles.announcementDate}>
+                    {new Date(item.createdAt).toLocaleDateString(
+                      profile.language === "mr" ? "mr-IN" : "en-IN",
+                      { month: "short", day: "numeric" },
+                    )}
                   </Text>
                 </View>
-              </Animated.View>
-            );
-          })}
+                <Text style={styles.announcementTitle}>{item.title}</Text>
+                <Text style={styles.announcementBody}>{item.body}</Text>
+              </View>
+            ))
+          )}
         </View>
 
-        {/* ── Priority Complaints ── */}
+        {/* ── Urgent Actions ── */}
         <View style={styles.section}>
           <SectionHeader
-            title={t("priorityComplaints")}
-            subtitle={t("emergencyHighPriority")}
+            title={t("urgentActions")}
+            subtitle={t("highPriorityFocus")}
             actionLabel={t("viewAll")}
             onAction={() => goToComplaints()}
           />
@@ -388,14 +398,7 @@ export default function DashboardScreen() {
           )}
         </View>
       </ScrollView>
-
-      <Sidebar
-        visible={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        wardComplaintsCount={pending + inProgress}
-        onLogout={handleLogout}
-      />
-    </SafeAreaView>
+    </OfficialScreen>
   );
 }
 
@@ -448,15 +451,6 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   brandWrap: { flexDirection: "row", alignItems: "center", flex: 1 },
-  menuBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#EFF6FF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
   logo: { width: 30, height: 30, marginRight: 8 },
   headerTitle: {
     color: COLORS.primary,

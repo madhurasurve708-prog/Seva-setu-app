@@ -337,6 +337,7 @@ export const en = {
 
   // Announcements
   announcementsTitle: 'Announcements',
+  complaintsTitle: 'Complaints',
   municipalNotifications: 'Municipal Board Notifications',
   noticeLabel: 'Notice',
 
