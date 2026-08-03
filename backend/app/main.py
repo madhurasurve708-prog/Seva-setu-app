@@ -17,7 +17,6 @@ from app.api.main_admin import router as main_admin_router
 from app.api.main_admin_complaint import router as main_admin_complaint_router
 from app.api.main_admin_analytics import router as main_admin_analytics_router
 from app.api.main_admin_audit import router as main_admin_audit_router
-from app.api.main_admin_reports import router as main_admin_reports_router
 
 # Import all models so SQLAlchemy registers them with Base.metadata
 # before create_all() runs. Must happen before the app starts.
@@ -59,7 +58,6 @@ app.include_router(main_admin_router)
 app.include_router(main_admin_complaint_router)
 app.include_router(main_admin_analytics_router)
 app.include_router(main_admin_audit_router)
-app.include_router(main_admin_reports_router)
 
 
 @app.get("/")

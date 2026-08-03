@@ -7,13 +7,12 @@ from app.schemas.department_officer_complaint import (
     DepartmentOfficerComplaintListItem,
     DepartmentOfficerComplaintDetail,
     DepartmentComplaintListFilter,
-    ComplaintStatusUpdate,
     ComplaintNoteCreate,
     ComplaintNoteResponse,
     ComplaintTimelineItem,
-    ComplaintEscalateRequest,
     ComplaintEscalationResponse,
 )
+from app.schemas.complaint_common import ComplaintStatusUpdate, ComplaintEscalateRequest
 from app.services.department_officer_complaint_service import DepartmentOfficerComplaintService
 
 router = APIRouter(tags=["Department Officer Complaints"])

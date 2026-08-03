@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict, Field
 from app.core.constants import ComplaintStatus
+from app.schemas.complaint_common import ComplaintStatusUpdate, ComplaintEscalateRequest
 
 
 class DepartmentOfficerDashboard(BaseModel):
@@ -25,8 +26,7 @@ class DepartmentOfficerComplaintListItem(BaseModel):
     created_at: datetime
     image_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DepartmentOfficerComplaintDetail(BaseModel):
@@ -46,8 +46,7 @@ class DepartmentOfficerComplaintDetail(BaseModel):
     updated_at: datetime
     assigned_department: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DepartmentComplaintListFilter(BaseModel):
@@ -64,12 +63,6 @@ class DepartmentComplaintListFilter(BaseModel):
     page_size: int = Field(20, ge=1, le=100, description="Number of items per page")
 
 
-class ComplaintStatusUpdate(BaseModel):
-    status: Literal[ComplaintStatus.PENDING, ComplaintStatus.IN_PROGRESS, ComplaintStatus.RESOLVED] = Field(
-        ..., description="New status; transitions must move forward."
-    )
-
-
 class ComplaintNoteCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     
@@ -83,8 +76,7 @@ class ComplaintNoteResponse(BaseModel):
     note_text: str
     image_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ComplaintTimelineItem(BaseModel):
@@ -94,19 +86,7 @@ class ComplaintTimelineItem(BaseModel):
     note_text: str
     image_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
-
-class ComplaintEscalateRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    escalation_target: Literal["Main Admin", "Department"] = Field(
-        ..., description="Escalation destination."
-    )
-    escalation_note: str = Field(
-        ..., min_length=1, max_length=2000, description="Reason for escalation."
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ComplaintEscalationResponse(BaseModel):
@@ -119,5 +99,4 @@ class ComplaintEscalationResponse(BaseModel):
     escalation_note: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

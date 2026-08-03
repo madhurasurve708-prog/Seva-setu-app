@@ -5,12 +5,9 @@ from app.dependencies.main_admin_auth import get_current_main_admin
 from app.models.main_admin import MainAdmin
 from app.schemas.analytics import (
     DashboardStatistics,
-    TodayStatistics,
-    MonthlyStatistics,
-    WardPerformanceList,
-    DepartmentPerformanceList,
-    MonthlyTrendList,
-    CategoryAnalyticsList,
+    WardStatisticsList,
+    DepartmentStatisticsList,
+    BestWard,
 )
 from app.services.analytics_service import AnalyticsService
 
@@ -31,84 +28,46 @@ def get_dashboard_statistics(
     return AnalyticsService.get_dashboard_statistics(db)
 
 
-@router.get(
-    "/api/main-admin/analytics/today",
-    response_model=TodayStatistics,
-    status_code=status.HTTP_200_OK,
-)
-def get_today_statistics(
-    current_admin: MainAdmin = Depends(get_current_main_admin),
-    db: Session = Depends(get_db),
-):
-    """Get today's complaint statistics."""
-    return AnalyticsService.get_today_statistics(db)
-
-
-@router.get(
-    "/api/main-admin/analytics/monthly",
-    response_model=MonthlyStatistics,
-    status_code=status.HTTP_200_OK,
-)
-def get_monthly_statistics(
-    current_admin: MainAdmin = Depends(get_current_main_admin),
-    db: Session = Depends(get_db),
-):
-    """Get current month complaint statistics."""
-    return AnalyticsService.get_monthly_statistics(db)
-
-
-# Ward Performance
+# Ward Statistics
 @router.get(
     "/api/main-admin/analytics/wards",
-    response_model=WardPerformanceList,
+    response_model=WardStatisticsList,
     status_code=status.HTTP_200_OK,
 )
-def get_ward_performance(
+def get_ward_statistics(
     current_admin: MainAdmin = Depends(get_current_main_admin),
     db: Session = Depends(get_db),
 ):
-    """Get ward performance statistics with ranking (best ward first)."""
-    return AnalyticsService.get_ward_performance(db)
+    """Get statistics for every ward."""
+    return AnalyticsService.get_ward_statistics(db)
 
 
-# Department Performance
+# Department Statistics
 @router.get(
     "/api/main-admin/analytics/departments",
-    response_model=DepartmentPerformanceList,
+    response_model=DepartmentStatisticsList,
     status_code=status.HTTP_200_OK,
 )
-def get_department_performance(
+def get_department_statistics(
     current_admin: MainAdmin = Depends(get_current_main_admin),
     db: Session = Depends(get_db),
 ):
-    """Get department performance statistics."""
-    return AnalyticsService.get_department_performance(db)
+    """Get statistics for every department."""
+    return AnalyticsService.get_department_statistics(db)
 
 
-# Monthly Trends
+# Best Ward
 @router.get(
-    "/api/main-admin/analytics/trends",
-    response_model=MonthlyTrendList,
+    "/api/main-admin/analytics/best-ward",
+    response_model=BestWard,
     status_code=status.HTTP_200_OK,
 )
-def get_monthly_trends(
-    months: int = 12,
+def get_best_ward(
     current_admin: MainAdmin = Depends(get_current_main_admin),
     db: Session = Depends(get_db),
 ):
-    """Get monthly complaint trends for the last N months."""
-    return AnalyticsService.get_monthly_trends(db, months)
-
-
-# Category Analytics
-@router.get(
-    "/api/main-admin/analytics/categories",
-    response_model=CategoryAnalyticsList,
-    status_code=status.HTTP_200_OK,
-)
-def get_category_analytics(
-    current_admin: MainAdmin = Depends(get_current_main_admin),
-    db: Session = Depends(get_db),
-):
-    """Get category complaint statistics."""
-    return AnalyticsService.get_category_analytics(db)
+    """Get the best ward (highest resolution percentage)."""
+    best_ward = AnalyticsService.get_best_ward(db)
+    if best_ward is None:
+        raise status.HTTP_404_NOT_FOUND(detail="No wards found")
+    return best_ward

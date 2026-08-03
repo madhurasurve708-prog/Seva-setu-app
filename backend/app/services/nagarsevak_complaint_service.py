@@ -2,24 +2,12 @@ import uuid
 from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.db.repository import ComplaintRepository, ComplaintHistoryRepository, ComplaintEscalationRepository
-
-CATEGORY_TO_DEPARTMENT = {
-    "Water": "पाणी पुरवठा विभाग",
-    "Garbage": "स्वच्छता व घनकचरा विभाग",
-    "Gutter": "स्वच्छता व घनकचरा विभाग",
-    "Drainage": "बांधकाम विभाग",
-    "Road": "बांधकाम विभाग",
-    "Street Lights": "विद्युत विभाग",
-    "Animals": "आरोग्य विभाग",
-    "Tree": "उद्याने व बाग विभाग",
-    "Traffic": "बांधकाम विभाग",
-    "Other": "आरोग्य विभाग",
-}
+from app.db.repository import ComplaintRepository, ComplaintHistoryRepository, ComplaintEscalationRepository, AuditLogRepository
 from app.models.nagarsevak import Nagarsevak
 from app.utils.storage import upload_image_to_storage
 from app.core.content_validation import ensure_appropriate_text
-from app.core.constants import ComplaintStatus, ImageValidation
+from app.core.constants import ComplaintStatus, ImageValidation, CATEGORY_TO_DEPARTMENT
+from app.schemas.complaint_common import ComplaintStatusUpdate as ComplaintStatusUpdateSchema, ComplaintEscalateRequest as ComplaintEscalateRequestSchema
 
 
 def _build_detail_dict(complaint) -> dict:
@@ -121,6 +109,17 @@ class NagarsevakComplaintService:
                 author_id=nagarsevak.id,
                 note_text=f"Status updated from '{current_status}' to '{new_status}'",
             )
+            # Create audit log for status update
+            AuditLogRepository.create_audit_log(
+                db=db,
+                action="UPDATE",
+                entity_type="Complaint",
+                entity_id=complaint.id,
+                actor_role="Nagarsevak",
+                actor_id=nagarsevak.id,
+                actor_name=nagarsevak.name,
+                details=f"Updated complaint status from '{current_status}' to '{new_status}'",
+            )
 
         return _build_detail_dict(complaint)
 
@@ -179,6 +178,18 @@ class NagarsevakComplaintService:
             author_id=nagarsevak.id,
             note_text=note_text.strip(),
             image_url=public_url,
+        )
+        
+        # Create audit log for note creation
+        AuditLogRepository.create_audit_log(
+            db=db,
+            action="CREATE",
+            entity_type="ComplaintNote",
+            entity_id=note.id,
+            actor_role="Nagarsevak",
+            actor_id=nagarsevak.id,
+            actor_name=nagarsevak.name,
+            details=f"Added note to complaint {complaint_id}",
         )
 
         return {
@@ -277,6 +288,18 @@ class NagarsevakComplaintService:
             author_name=nagarsevak.name,
             author_id=nagarsevak.id,
             note_text=f"Escalated to {escalated_to}. Reason: {escalation_note.strip()}",
+        )
+        
+        # Create audit log for escalation
+        AuditLogRepository.create_audit_log(
+            db=db,
+            action="ESCALATE",
+            entity_type="Complaint",
+            entity_id=complaint_id,
+            actor_role="Nagarsevak",
+            actor_id=nagarsevak.id,
+            actor_name=nagarsevak.name,
+            details=f"Escalated complaint to {escalated_to}: {escalation_note.strip()}",
         )
 
         return {

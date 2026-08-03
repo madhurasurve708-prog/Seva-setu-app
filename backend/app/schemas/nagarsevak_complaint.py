@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field
-from app.core.constants import ComplaintStatus
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
+from app.schemas.complaint_common import ComplaintStatusUpdate, ComplaintEscalateRequest
 
 
 class NagarsevakComplaintDashboard(BaseModel):
@@ -23,8 +23,7 @@ class NagarsevakComplaintListItem(BaseModel):
     created_at: datetime
     image_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NagarsevakComplaintDetail(BaseModel):
@@ -43,25 +42,7 @@ class NagarsevakComplaintDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-class ComplaintStatusUpdate(BaseModel):
-    status: Literal[ComplaintStatus.PENDING, ComplaintStatus.IN_PROGRESS, ComplaintStatus.RESOLVED] = Field(
-        ..., description="New status; transitions must move forward."
-    )
-
-
-class ComplaintEscalateRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    escalation_target: Literal["Main Admin", "Department"] = Field(
-        ..., description="Escalation destination."
-    )
-    escalation_note: str = Field(
-        ..., min_length=1, max_length=2000, description="Reason for escalation."
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EscalatedComplaintResponse(BaseModel):
@@ -74,8 +55,7 @@ class EscalatedComplaintResponse(BaseModel):
     escalation_date: datetime
     latest_escalation_note: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ComplaintEscalationCreatedResponse(BaseModel):
@@ -87,3 +67,5 @@ class ComplaintEscalationCreatedResponse(BaseModel):
     escalated_to: str
     escalation_note: str
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

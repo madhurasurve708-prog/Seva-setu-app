@@ -7,7 +7,7 @@ class NagarsevakLogin(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str = Field(..., min_length=1, max_length=150, description="Display name of the Nagarsevak")
-    ward_id: int = Field(..., gt=0, description="Associated Ward ID")
+    ward_number: int = Field(..., gt=0, description="Ward number for login, for example 2")
     password: str = Field(..., min_length=1, max_length=100, description="Password")
 
 
@@ -21,9 +21,14 @@ class NagarsevakProfile(BaseModel):
     profile_photo_url: Optional[str] = None
     role: str = "nagarsevak"
     is_active: bool
+    is_blocked: bool
+    is_restricted: bool
+    is_archived: bool
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NagarsevakLoginResponse(BaseModel):

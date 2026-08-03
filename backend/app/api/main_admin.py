@@ -4,6 +4,8 @@ from app.dependencies.db import get_db
 from app.dependencies.main_admin_auth import get_current_main_admin
 from app.models.main_admin import MainAdmin
 from app.schemas.main_admin import (
+    MainAdminLogin,
+    MainAdminLoginResponse,
     MainAdminAnnouncementCreate,
     MainAdminAnnouncementUpdate,
     MainAdminAnnouncementResponse,
@@ -21,6 +23,17 @@ from app.schemas.main_admin import (
 from app.services.main_admin_service import MainAdminService
 
 router = APIRouter(tags=["Main Admin Administration"])
+
+
+# Authentication Endpoints
+@router.post(
+    "/api/main-admin/login",
+    response_model=MainAdminLoginResponse,
+    status_code=status.HTTP_200_OK,
+)
+def login(login_data: MainAdminLogin, db: Session = Depends(get_db)):
+    """Login Main Admin with name and password."""
+    return MainAdminService.login(db, login_data)
 
 
 # Announcement Endpoints

@@ -7,12 +7,14 @@ from app.db.repository import (
     NagarsevakRepository,
     DepartmentOfficerRepository,
     WardRepository,
+    MainAdminRepository,
 )
 from app.models.announcement import Announcement
 from app.models.citizen import Citizen
 from app.models.nagarsevak import Nagarsevak
 from app.models.department_officer import DepartmentOfficer
 from app.models.main_admin import MainAdmin
+from app.core.constants import Department
 from app.schemas.main_admin import (
     MainAdminAnnouncementCreate,
     MainAdminAnnouncementUpdate,
@@ -25,12 +27,47 @@ from app.schemas.main_admin import (
     MainAdminDepartmentOfficerProfile,
     MainAdminUserActionRequest,
     MainAdminUserActionResponse,
+    MainAdminLogin,
 )
 from app.core.constants import AnnouncementTarget, UserState
 from app.services.audit_log_service import AuditLogService
+from app.core.security import verify_password, create_access_token
 
 
 class MainAdminService:
+    @staticmethod
+    def login(db: Session, login_data: MainAdminLogin) -> dict:
+        """Login Main Admin with name and password."""
+        admin = MainAdminRepository.get_by_name(db, login_data.name)
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid name or password.",
+            )
+        
+        # Verify password
+        if not verify_password(login_data.password, admin.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid name or password.",
+            )
+        
+        # Check if admin is active
+        if not admin.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This admin account is inactive.",
+            )
+        
+        # Create JWT token
+        token = create_access_token(subject=admin.id, role="main_admin")
+        
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "admin": admin,
+        }
+    
     @staticmethod
     def create_announcement(
         db: Session,
@@ -67,10 +104,10 @@ class MainAdminService:
                     detail="target_department is required for department-specific announcements.",
                 )
             # Validate department name
-            if announcement_in.target_department not in DepartmentOfficer.VALID_DEPARTMENTS:
+            if announcement_in.target_department not in Department.VALID_DEPARTMENTS:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid department. Valid departments: {', '.join(DepartmentOfficer.VALID_DEPARTMENTS)}",
+                    detail=f"Invalid department. Valid departments: {', '.join(Department.VALID_DEPARTMENTS)}",
                 )
 
         announcement = Announcement(
@@ -508,6 +545,7 @@ class MainAdminService:
         db: Session,
         citizen_id: int,
         action_request: MainAdminUserActionRequest,
+        admin: MainAdmin,
     ) -> MainAdminUserActionResponse:
         """Perform action on citizen."""
         citizen = CitizenRepository.get_by_id(db, citizen_id)
@@ -610,6 +648,11 @@ class MainAdminService:
                 detail="Invalid action.",
             )
 
+        # Audit log
+        AuditLogService.log_action(
+            db, admin, action, "citizen", citizen_id, message
+        )
+
         return MainAdminUserActionResponse(message=message)
 
     @staticmethod
@@ -617,6 +660,7 @@ class MainAdminService:
         db: Session,
         nagarsevak_id: int,
         action_request: MainAdminUserActionRequest,
+        admin: MainAdmin,
     ) -> MainAdminUserActionResponse:
         """Perform action on nagarsevak."""
         nagarsevak = NagarsevakRepository.get_by_id(db, nagarsevak_id)
@@ -719,6 +763,11 @@ class MainAdminService:
                 detail="Invalid action.",
             )
 
+        # Audit log
+        AuditLogService.log_action(
+            db, admin, action, "nagarsevak", nagarsevak_id, message
+        )
+
         return MainAdminUserActionResponse(message=message)
 
     @staticmethod
@@ -726,6 +775,7 @@ class MainAdminService:
         db: Session,
         officer_id: int,
         action_request: MainAdminUserActionRequest,
+        admin: MainAdmin,
     ) -> MainAdminUserActionResponse:
         """Perform action on department officer."""
         officer = DepartmentOfficerRepository.get_by_id(db, officer_id)
@@ -827,6 +877,11 @@ class MainAdminService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid action.",
             )
+
+        # Audit log
+        AuditLogService.log_action(
+            db, admin, action, "department_officer", officer_id, message
+        )
 
         return MainAdminUserActionResponse(message=message)
 

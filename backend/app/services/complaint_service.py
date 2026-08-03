@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.db.repository import CitizenRepository, ComplaintRepository
+from app.db.repository import CitizenRepository, ComplaintRepository, CategoryRepository
 from app.models.complaint import Complaint
-from app.models.category import Category
 from app.schemas.complaint import ComplaintCreate
 from app.utils.storage import upload_image_to_storage
 from app.core.content_validation import ensure_appropriate_text
@@ -31,7 +30,7 @@ class ComplaintService:
             )
 
         # 2. Verify selected category exists
-        category_exists = db.query(Category).filter(Category.id == complaint_in.category_id).first()
+        category_exists = CategoryRepository.get_by_id(db, complaint_in.category_id)
         if not category_exists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.db.repository import CitizenRepository
+from app.db.repository import CitizenRepository, WardRepository
 from app.models.citizen import Citizen
-from app.models.ward import Ward
 from app.schemas.citizen import CitizenProfileCreate
 from app.utils.storage import upload_image_to_storage, PROFILE_PHOTOS_BUCKET
 from app.core.constants import ImageValidation
@@ -11,14 +10,14 @@ from app.core.constants import ImageValidation
 class CitizenService:
     @staticmethod
     def create_profile(db: Session, citizen_in: CitizenProfileCreate) -> Citizen:
-        # 1. Verify ward exists
-        ward_exists = db.query(Ward).filter(Ward.id == citizen_in.ward_id).first()
-        if not ward_exists:
+        # 1. Convert ward_number to ward_id (just like Nagarsevak login)
+        ward = WardRepository.get_by_ward_number(db, str(citizen_in.ward_number))
+        if not ward:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ward with ID {citizen_in.ward_id} does not exist.",
+                detail=f"Ward with number {citizen_in.ward_number} does not exist.",
             )
-
+        
         # 2. Reject duplicate supabase_user_id
         duplicate_user = CitizenRepository.get_by_supabase_id(db, citizen_in.supabase_user_id)
         if duplicate_user:
@@ -35,8 +34,23 @@ class CitizenService:
                 detail="Phone number is already registered by another citizen.",
             )
 
-        # 4. Create citizen profile
-        return CitizenRepository.create_citizen(db, citizen_in)
+        # 4. Create citizen profile with converted ward_id
+        # Create a dict with the converted ward_id
+        citizen_dict = citizen_in.model_dump()
+        citizen_dict["ward_id"] = ward.id
+        del citizen_dict["ward_number"]  # Remove ward_number since it's not a DB field
+        
+        db_citizen = Citizen(
+            supabase_user_id=citizen_dict["supabase_user_id"],
+            full_name=citizen_dict["full_name"],
+            phone_number=citizen_dict["phone_number"],
+            ward_id=citizen_dict["ward_id"],
+            locality=citizen_dict["locality"],
+        )
+        db.add(db_citizen)
+        db.commit()
+        db.refresh(db_citizen)
+        return db_citizen
 
     @staticmethod
     def get_profile(db: Session, supabase_user_id: str) -> Citizen:

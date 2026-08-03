@@ -4,6 +4,32 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.core.constants import AnnouncementTarget
 
 
+# Authentication Schemas
+class MainAdminProfile(BaseModel):
+    """Main Admin profile response."""
+    id: int
+    name: str
+    role: str = "main_admin"
+    is_active: bool
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MainAdminLogin(BaseModel):
+    """Request schema for Main Admin login."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
+    name: str = Field(..., min_length=1, max_length=150, description="Admin name")
+    password: str = Field(..., min_length=1, max_length=100, description="Password")
+
+
+class MainAdminLoginResponse(BaseModel):
+    """Response schema for Main Admin login."""
+    access_token: str
+    token_type: str = "bearer"
+    admin: MainAdminProfile
+
+
 # Announcement Schemas
 class MainAdminAnnouncementCreate(BaseModel):
     """Request schema for creating an announcement."""

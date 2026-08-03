@@ -2,12 +2,12 @@ import uuid
 from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.db.repository import ComplaintRepository, ComplaintHistoryRepository, ComplaintEscalationRepository
+from app.db.repository import ComplaintRepository, ComplaintHistoryRepository, ComplaintEscalationRepository, AuditLogRepository
 from app.dependencies.department_auth import DepartmentOfficerContext
-from app.services.nagarsevak_complaint_service import CATEGORY_TO_DEPARTMENT
 from app.utils.storage import upload_image_to_storage
 from app.core.content_validation import ensure_appropriate_text
-from app.core.constants import ComplaintStatus, ImageValidation
+from app.core.constants import ComplaintStatus, ImageValidation, CATEGORY_TO_DEPARTMENT
+from app.schemas.complaint_common import ComplaintStatusUpdate as ComplaintStatusUpdateSchema, ComplaintEscalateRequest as ComplaintEscalateRequestSchema
 
 
 def _get_category_names_for_department(department_name: str) -> list[str]:
@@ -194,6 +194,17 @@ class DepartmentOfficerComplaintService:
                 author_id=None,  # Department officers don't have individual IDs yet
                 note_text=f"Status updated from '{current_status}' to '{new_status}'",
             )
+            # Create audit log for status update
+            AuditLogRepository.create_audit_log(
+                db=db,
+                action="UPDATE",
+                entity_type="Complaint",
+                entity_id=complaint.id,
+                actor_role="Department",
+                actor_id=None,
+                actor_name=context.department_name,
+                details=f"Updated complaint status from '{current_status}' to '{new_status}'",
+            )
 
         return _build_detail_dict(complaint, context.department_name)
 
@@ -264,6 +275,18 @@ class DepartmentOfficerComplaintService:
             author_id=None,  # Department officers don't have individual IDs yet
             note_text=note_text.strip(),
             image_url=public_url,
+        )
+        
+        # Create audit log for note creation
+        AuditLogRepository.create_audit_log(
+            db=db,
+            action="CREATE",
+            entity_type="ComplaintNote",
+            entity_id=note.id,
+            actor_role="Department",
+            actor_id=None,
+            actor_name=context.department_name,
+            details=f"Added note to complaint {complaint_id}",
         )
 
         return {
@@ -375,6 +398,18 @@ class DepartmentOfficerComplaintService:
             author_name=context.department_name,
             author_id=None,
             note_text=f"Escalated to {escalation_target}: {escalation_note.strip()}",
+        )
+        
+        # Create audit log for escalation
+        AuditLogRepository.create_audit_log(
+            db=db,
+            action="ESCALATE",
+            entity_type="Complaint",
+            entity_id=complaint_id,
+            actor_role="Department",
+            actor_id=None,
+            actor_name=context.department_name,
+            details=f"Escalated complaint to {escalation_target}: {escalation_note.strip()}",
         )
 
         return {

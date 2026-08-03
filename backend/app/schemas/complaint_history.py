@@ -1,11 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
-
-
-class ComplaintHistoryCreate(BaseModel):
-    note_text: str
-    image_url: Optional[str] = None
+from pydantic import BaseModel, ConfigDict
 
 
 class ComplaintHistoryResponse(BaseModel):
@@ -16,5 +11,4 @@ class ComplaintHistoryResponse(BaseModel):
     note_text: str
     image_url: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -17,7 +17,7 @@ class Citizen(Base):
     supabase_user_id: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     full_name: Mapped[str] = mapped_column(String(150), nullable=False)
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
-    ward_id: Mapped[int] = mapped_column(ForeignKey("wards.id", ondelete="RESTRICT"), nullable=False)
+    ward_id: Mapped[int] = mapped_column(ForeignKey("wards.id", ondelete="RESTRICT"), nullable=False, index=True)
     locality: Mapped[str] = mapped_column(String(255), nullable=False)
     profile_photo_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

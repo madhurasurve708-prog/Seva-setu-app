@@ -18,9 +18,9 @@ class Complaint(Base):
     __tablename__ = "complaints"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    citizen_id: Mapped[int] = mapped_column(ForeignKey("citizens.id", ondelete="CASCADE"), nullable=False)
-    ward_id: Mapped[int] = mapped_column(ForeignKey("wards.id", ondelete="RESTRICT"), nullable=False)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False)
+    citizen_id: Mapped[int] = mapped_column(ForeignKey("citizens.id", ondelete="CASCADE"), nullable=False, index=True)
+    ward_id: Mapped[int] = mapped_column(ForeignKey("wards.id", ondelete="RESTRICT"), nullable=False, index=True)
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     manual_location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
