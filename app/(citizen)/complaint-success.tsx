@@ -5,7 +5,7 @@ import { CITIZEN_COLORS as C } from '@/constants/citizen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import Animated, { ZoomIn, FadeInUp } from 'react-native-reanimated';
 import PrimaryButton from '@/components/common/PrimaryButton';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { useTranslation } from '@/providers/localization-provider';
 
 export default function ComplaintSuccess() {

@@ -20,6 +20,11 @@ def get_supabase_client() -> Client:
     return _supabase_client
 
 
+def get_supabase_anon_client() -> Client:
+    """Create a client used only to verify a caller's Supabase access token."""
+    return create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+
+
 def upload_image_to_storage(
     file_bytes: bytes,
     content_type: str,

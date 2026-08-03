@@ -3,18 +3,28 @@ from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.schemas.citizen import CitizenProfileCreate, CitizenProfileResponse
 from app.services.citizen_service import CitizenService
+from app.dependencies.citizen_auth import (
+    SupabaseCitizen,
+    get_current_citizen,
+    get_current_supabase_citizen,
+)
+from app.models.citizen import Citizen
 
 router = APIRouter(tags=["Citizen Profile"])
 
 
 @router.post("/api/citizen/profile", response_model=CitizenProfileResponse, status_code=status.HTTP_201_CREATED)
-def create_profile(citizen_in: CitizenProfileCreate, db: Session = Depends(get_db)):
-    return CitizenService.create_profile(db, citizen_in)
+def create_profile(
+    citizen_in: CitizenProfileCreate,
+    identity: SupabaseCitizen = Depends(get_current_supabase_citizen),
+    db: Session = Depends(get_db),
+):
+    return CitizenService.create_profile(db, citizen_in, identity.user_id, identity.phone_number)
 
 
-@router.get("/api/citizen/profile/{supabase_user_id}", response_model=CitizenProfileResponse)
-def get_profile(supabase_user_id: str, db: Session = Depends(get_db)):
-    return CitizenService.get_profile(db, supabase_user_id)
+@router.get("/api/citizen/profile", response_model=CitizenProfileResponse)
+def get_profile(current_citizen: Citizen = Depends(get_current_citizen)):
+    return current_citizen
 
 
 @router.put(
@@ -23,8 +33,8 @@ def get_profile(supabase_user_id: str, db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
 )
 def upload_profile_photo(
-    supabase_user_id: str = Form(...),
     image: UploadFile = File(...),
+    current_citizen: Citizen = Depends(get_current_citizen),
     db: Session = Depends(get_db),
 ):
     file_bytes = image.file.read()
@@ -32,7 +42,7 @@ def upload_profile_photo(
 
     return CitizenService.upload_profile_photo(
         db=db,
-        supabase_user_id=supabase_user_id,
+        citizen=current_citizen,
         file_bytes=file_bytes,
         content_type=content_type,
     )

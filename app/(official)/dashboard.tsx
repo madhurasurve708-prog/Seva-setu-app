@@ -279,7 +279,7 @@ export default function DashboardScreen() {
                       color={CATEGORY_STYLE[cat.id]?.color ?? COLORS.primary}
                     />
                   </View>
-                  <Text style={styles.categoryLabel}>{t(cat.labelKey)}</Text>
+                  <Text style={styles.categoryLabel}>{cat.label}</Text>
                 </Pressable>
               </Animated.View>
             ))}
@@ -339,7 +339,7 @@ export default function DashboardScreen() {
                     </Text>
                   </View>
                   <Text style={styles.announcementDate}>
-                    {new Date(item.createdAt).toLocaleDateString(
+                    {new Date(item.date).toLocaleDateString(
                       profile.language === "mr" ? "mr-IN" : "en-IN",
                       { month: "short", day: "numeric" },
                     )}

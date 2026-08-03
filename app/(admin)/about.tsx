@@ -7,7 +7,7 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useTranslation } from '@/providers/localization-provider';
 

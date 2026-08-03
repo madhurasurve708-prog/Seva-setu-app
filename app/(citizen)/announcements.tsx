@@ -1,6 +1,6 @@
 // app/(citizen)/announcements.tsx
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { ANNOUNCEMENTS } from '@/constants/citizen';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

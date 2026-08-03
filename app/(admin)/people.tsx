@@ -4,7 +4,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';

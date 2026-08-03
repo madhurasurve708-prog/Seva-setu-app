@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';

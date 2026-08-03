@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, File, UploadFile
+from fastapi import APIRouter, Depends, status, File, Form, UploadFile
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.department_auth import get_current_department_officer, DepartmentOfficerContext
@@ -116,7 +116,7 @@ def add_complaint_note(
 )
 def add_complaint_note_with_photo(
     complaint_id: int,
-    note_text: str = File(..., description="Note text content"),
+    note_text: str = Form(..., min_length=1, max_length=2000, description="Note text content"),
     image: UploadFile = File(..., description="Note photo attachment"),
     context: DepartmentOfficerContext = Depends(get_current_department_officer),
     db: Session = Depends(get_db),

@@ -613,7 +613,6 @@ export const en = {
   blockUser: 'Block User',
   removeComplaint: 'Remove Complaint',
   confirmAction: 'Confirm',
-  complaintsTitle: 'Complaints',
   ctxWardLabel: 'Ward:',
   ctxCategoryLabel: 'Category:',
   ctxDeptLabel: 'Dept:',

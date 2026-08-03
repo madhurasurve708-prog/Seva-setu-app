@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from app.db.base_class import Base
@@ -17,6 +18,8 @@ from app.api.main_admin import router as main_admin_router
 from app.api.main_admin_complaint import router as main_admin_complaint_router
 from app.api.main_admin_analytics import router as main_admin_analytics_router
 from app.api.main_admin_audit import router as main_admin_audit_router
+from app.api.citizen_announcement import router as citizen_announcement_router
+from app.core.config import settings
 
 # Import all models so SQLAlchemy registers them with Base.metadata
 # before create_all() runs. Must happen before the app starts.
@@ -27,6 +30,16 @@ app = FastAPI(
     version="1.0.0",
     description="Backend API for Seva Setu civic-service portals.",
 )
+
+cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+if cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -58,6 +71,7 @@ app.include_router(main_admin_router)
 app.include_router(main_admin_complaint_router)
 app.include_router(main_admin_analytics_router)
 app.include_router(main_admin_audit_router)
+app.include_router(citizen_announcement_router)
 
 
 @app.get("/")

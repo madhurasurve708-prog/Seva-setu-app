@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';

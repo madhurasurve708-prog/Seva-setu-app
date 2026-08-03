@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS } from '@/constants/theme';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';

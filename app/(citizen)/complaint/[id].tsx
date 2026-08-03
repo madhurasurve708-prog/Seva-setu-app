@@ -7,7 +7,7 @@ import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../../constants/theme';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function ComplaintDetail() {

@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, TYPOGRAPHY } from '../../constants/theme';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 
 export default function TermsConditionsScreen() {
   return (

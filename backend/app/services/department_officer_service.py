@@ -22,6 +22,11 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 class DepartmentOfficerService:
     @staticmethod
     def login(login_data: DepartmentOfficerLogin) -> dict:
+        if len(settings.DEPT_TEMP_PASSWORD) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Department login is not configured. Contact the Main Admin.",
+            )
         # 1. Validate department key
         department_name = Department.VALID_DEPARTMENTS.get(login_data.department)
         if department_name is None:

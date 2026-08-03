@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';

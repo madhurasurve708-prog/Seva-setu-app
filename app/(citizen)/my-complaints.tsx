@@ -8,7 +8,7 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import Animated, { FadeInRight, FadeInUp } from 'react-native-reanimated';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 
 export default function MyComplaints() {

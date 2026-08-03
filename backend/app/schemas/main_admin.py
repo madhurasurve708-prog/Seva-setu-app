@@ -142,10 +142,6 @@ class MainAdminNagarsevakProfile(BaseModel):
     ward_number: str
     profile_photo_url: Optional[str] = None
     is_active: bool
-    is_blocked: bool
-    is_restricted: bool
-    is_archived: bool
-    is_deleted: bool
     created_at: datetime
     updated_at: datetime
 
@@ -204,11 +200,7 @@ class MainAdminNagarsevakSearchFilter(BaseModel):
     """Filter parameters for nagarsevak search."""
     search_query: Optional[str] = Field(None, description="Search by name or phone number")
     ward_id: Optional[int] = Field(None, description="Filter by ward ID")
-    status: Optional[Literal["active", "blocked", "restricted", "archived", "deleted"]] = Field(None, description="Filter by user status")
     is_active: Optional[bool] = Field(None, description="Filter by active status")
-    is_blocked: Optional[bool] = Field(None, description="Filter by blocked status")
-    is_restricted: Optional[bool] = Field(None, description="Filter by restricted status")
-    is_archived: Optional[bool] = Field(None, description="Filter by archived status")
     offset: int = Field(0, ge=0, description="Pagination offset")
     limit: int = Field(50, ge=1, le=100, description="Results per page (max 100)")
 

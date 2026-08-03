@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS } from '@/constants/theme';
 

@@ -6,7 +6,6 @@ from app.core.security import decode_token_payload
 from app.core.constants import Role
 from app.db.repository import NagarsevakRepository
 from app.models.nagarsevak import Nagarsevak
-from app.dependencies.administrative import ensure_user_can_login
 
 security = HTTPBearer()
 
@@ -41,8 +40,5 @@ def get_current_nagarsevak(
             detail="Nagarsevak not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # Check if user can login (checks is_deleted, is_archived, is_blocked)
-    ensure_user_can_login(nagarsevak)
-    
+
     return nagarsevak
