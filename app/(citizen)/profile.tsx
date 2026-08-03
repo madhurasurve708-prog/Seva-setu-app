@@ -1,7 +1,7 @@
 // app/(citizen)/profile.tsx
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import CustomTextInput from '@/components/common/CustomTextInput';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';

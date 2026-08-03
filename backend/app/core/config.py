@@ -14,9 +14,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
     BAD_WORDS: str = ""
 
-    # Temporary shared password used for department officer login until
-    # real individual officer accounts are provisioned.
-    DEPT_TEMP_PASSWORD: str = "dept@123"
+    # Password distributed by the municipality. It must be supplied by the
+    # deployment environment, never by a source-controlled fallback.
+    DEPT_TEMP_PASSWORD: str = ""
+    # Comma-separated browser origins. Native applications do not use CORS.
+    CORS_ORIGINS: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -9,7 +9,22 @@ from app.core.constants import ImageValidation
 
 class CitizenService:
     @staticmethod
-    def create_profile(db: Session, citizen_in: CitizenProfileCreate) -> Citizen:
+    def create_profile(
+        db: Session,
+        citizen_in: CitizenProfileCreate,
+        authenticated_user_id: str,
+        authenticated_phone_number: str | None,
+    ) -> Citizen:
+        if citizen_in.supabase_user_id != authenticated_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Profile identity does not match the authenticated citizen.",
+            )
+        if authenticated_phone_number and citizen_in.phone_number != authenticated_phone_number:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number must match the verified Supabase phone number.",
+            )
         # 1. Convert ward_number to ward_id (just like Nagarsevak login)
         ward = WardRepository.get_by_ward_number(db, str(citizen_in.ward_number))
         if not ward:
@@ -65,19 +80,11 @@ class CitizenService:
     @staticmethod
     def upload_profile_photo(
         db: Session,
-        supabase_user_id: str,
+        citizen: Citizen,
         file_bytes: bytes,
         content_type: str,
     ) -> Citizen:
-        # 1. Find the citizen using supabase_user_id
-        citizen = CitizenRepository.get_by_supabase_id(db, supabase_user_id)
-        if not citizen:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Citizen profile not found.",
-            )
-
-        # 2. Reject empty uploads
+        # 1. Reject empty uploads
         if not file_bytes:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.repository import AnnouncementRepository
@@ -12,9 +14,7 @@ class DepartmentOfficerAnnouncementService:
         """Get announcements for department officers."""
         announcements = AnnouncementRepository.get_announcements_for_department_officer(db)
         
-        # Since department officers don't have individual IDs yet, we'll use department key as reader_id
-        # Convert department key to a numeric ID for consistency
-        reader_id = hash(context.department) % 1000000  # Simple hash for demo purposes
+        reader_id = DepartmentOfficerAnnouncementService._reader_id(context.department)
         
         read_ids = AnnouncementRepository.get_read_announcement_ids(
             db,
@@ -55,8 +55,7 @@ class DepartmentOfficerAnnouncementService:
                 detail="Announcement not found.",
             )
 
-        # Use department key as reader_id
-        reader_id = hash(context.department) % 1000000
+        reader_id = DepartmentOfficerAnnouncementService._reader_id(context.department)
         
         read_state = AnnouncementRepository.get_read_state(
             db,
@@ -95,8 +94,7 @@ class DepartmentOfficerAnnouncementService:
                 detail="Announcement not found.",
             )
 
-        # Use department key as reader_id
-        reader_id = hash(context.department) % 1000000
+        reader_id = DepartmentOfficerAnnouncementService._reader_id(context.department)
 
         AnnouncementRepository.mark_as_read(
             db,
@@ -105,3 +103,11 @@ class DepartmentOfficerAnnouncementService:
             announcement_id=announcement_id,
         )
         return {"success": True, "message": "Announcement marked as read."}
+    @staticmethod
+    def _reader_id(department: str) -> int:
+        """Stable positive integer for shared department credentials.
+
+        Python's built-in hash is randomized on every process start, which made
+        read receipts disappear after a deployment or restart.
+        """
+        return int.from_bytes(hashlib.sha256(department.encode("utf-8")).digest()[:4], "big") & 0x7FFFFFFF

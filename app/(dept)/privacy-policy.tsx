@@ -4,7 +4,7 @@
 // and does NOT trigger the OfficialProvider auth guard.
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS } from '@/constants/theme';
 import { useTranslation } from '@/providers/localization-provider';

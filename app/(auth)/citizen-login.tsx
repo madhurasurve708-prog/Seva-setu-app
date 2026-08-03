@@ -2,6 +2,7 @@ import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffol
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import type { CitizenProfile } from '@/types/citizen';
+import { createCitizenProfile, getCitizenProfile, isCitizenAuthConfigured, requestCitizenOtp, verifyCitizenOtp } from '@/services/citizen-api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -120,7 +121,7 @@ export default function CitizenLoginScreen() {
     ]).start();
   }, [scaleAnim]);
 
-  const handleSendOtp = useCallback(() => {
+  const handleSendOtp = useCallback(async () => {
     if (!isMobileValid) {
       setMobileError(t('mobileError'));
       return;
@@ -128,7 +129,12 @@ export default function CitizenLoginScreen() {
     setMobileError('');
     setSendingOtp(true);
 
-    setTimeout(() => {
+    try {
+      if (isCitizenAuthConfigured) {
+        await requestCitizenOtp(`+91${mobile}`);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
       setSendingOtp(false);
       animateToStep(2);
       setTimeout(() => {
@@ -136,8 +142,11 @@ export default function CitizenLoginScreen() {
         startCountdown();
         setTimeout(() => otpRefs.current[0]?.focus(), 420);
       }, 350);
-    }, 900);
-  }, [isMobileValid, animateToStep, startCountdown, t]);
+    } catch (error) {
+      setSendingOtp(false);
+      setMobileError(error instanceof Error ? error.message : 'Could not send OTP.');
+    }
+  }, [isMobileValid, mobile, animateToStep, startCountdown, t]);
 
   const handleOtpChange = useCallback((value: string, index: number) => {
     const sanitized = value.replace(/[^0-9]/g, '');
@@ -184,13 +193,6 @@ export default function CitizenLoginScreen() {
     }
   }, [otp]);
 
-  const checkUserExists = useCallback(async (mobileNumber: string) => {
-    await new Promise((r) => setTimeout(r, 700));
-    // For demo/design verification, if the number ends with 2, 4, 6, 8, 0, treat as existing user.
-    const lastDigit = Number(mobileNumber.slice(-1));
-    return lastDigit % 2 === 0;
-  }, []);
-
   const handleVerifyOtp = useCallback(async () => {
     if (!isOtpComplete) {
       setOtpError(t('otpError'));
@@ -199,33 +201,65 @@ export default function CitizenLoginScreen() {
     setOtpError('');
     setVerifying(true);
 
-    setTimeout(async () => {
-      setVerifying(false);
-      playSuccessAnimation();
-      setCheckingUser(true);
-      const exists = await checkUserExists(mobile);
-      setCheckingUser(false);
-
-      if (exists) {
+    try {
+      if (!isCitizenAuthConfigured) {
         const storedUser = await getStoredProfile(mobile);
+        setVerifying(false);
+        playSuccessAnimation();
         if (storedUser) {
           await saveProfile({ ...storedUser, mobile, phone: mobile });
           router.replace('/(citizen)/dashboard' as any);
         } else {
           animateToStep(4);
         }
+        return;
+      }
+
+      await verifyCitizenOtp(`+91${mobile}`, otp.join(''));
+      setVerifying(false);
+      playSuccessAnimation();
+      setCheckingUser(true);
+      let existingProfile: Awaited<ReturnType<typeof getCitizenProfile>> | null = null;
+      try {
+        existingProfile = await getCitizenProfile();
+      } catch {
+        existingProfile = null;
+      }
+      setCheckingUser(false);
+
+      if (existingProfile) {
+        const { firstName, lastName } = splitName(existingProfile.full_name);
+        await saveProfile({
+          id: String(existingProfile.id), firstName, lastName, fullName: existingProfile.full_name,
+          mobile, ward: `Ward ${existingProfile.ward_id}`, locality: existingProfile.locality,
+          profileImage: existingProfile.profile_photo_url ?? '', name: existingProfile.full_name,
+          phone: existingProfile.phone_number, avatar: existingProfile.profile_photo_url ?? '',
+        });
+        router.replace('/(citizen)/dashboard' as any);
       } else {
         animateToStep(4);
       }
-    }, 900);
-  }, [isOtpComplete, playSuccessAnimation, checkUserExists, mobile, animateToStep, router, saveProfile, getStoredProfile, t]);
+    } catch (error) {
+      setVerifying(false);
+      setCheckingUser(false);
+      setOtpError(error instanceof Error ? error.message : 'OTP verification failed.');
+    }
+  }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, getStoredProfile, t]);
 
-  const handleResend = useCallback(() => {
+  const handleResend = useCallback(async () => {
     if (!canResend) return;
     setOtp(Array(OTP_LENGTH).fill(''));
-    startCountdown();
-    setTimeout(() => otpRefs.current[0]?.focus(), 150);
-  }, [canResend, startCountdown]);
+    setOtpError('');
+    try {
+      if (isCitizenAuthConfigured) {
+        await requestCitizenOtp(`+91${mobile}`);
+      }
+      startCountdown();
+      setTimeout(() => otpRefs.current[0]?.focus(), 150);
+    } catch (error) {
+      setOtpError(error instanceof Error ? error.message : 'Could not resend OTP.');
+    }
+  }, [canResend, mobile, startCountdown]);
 
   const validateRegistration = useCallback(() => {
     let ok = true;
@@ -250,26 +284,35 @@ export default function CitizenLoginScreen() {
   const handleCompleteRegistration = useCallback(async () => {
     if (!validateRegistration()) return;
     setRegistering(true);
-    setTimeout(async () => {
+    try {
+      const profile = isCitizenAuthConfigured
+        ? await createCitizenProfile({
+            fullName: fullName.trim(), phoneNumber: `+91${mobile}`,
+            wardNumber: Number(ward.replace(/\D/g, '')), locality: locality.trim(),
+          })
+        : null;
       const { firstName, lastName } = splitName(fullName);
       const user: CitizenProfile = {
-        id: generateId(),
+        id: profile ? String(profile.id) : generateId(),
         firstName,
         lastName,
         fullName: fullName.trim(),
         mobile,
         ward: ward.trim(),
         locality: locality.trim(),
-        profileImage: '',
+        profileImage: profile?.profile_photo_url ?? '',
         name: fullName.trim(),
         phone: mobile,
-        avatar: '',
+        avatar: profile?.profile_photo_url ?? '',
       };
       await saveProfile(user);
       setRegistering(false);
       playSuccessAnimation();
-      setTimeout(() => router.replace('/(citizen)/dashboard' as any), 450);
-    }, 900);
+      router.replace('/(citizen)/dashboard' as any);
+    } catch (error) {
+      setRegistering(false);
+      setNameError(error instanceof Error ? error.message : 'Could not create profile.');
+    }
   }, [validateRegistration, fullName, mobile, ward, locality, playSuccessAnimation, router, saveProfile]);
 
   const goBackStep = useCallback(() => {

@@ -18,18 +18,10 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 class ComplaintService:
     @staticmethod
-    def create_complaint(db: Session, complaint_in: ComplaintCreate) -> Complaint:
+    def create_complaint(db: Session, complaint_in: ComplaintCreate, citizen) -> Complaint:
         ensure_appropriate_text(complaint_in.description, "Complaint description")
 
-        # 1. Find the Citizen using supabase_user_id
-        citizen = CitizenRepository.get_by_supabase_id(db, complaint_in.supabase_user_id)
-        if not citizen:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Citizen profile not found. Complete your profile before raising complaints.",
-            )
-
-        # 2. Verify selected category exists
+        # 1. Verify selected category exists
         category_exists = CategoryRepository.get_by_id(db, complaint_in.category_id)
         if not category_exists:
             raise HTTPException(
@@ -37,7 +29,7 @@ class ComplaintService:
                 detail=f"Category with ID {complaint_in.category_id} does not exist.",
             )
 
-        # 3. Read ward_id from Citizen profile and call repository to create the complaint
+        # 2. Read ward_id from the authenticated citizen profile.
         return ComplaintRepository.create_complaint(
             db=db,
             citizen_id=citizen.id,
@@ -49,29 +41,11 @@ class ComplaintService:
         )
 
     @staticmethod
-    def get_my_complaints(db: Session, supabase_user_id: str) -> list[Complaint]:
-        # 1. Verify the citizen profile exists
-        citizen = CitizenRepository.get_by_supabase_id(db, supabase_user_id)
-        if not citizen:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Citizen profile not found.",
-            )
-
-        # 2. Return only that citizen's complaints
-        return ComplaintRepository.get_complaints_by_supabase_user(db, supabase_user_id)
+    def get_my_complaints(db: Session, citizen) -> list[Complaint]:
+        return ComplaintRepository.get_complaints_by_supabase_user(db, citizen.supabase_user_id)
 
     @staticmethod
-    def get_complaint_detail(db: Session, supabase_user_id: str, complaint_id: int) -> Complaint:
-        # 1. Find the citizen using supabase_user_id
-        citizen = CitizenRepository.get_by_supabase_id(db, supabase_user_id)
-        if not citizen:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Citizen profile not found.",
-            )
-
-        # 2. Fetch the complaint only if it belongs to this citizen
+    def get_complaint_detail(db: Session, citizen, complaint_id: int) -> Complaint:
         complaint = ComplaintRepository.get_complaint_by_id_for_citizen(
             db=db,
             complaint_id=complaint_id,
@@ -88,20 +62,12 @@ class ComplaintService:
     @staticmethod
     def upload_complaint_image(
         db: Session,
-        supabase_user_id: str,
+        citizen,
         complaint_id: int,
         file_bytes: bytes,
         content_type: str,
     ) -> Complaint:
-        # 1. Find the citizen using supabase_user_id
-        citizen = CitizenRepository.get_by_supabase_id(db, supabase_user_id)
-        if not citizen:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Citizen profile not found.",
-            )
-
-        # 2. Verify the complaint exists and belongs to this citizen
+        # 1. Verify the complaint exists and belongs to this citizen
         complaint = ComplaintRepository.get_complaint_by_id_for_citizen(
             db=db,
             complaint_id=complaint_id,

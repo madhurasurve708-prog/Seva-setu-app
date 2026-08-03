@@ -21,10 +21,6 @@ class NagarsevakProfile(BaseModel):
     profile_photo_url: Optional[str] = None
     role: str = "nagarsevak"
     is_active: bool
-    is_blocked: bool
-    is_restricted: bool
-    is_archived: bool
-    is_deleted: bool
     created_at: datetime
     updated_at: datetime
 

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View, Pressable, Platform, Linking } from
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 type FAQItem = {

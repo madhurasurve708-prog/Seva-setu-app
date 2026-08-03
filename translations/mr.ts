@@ -635,7 +635,6 @@ export const mr: Record<string, string> = {
   blockUser: "वापरकर्ता ब्लॉक करा",
   removeComplaint: "तक्रार काढा",
   confirmAction: "पुष्टी करा",
-  complaintsTitle: "तक्रारी",
   ctxWardLabel: "वॉर्ड:",
   ctxCategoryLabel: "श्रेणी:",
   ctxDeptLabel: "विभाग:",

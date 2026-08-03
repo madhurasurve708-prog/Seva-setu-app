@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import HeroBanner from '@/components/official/HeroBanner';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';

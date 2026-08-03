@@ -362,27 +362,16 @@ class MainAdminService:
         limit: int = 50,
     ) -> MainAdminUserListResponse:
         """Search nagarsevaks with filters."""
-        # Map status to individual flags
         if status == "active":
             is_active = True
-            is_blocked = False
-            is_restricted = False
-            is_archived = False
-        elif status == "blocked":
-            is_blocked = True
-        elif status == "restricted":
-            is_restricted = True
-        elif status == "archived":
-            is_archived = True
-        elif status == "deleted":
-            # Handled by repository (filter is_deleted == False by default)
-            pass
+        elif status in {"blocked", "restricted", "archived", "deleted"}:
+            is_active = None
 
         nagarsevaks = NagarsevakRepository.search_nagarsevaks(
-            db, search_query, ward_id, is_active, is_blocked, is_restricted, is_archived, offset, limit
+            db, search_query, ward_id, is_active, offset, limit
         )
         total_count = NagarsevakRepository.search_nagarsevaks_count(
-            db, search_query, ward_id, is_active, is_blocked, is_restricted, is_archived
+            db, search_query, ward_id, is_active
         )
 
         users = []
@@ -397,10 +386,10 @@ class MainAdminService:
                 ward_number=nagarsevak.ward.ward_number if nagarsevak.ward else None,
                 department=None,
                 is_active=nagarsevak.is_active,
-                is_blocked=nagarsevak.is_blocked,
-                is_restricted=nagarsevak.is_restricted,
-                is_archived=nagarsevak.is_archived,
-                is_deleted=nagarsevak.is_deleted,
+                is_blocked=False,
+                is_restricted=False,
+                is_archived=False,
+                is_deleted=False,
                 created_at=nagarsevak.created_at,
             ))
 
@@ -662,7 +651,7 @@ class MainAdminService:
         action_request: MainAdminUserActionRequest,
         admin: MainAdmin,
     ) -> MainAdminUserActionResponse:
-        """Perform action on nagarsevak."""
+        """Nagarsevak account actions are not part of Seva Setu requirements."""
         nagarsevak = NagarsevakRepository.get_by_id(db, nagarsevak_id)
         if not nagarsevak:
             raise HTTPException(
@@ -670,105 +659,10 @@ class MainAdminService:
                 detail="Nagarsevak not found.",
             )
 
-        action = action_request.action
-
-        # Validate state transitions
-        current_state = MainAdminService._get_user_state(nagarsevak)
-        if action not in UserState.VALID_TRANSITIONS.get(current_state, []):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid state transition from {current_state} to {action}.",
-            )
-
-        if action == "block":
-            if nagarsevak.is_blocked:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is already blocked.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_active=False, is_blocked=True
-            )
-            message = "Nagarsevak blocked successfully."
-
-        elif action == "unblock":
-            if not nagarsevak.is_blocked:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is not blocked.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_active=True, is_blocked=False
-            )
-            message = "Nagarsevak unblocked successfully."
-
-        elif action == "restrict":
-            if nagarsevak.is_restricted:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is already restricted.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_restricted=True
-            )
-            message = "Nagarsevak restricted successfully."
-
-        elif action == "unrestrict":
-            if not nagarsevak.is_restricted:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is not restricted.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_restricted=False
-            )
-            message = "Nagarsevak restriction removed successfully."
-
-        elif action == "archive":
-            if nagarsevak.is_archived:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is already archived.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_archived=True, is_active=False
-            )
-            message = "Nagarsevak archived successfully."
-
-        elif action == "unarchive":
-            if not nagarsevak.is_archived:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is not archived.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_archived=False, is_active=True
-            )
-            message = "Nagarsevak unarchived successfully."
-
-        elif action == "delete":
-            if nagarsevak.is_deleted:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Nagarsevak is already deleted.",
-                )
-            nagarsevak = NagarsevakRepository.update_user_state(
-                db, nagarsevak, is_deleted=True, is_active=False
-            )
-            message = "Nagarsevak deleted successfully."
-
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid action.",
-            )
-
-        # Audit log
-        AuditLogService.log_action(
-            db, admin, action, "nagarsevak", nagarsevak_id, message
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nagarsevak account blocking, restriction, archiving, and deletion are not supported by Seva Setu.",
         )
-
-        return MainAdminUserActionResponse(message=message)
 
     @staticmethod
     def _perform_department_officer_action(

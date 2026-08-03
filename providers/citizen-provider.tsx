@@ -8,6 +8,7 @@ import {
 } from '@/data/complaints';
 import type { CitizenComplaint, CitizenPreferences, CitizenProfile } from '@/types/citizen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createCitizenComplaint } from '@/services/citizen-api';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
 // Maps citizen complaint category labels to official department names.
@@ -153,13 +154,19 @@ export function CitizenProvider({ children }: PropsWithChildren) {
       },
       submitComplaint: async (draft) => {
         if (!profile) throw new Error('Citizen profile is required.');
+        const created = await createCitizenComplaint({
+          category: draft.category,
+          title: draft.title,
+          description: draft.description,
+          location: draft.title,
+        });
         const complaint: CitizenComplaint = {
           ...draft,
-          id: `SS-${Date.now().toString().slice(-6)}`,
+          id: String(created.id),
           ward: profile.ward,
           locality: profile.locality,
-          submittedAt: new Date().toISOString(),
-          status: 'Pending',
+          submittedAt: created.created_at,
+          status: created.status,
           assignedDepartment: draft.category === 'Garbage' ? 'Sanitation Department' : undefined,
         };
         const next = [complaint, ...complaints];

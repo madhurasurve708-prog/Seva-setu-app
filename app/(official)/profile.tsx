@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import CustomTextInput from '@/components/common/CustomTextInput';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';

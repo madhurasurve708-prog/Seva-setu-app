@@ -220,11 +220,7 @@ def get_citizen_profile(
 def search_nagarsevaks(
     search_query: str | None = None,
     ward_id: int | None = None,
-    status: str | None = None,
     is_active: bool | None = None,
-    is_blocked: bool | None = None,
-    is_restricted: bool | None = None,
-    is_archived: bool | None = None,
     offset: int = 0,
     limit: int = 50,
     current_admin: MainAdmin = Depends(get_current_main_admin),
@@ -235,11 +231,7 @@ def search_nagarsevaks(
     Filters:
     - search_query: Search by name or phone number
     - ward_id: Filter by ward ID
-    - status: Filter by status (active, blocked, restricted, archived, deleted)
     - is_active: Filter by active status
-    - is_blocked: Filter by blocked status
-    - is_restricted: Filter by restricted status
-    - is_archived: Filter by archived status
     
     Pagination:
     - offset: Number of results to skip (default 0)
@@ -248,11 +240,7 @@ def search_nagarsevaks(
     filters = MainAdminNagarsevakSearchFilter(
         search_query=search_query,
         ward_id=ward_id,
-        status=status,
         is_active=is_active,
-        is_blocked=is_blocked,
-        is_restricted=is_restricted,
-        is_archived=is_archived,
         offset=offset,
         limit=limit,
     )
@@ -260,11 +248,11 @@ def search_nagarsevaks(
         db,
         filters.search_query,
         filters.ward_id,
-        filters.status,
+        None,
         filters.is_active,
-        filters.is_blocked,
-        filters.is_restricted,
-        filters.is_archived,
+        None,
+        None,
+        None,
         filters.offset,
         filters.limit,
     )

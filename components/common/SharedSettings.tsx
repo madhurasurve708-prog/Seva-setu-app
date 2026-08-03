@@ -15,7 +15,7 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS } from '@/constants/theme';
 import { useTranslation, type AppLanguage } from '@/providers/localization-provider';
 

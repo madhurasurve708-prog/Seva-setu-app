@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { useEffect, useState } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
-import GlassCard from '@/components/common/GlassCard';
+import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInUp, FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 type TeamMember = {

@@ -39,26 +39,15 @@ class CitizenRepository:
 
     @staticmethod
     def get_by_supabase_id(db: Session, supabase_user_id: str) -> Citizen | None:
-        return db.query(Citizen).filter(
-            Citizen.supabase_user_id == supabase_user_id,
-            Citizen.is_deleted == False
-        ).first()
+        return db.query(Citizen).filter(Citizen.supabase_user_id == supabase_user_id).first()
 
     @staticmethod
     def get_by_phone_number(db: Session, phone_number: str) -> Citizen | None:
-        return db.query(Citizen).filter(
-            Citizen.phone_number == phone_number,
-            Citizen.is_deleted == False
-        ).first()
+        return db.query(Citizen).filter(Citizen.phone_number == phone_number).first()
 
     @staticmethod
     def get_by_id(db: Session, citizen_id: int) -> Citizen | None:
-        return (
-            db.query(Citizen)
-            .options(joinedload(Citizen.ward))
-            .filter(Citizen.id == citizen_id, Citizen.is_deleted == False)
-            .first()
-        )
+        return db.query(Citizen).options(joinedload(Citizen.ward)).filter(Citizen.id == citizen_id).first()
 
     @staticmethod
     def update_profile_photo_url(
@@ -80,15 +69,11 @@ class CitizenRepository:
         db: Session,
         search_query: str | None = None,
         ward_id: int | None = None,
-        is_active: bool | None = None,
-        is_blocked: bool | None = None,
-        is_restricted: bool | None = None,
-        is_archived: bool | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Citizen]:
         """Search citizens with filters for Main Admin."""
-        query = db.query(Citizen).filter(Citizen.is_deleted == False)
+        query = db.query(Citizen)
 
         if search_query:
             search_pattern = f"%{search_query}%"
@@ -101,18 +86,6 @@ class CitizenRepository:
 
         if ward_id:
             query = query.filter(Citizen.ward_id == ward_id)
-
-        if is_active is not None:
-            query = query.filter(Citizen.is_active == is_active)
-
-        if is_blocked is not None:
-            query = query.filter(Citizen.is_blocked == is_blocked)
-
-        if is_restricted is not None:
-            query = query.filter(Citizen.is_restricted == is_restricted)
-
-        if is_archived is not None:
-            query = query.filter(Citizen.is_archived == is_archived)
 
         return query.offset(offset).limit(limit).all()
 
@@ -121,13 +94,9 @@ class CitizenRepository:
         db: Session,
         search_query: str | None = None,
         ward_id: int | None = None,
-        is_active: bool | None = None,
-        is_blocked: bool | None = None,
-        is_restricted: bool | None = None,
-        is_archived: bool | None = None,
     ) -> int:
         """Get count of citizens matching search filters."""
-        query = db.query(Citizen).filter(Citizen.is_deleted == False)
+        query = db.query(Citizen)
 
         if search_query:
             search_pattern = f"%{search_query}%"
@@ -140,18 +109,6 @@ class CitizenRepository:
 
         if ward_id:
             query = query.filter(Citizen.ward_id == ward_id)
-
-        if is_active is not None:
-            query = query.filter(Citizen.is_active == is_active)
-
-        if is_blocked is not None:
-            query = query.filter(Citizen.is_blocked == is_blocked)
-
-        if is_restricted is not None:
-            query = query.filter(Citizen.is_restricted == is_restricted)
-
-        if is_archived is not None:
-            query = query.filter(Citizen.is_archived == is_archived)
 
         return query.count()
 
@@ -614,7 +571,7 @@ class NagarsevakRepository:
         return (
             db.query(Nagarsevak)
             .options(joinedload(Nagarsevak.ward))
-            .filter(Nagarsevak.id == nagarsevak_id, Nagarsevak.is_deleted == False)
+            .filter(Nagarsevak.id == nagarsevak_id)
             .first()
         )
 
@@ -626,7 +583,6 @@ class NagarsevakRepository:
             .filter(
                 Nagarsevak.name.ilike(name.strip()),
                 Nagarsevak.ward_id == ward_id,
-                Nagarsevak.is_deleted == False
             )
             .first()
         )
@@ -665,14 +621,11 @@ class NagarsevakRepository:
         search_query: str | None = None,
         ward_id: int | None = None,
         is_active: bool | None = None,
-        is_blocked: bool | None = None,
-        is_restricted: bool | None = None,
-        is_archived: bool | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Nagarsevak]:
         """Search nagarsevaks with filters for Main Admin."""
-        query = db.query(Nagarsevak).filter(Nagarsevak.is_deleted == False)
+        query = db.query(Nagarsevak)
 
         if search_query:
             search_pattern = f"%{search_query}%"
@@ -688,15 +641,6 @@ class NagarsevakRepository:
 
         if is_active is not None:
             query = query.filter(Nagarsevak.is_active == is_active)
-
-        if is_blocked is not None:
-            query = query.filter(Nagarsevak.is_blocked == is_blocked)
-
-        if is_restricted is not None:
-            query = query.filter(Nagarsevak.is_restricted == is_restricted)
-
-        if is_archived is not None:
-            query = query.filter(Nagarsevak.is_archived == is_archived)
 
         return query.offset(offset).limit(limit).all()
 
@@ -706,12 +650,9 @@ class NagarsevakRepository:
         search_query: str | None = None,
         ward_id: int | None = None,
         is_active: bool | None = None,
-        is_blocked: bool | None = None,
-        is_restricted: bool | None = None,
-        is_archived: bool | None = None,
     ) -> int:
         """Get count of nagarsevaks matching search filters."""
-        query = db.query(Nagarsevak).filter(Nagarsevak.is_deleted == False)
+        query = db.query(Nagarsevak)
 
         if search_query:
             search_pattern = f"%{search_query}%"
@@ -728,15 +669,6 @@ class NagarsevakRepository:
         if is_active is not None:
             query = query.filter(Nagarsevak.is_active == is_active)
 
-        if is_blocked is not None:
-            query = query.filter(Nagarsevak.is_blocked == is_blocked)
-
-        if is_restricted is not None:
-            query = query.filter(Nagarsevak.is_restricted == is_restricted)
-
-        if is_archived is not None:
-            query = query.filter(Nagarsevak.is_archived == is_archived)
-
         return query.count()
 
     @staticmethod
@@ -744,28 +676,10 @@ class NagarsevakRepository:
         db: Session,
         nagarsevak: Nagarsevak,
         is_active: bool | None = None,
-        is_blocked: bool | None = None,
-        is_restricted: bool | None = None,
-        is_archived: bool | None = None,
-        is_deleted: bool | None = None,
     ) -> Nagarsevak:
-        """Update nagarsevak state flags with validation."""
+        """Update nagarsevak account state with validation."""
         if is_active is not None:
             nagarsevak.is_active = is_active
-        if is_blocked is not None:
-            nagarsevak.is_blocked = is_blocked
-        if is_restricted is not None:
-            nagarsevak.is_restricted = is_restricted
-        if is_archived is not None:
-            nagarsevak.is_archived = is_archived
-        if is_deleted is not None:
-            nagarsevak.is_deleted = is_deleted
-            # If deleted, ensure user is blocked, archived, and inactive
-            if is_deleted:
-                nagarsevak.is_blocked = True
-                nagarsevak.is_archived = True
-                nagarsevak.is_active = False
-                nagarsevak.is_restricted = False
 
         db.commit()
         db.refresh(nagarsevak)
@@ -857,6 +771,28 @@ class ComplaintEscalationRepository:
 
 
 class AnnouncementRepository:
+    @staticmethod
+    def get_announcements_for_citizen(db: Session, ward_id: int) -> list[Announcement]:
+        return (
+            db.query(Announcement)
+            .filter(
+                and_(
+                    Announcement.is_deleted == False,
+                    Announcement.is_archived == False,
+                    or_(
+                        Announcement.target_type == "everyone",
+                        Announcement.target_type == "all_citizens",
+                        and_(
+                            Announcement.target_type == "ward_citizens",
+                            Announcement.target_ward_id == ward_id,
+                        ),
+                    ),
+                )
+            )
+            .order_by(desc(Announcement.created_at))
+            .all()
+        )
+
     @staticmethod
     def get_announcements_for_nagarsevak(
         db: Session,
@@ -1241,11 +1177,7 @@ class DepartmentOfficerRepository:
 class MainAdminRepository:
     @staticmethod
     def get_by_id(db: Session, admin_id: int) -> MainAdmin | None:
-        return (
-            db.query(MainAdmin)
-            .filter(MainAdmin.id == admin_id, MainAdmin.is_deleted == False)
-            .first()
-        )
+        return db.query(MainAdmin).filter(MainAdmin.id == admin_id).first()
 
     @staticmethod
     def get_by_name(db: Session, name: str) -> MainAdmin | None:
@@ -1253,11 +1185,7 @@ class MainAdminRepository:
         normalized_name = name.strip()
         if not normalized_name:
             return None
-        return (
-            db.query(MainAdmin)
-            .filter(MainAdmin.name == normalized_name, MainAdmin.is_deleted == False)
-            .first()
-        )
+        return db.query(MainAdmin).filter(MainAdmin.name == normalized_name).first()
 
     @staticmethod
     def update_password_hash(
