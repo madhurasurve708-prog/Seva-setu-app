@@ -16,13 +16,11 @@ from app.schemas.main_admin_complaint import (
     MainAdminComplaintListItem,
     MainAdminComplaintHistoryItem,
     MainAdminComplaintEscalationInfo,
-    CATEGORY_TO_DEPARTMENT_KEY,
-    VALID_DEPARTMENT_KEYS,
 )
 from app.schemas.department_officer_complaint import ComplaintNoteResponse
 from app.utils.storage import upload_image_to_storage
 from app.core.content_validation import ensure_appropriate_text
-from app.core.constants import ComplaintStatus, ImageValidation
+from app.core.constants import ComplaintStatus, ImageValidation, CATEGORY_TO_DEPARTMENT, Department
 from app.services.audit_log_service import AuditLogService
 
 
@@ -39,7 +37,7 @@ class MainAdminComplaintService:
         if filters.department:
             # Map department key to categories
             category_names = [
-                cat_name for cat_name, dept_key in CATEGORY_TO_DEPARTMENT_KEY.items()
+                cat_name for cat_name, dept_key in CATEGORY_TO_DEPARTMENT.items()
                 if dept_key == filters.department
             ]
             if category_names:
@@ -74,19 +72,13 @@ class MainAdminComplaintService:
         if complaints:
             complaint_ids = [c.id for c in complaints]
             if complaint_ids:
-                escalated_query = (
-                    db.query(ComplaintEscalation.complaint_id)
-                    .filter(ComplaintEscalation.complaint_id.in_(complaint_ids))
-                    .distinct()
-                    .all()
-                )
-                escalated_ids = {row[0] for row in escalated_query}
+                escalated_ids = ComplaintEscalationRepository.get_escalated_ids_by_complaint_ids(db, complaint_ids)
         
         # Build lightweight response items with department mapping
         complaint_items = []
         for complaint in complaints:
-            department_key = CATEGORY_TO_DEPARTMENT_KEY.get(complaint.category.name, "DEPT_AROGYA")
-            department_name = VALID_DEPARTMENT_KEYS.get(department_key, "Unknown")
+            department_key = CATEGORY_TO_DEPARTMENT.get(complaint.category.name, "DEPT_AROGYA")
+            department_name = Department.VALID_DEPARTMENTS.get(department_key, "Unknown")
             
             # Convert single image_url to images array for future-proofing
             images = []
@@ -137,8 +129,8 @@ class MainAdminComplaintService:
         escalations = ComplaintEscalationRepository.get_escalations_by_complaint_id(db, complaint_id)
         
         # Map category to department key and name
-        department_key = CATEGORY_TO_DEPARTMENT_KEY.get(complaint.category.name, "DEPT_AROGYA")
-        department_name = VALID_DEPARTMENT_KEYS.get(department_key, "Unknown")
+        department_key = CATEGORY_TO_DEPARTMENT.get(complaint.category.name, "DEPT_AROGYA")
+        department_name = Department.VALID_DEPARTMENTS.get(department_key, "Unknown")
         
         # Convert single image_url to images array for future-proofing
         images = []

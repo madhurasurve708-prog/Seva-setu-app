@@ -21,32 +21,42 @@ from app.core.constants import ComplaintStatus
 class CitizenRepository:
     @staticmethod
     def create_citizen(db: Session, citizen_in: CitizenProfileCreate) -> Citizen:
-        db_citizen = Citizen(
-            supabase_user_id=citizen_in.supabase_user_id,
-            full_name=citizen_in.full_name,
-            phone_number=citizen_in.phone_number,
-            ward_id=citizen_in.ward_id,
-            locality=citizen_in.locality,
-        )
-        db.add(db_citizen)
-        db.commit()
-        db.refresh(db_citizen)
-        return db_citizen
+        try:
+            db_citizen = Citizen(
+                supabase_user_id=citizen_in.supabase_user_id,
+                full_name=citizen_in.full_name,
+                phone_number=citizen_in.phone_number,
+                ward_id=citizen_in.ward_id,
+                locality=citizen_in.locality,
+            )
+            db.add(db_citizen)
+            db.commit()
+            db.refresh(db_citizen)
+            return db_citizen
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def get_by_supabase_id(db: Session, supabase_user_id: str) -> Citizen | None:
-        return db.query(Citizen).filter(Citizen.supabase_user_id == supabase_user_id).first()
+        return db.query(Citizen).filter(
+            Citizen.supabase_user_id == supabase_user_id,
+            Citizen.is_deleted == False
+        ).first()
 
     @staticmethod
     def get_by_phone_number(db: Session, phone_number: str) -> Citizen | None:
-        return db.query(Citizen).filter(Citizen.phone_number == phone_number).first()
+        return db.query(Citizen).filter(
+            Citizen.phone_number == phone_number,
+            Citizen.is_deleted == False
+        ).first()
 
     @staticmethod
     def get_by_id(db: Session, citizen_id: int) -> Citizen | None:
         return (
             db.query(Citizen)
             .options(joinedload(Citizen.ward))
-            .filter(Citizen.id == citizen_id)
+            .filter(Citizen.id == citizen_id, Citizen.is_deleted == False)
             .first()
         )
 
@@ -56,10 +66,14 @@ class CitizenRepository:
         citizen: Citizen,
         photo_url: str,
     ) -> Citizen:
-        citizen.profile_photo_url = photo_url
-        db.commit()
-        db.refresh(citizen)
-        return citizen
+        try:
+            citizen.profile_photo_url = photo_url
+            db.commit()
+            db.refresh(citizen)
+            return citizen
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def search_citizens(
@@ -185,19 +199,23 @@ class ComplaintRepository:
         description: str,
         manual_location: str | None = None,
     ) -> Complaint:
-        db_complaint = Complaint(
-            citizen_id=citizen_id,
-            ward_id=ward_id,
-            category_id=category_id,
-            title=title,
-            description=description,
-            manual_location=manual_location,
-            status=ComplaintStatus.PENDING,  # Automatically determined on creation
-        )
-        db.add(db_complaint)
-        db.commit()
-        db.refresh(db_complaint)
-        return db_complaint
+        try:
+            db_complaint = Complaint(
+                citizen_id=citizen_id,
+                ward_id=ward_id,
+                category_id=category_id,
+                title=title,
+                description=description,
+                manual_location=manual_location,
+                status=ComplaintStatus.PENDING,  # Automatically determined on creation
+            )
+            db.add(db_complaint)
+            db.commit()
+            db.refresh(db_complaint)
+            return db_complaint
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def get_department_status_counts(db: Session, category_names: list[str]) -> dict[str, int]:
@@ -567,11 +585,27 @@ class CategoryRepository:
     def get_all_categories(db: Session) -> list[Category]:
         return db.query(Category).order_by(Category.name).all()
 
+    @staticmethod
+    def get_by_id(db: Session, category_id: int) -> Category | None:
+        return db.query(Category).filter(Category.id == category_id).first()
+
 
 class WardRepository:
     @staticmethod
     def get_all_wards(db: Session) -> list[Ward]:
         return db.query(Ward).order_by(Ward.ward_number).all()
+
+    @staticmethod
+    def get_by_id(db: Session, ward_id: int) -> Ward | None:
+        return db.query(Ward).filter(Ward.id == ward_id).first()
+
+    @staticmethod
+    def get_by_ward_number(db: Session, ward_number: str) -> Ward | None:
+        return (
+            db.query(Ward)
+            .filter(Ward.ward_number == str(ward_number).strip())
+            .first()
+        )
 
 
 class NagarsevakRepository:
@@ -580,7 +614,7 @@ class NagarsevakRepository:
         return (
             db.query(Nagarsevak)
             .options(joinedload(Nagarsevak.ward))
-            .filter(Nagarsevak.id == nagarsevak_id)
+            .filter(Nagarsevak.id == nagarsevak_id, Nagarsevak.is_deleted == False)
             .first()
         )
 
@@ -591,7 +625,8 @@ class NagarsevakRepository:
             .options(joinedload(Nagarsevak.ward))
             .filter(
                 Nagarsevak.name.ilike(name.strip()),
-                Nagarsevak.ward_id == ward_id
+                Nagarsevak.ward_id == ward_id,
+                Nagarsevak.is_deleted == False
             )
             .first()
         )
@@ -780,6 +815,23 @@ class ComplaintEscalationRepository:
             .order_by(desc(ComplaintEscalation.created_at))
             .all()
         )
+
+    @staticmethod
+    def get_escalated_ids_by_complaint_ids(
+        db: Session,
+        complaint_ids: list[int],
+    ) -> set[int]:
+        """Get set of complaint IDs that have been escalated."""
+        if not complaint_ids:
+            return set()
+        
+        results = (
+            db.query(ComplaintEscalation.complaint_id)
+            .filter(ComplaintEscalation.complaint_id.in_(complaint_ids))
+            .distinct()
+            .all()
+        )
+        return {row[0] for row in results}
 
     @staticmethod
     def get_escalated_complaints_count(db: Session) -> int:
@@ -1020,7 +1072,7 @@ class DepartmentOfficerRepository:
     def get_by_id(db: Session, officer_id: int) -> DepartmentOfficer | None:
         return (
             db.query(DepartmentOfficer)
-            .filter(DepartmentOfficer.id == officer_id)
+            .filter(DepartmentOfficer.id == officer_id, DepartmentOfficer.is_deleted == False)
             .first()
         )
 
@@ -1028,7 +1080,10 @@ class DepartmentOfficerRepository:
     def get_by_email(db: Session, email: str) -> DepartmentOfficer | None:
         return (
             db.query(DepartmentOfficer)
-            .filter(DepartmentOfficer.email == email.strip().lower())
+            .filter(
+                DepartmentOfficer.email == email.strip().lower(),
+                DepartmentOfficer.is_deleted == False
+            )
             .first()
         )
 
@@ -1188,7 +1243,7 @@ class MainAdminRepository:
     def get_by_id(db: Session, admin_id: int) -> MainAdmin | None:
         return (
             db.query(MainAdmin)
-            .filter(MainAdmin.id == admin_id)
+            .filter(MainAdmin.id == admin_id, MainAdmin.is_deleted == False)
             .first()
         )
 
@@ -1200,7 +1255,7 @@ class MainAdminRepository:
             return None
         return (
             db.query(MainAdmin)
-            .filter(MainAdmin.name == normalized_name)
+            .filter(MainAdmin.name == normalized_name, MainAdmin.is_deleted == False)
             .first()
         )
 
@@ -1215,7 +1270,7 @@ class MainAdminRepository:
 
 
 class AnalyticsRepository:
-    """Repository for analytics and reporting queries."""
+    """Repository for analytics queries."""
     
     @staticmethod
     def get_dashboard_statistics(db: Session) -> dict:
@@ -1231,7 +1286,6 @@ class AnalyticsRepository:
             ComplaintStatus.PENDING: 0,
             ComplaintStatus.IN_PROGRESS: 0,
             ComplaintStatus.RESOLVED: 0,
-            ComplaintStatus.CLOSED: 0,
         }
         total = 0
         for status_val, count in status_counts:
@@ -1251,121 +1305,21 @@ class AnalyticsRepository:
             "pending": counts[ComplaintStatus.PENDING],
             "in_progress": counts[ComplaintStatus.IN_PROGRESS],
             "resolved": counts[ComplaintStatus.RESOLVED],
-            "closed": counts[ComplaintStatus.CLOSED],
             "escalated": escalated_count,
         }
     
     @staticmethod
-    def get_today_statistics(db: Session) -> dict:
-        """Get complaint statistics for today."""
-        today = date.today()
-        
-        # Registered today
-        registered_today = (
-            db.query(func.count(Complaint.id))
-            .filter(func.date(Complaint.created_at) == today)
-            .scalar()
-        )
-        
-        # Resolved today
-        resolved_today = (
-            db.query(func.count(Complaint.id))
-            .filter(
-                func.date(Complaint.updated_at) == today,
-                Complaint.status == ComplaintStatus.RESOLVED
-            )
-            .scalar()
-        )
-        
-        # Closed today
-        closed_today = (
-            db.query(func.count(Complaint.id))
-            .filter(
-                func.date(Complaint.updated_at) == today,
-                Complaint.status == ComplaintStatus.CLOSED
-            )
-            .scalar()
-        )
-        
-        # Escalated today
-        escalated_today = (
-            db.query(func.count(ComplaintEscalation.id))
-            .filter(func.date(ComplaintEscalation.escalated_at) == today)
-            .scalar()
-        )
-        
-        return {
-            "registered_today": registered_today,
-            "resolved_today": resolved_today,
-            "closed_today": closed_today,
-            "escalated_today": escalated_today,
-        }
-    
-    @staticmethod
-    def get_monthly_statistics(db: Session) -> dict:
-        """Get complaint statistics for current month."""
-        today = date.today()
-        month_start = date(today.year, today.month, 1)
-        
-        # Registered this month
-        registered_month = (
-            db.query(func.count(Complaint.id))
-            .filter(Complaint.created_at >= month_start)
-            .scalar()
-        )
-        
-        # Resolved this month
-        resolved_month = (
-            db.query(func.count(Complaint.id))
-            .filter(
-                Complaint.updated_at >= month_start,
-                Complaint.status == ComplaintStatus.RESOLVED
-            )
-            .scalar()
-        )
-        
-        # Closed this month
-        closed_month = (
-            db.query(func.count(Complaint.id))
-            .filter(
-                Complaint.updated_at >= month_start,
-                Complaint.status == ComplaintStatus.CLOSED
-            )
-            .scalar()
-        )
-        
-        # Escalated this month
-        escalated_month = (
-            db.query(func.count(ComplaintEscalation.id))
-            .filter(ComplaintEscalation.escalated_at >= month_start)
-            .scalar()
-        )
-        
-        return {
-            "registered_month": registered_month,
-            "resolved_month": resolved_month,
-            "closed_month": closed_month,
-            "escalated_month": escalated_month,
-        }
-    
-    @staticmethod
-    def get_ward_performance(db: Session) -> list[dict]:
-        """Get ward performance statistics with ranking."""
+    def get_ward_statistics(db: Session) -> list[dict]:
+        """Get statistics for every ward."""
         results = (
             db.query(
                 Ward.id,
                 Ward.ward_number,
                 Ward.ward_name,
                 func.count(Complaint.id).label("total_complaints"),
-                func.sum(case((Complaint.status == ComplaintStatus.RESOLVED, 1), else_=0)).label("resolved"),
                 func.sum(case((Complaint.status == ComplaintStatus.PENDING, 1), else_=0)).label("pending"),
-                func.avg(
-                    case(
-                        (Complaint.status == ComplaintStatus.RESOLVED, 
-                         func.julianday(Complaint.updated_at) - func.julianday(Complaint.created_at)),
-                        else_=None
-                    )
-                ).label("avg_resolution_days")
+                func.sum(case((Complaint.status == ComplaintStatus.IN_PROGRESS, 1), else_=0)).label("in_progress"),
+                func.sum(case((Complaint.status == ComplaintStatus.RESOLVED, 1), else_=0)).label("resolved"),
             )
             .join(Complaint, Ward.id == Complaint.ward_id)
             .group_by(Ward.id, Ward.ward_number, Ward.ward_name)
@@ -1376,9 +1330,6 @@ class AnalyticsRepository:
         for result in results:
             total = result.total_complaints or 0
             resolved = result.resolved or 0
-            pending = result.pending or 0
-            avg_days = result.avg_resolution_days or 0
-            
             resolution_percentage = (resolved / total * 100) if total > 0 else 0
             
             ward_stats.append({
@@ -1386,37 +1337,43 @@ class AnalyticsRepository:
                 "ward_number": result.ward_number,
                 "ward_name": result.ward_name,
                 "total_complaints": total,
+                "pending": result.pending or 0,
+                "in_progress": result.in_progress or 0,
                 "resolved": resolved,
-                "pending": pending,
-                "avg_resolution_days": round(avg_days, 2),
                 "resolution_percentage": round(resolution_percentage, 2),
             })
-        
-        # Sort by resolution percentage (highest first)
-        ward_stats.sort(key=lambda x: x["resolution_percentage"], reverse=True)
         
         return ward_stats
     
     @staticmethod
-    def get_department_performance(db: Session) -> list[dict]:
-        """Get department performance statistics."""
-        from app.core.constants import CATEGORY_TO_DEPARTMENT
+    def get_department_statistics(db: Session) -> list[dict]:
+        """Get statistics for every department."""
+        from app.core.constants import CATEGORY_TO_DEPARTMENT, Department
         
         # Get all departments from Category → Department mapping
-        department_names = set(CATEGORY_TO_DEPARTMENT.values())
+        department_keys = set(CATEGORY_TO_DEPARTMENT.values())
         
         department_stats = []
-        for dept_name in department_names:
+        for dept_key in department_keys:
+            # Get Marathi name for display
+            dept_name = Department.VALID_DEPARTMENTS.get(dept_key, dept_key)
+            
             # Get categories for this department
-            dept_categories = [cat for cat, dept in CATEGORY_TO_DEPARTMENT.items() if dept == dept_name]
+            dept_categories = [cat for cat, dept in CATEGORY_TO_DEPARTMENT.items() if dept == dept_key]
             
             if not dept_categories:
+                continue
+            
+            # Get category IDs from names
+            category_ids = [c.id for c in db.query(Category).filter(Category.name.in_(dept_categories)).all()]
+            
+            if not category_ids:
                 continue
             
             # Count complaints for this department
             total = (
                 db.query(func.count(Complaint.id))
-                .filter(Complaint.category_id.in_(dept_categories))
+                .filter(Complaint.category_id.in_(category_ids))
                 .scalar()
             )
             
@@ -1426,7 +1383,7 @@ class AnalyticsRepository:
             # Status breakdown
             status_counts = (
                 db.query(Complaint.status, func.count(Complaint.id))
-                .filter(Complaint.category_id.in_(dept_categories))
+                .filter(Complaint.category_id.in_(category_ids))
                 .group_by(Complaint.status)
                 .all()
             )
@@ -1435,34 +1392,10 @@ class AnalyticsRepository:
                 ComplaintStatus.PENDING: 0,
                 ComplaintStatus.IN_PROGRESS: 0,
                 ComplaintStatus.RESOLVED: 0,
-                ComplaintStatus.CLOSED: 0,
             }
             for status_val, count in status_counts:
                 if status_val in counts:
                     counts[status_val] = count
-            
-            # Average resolution time
-            avg_resolution = (
-                db.query(
-                    func.avg(
-                        case(
-                            (Complaint.status == ComplaintStatus.RESOLVED,
-                             func.julianday(Complaint.updated_at) - func.julianday(Complaint.created_at)),
-                            else_=None
-                        )
-                    )
-                )
-                .filter(Complaint.category_id.in_(dept_categories))
-                .scalar()
-            ) or 0
-            
-            # Escalated count
-            escalated = (
-                db.query(func.count(ComplaintEscalation.id))
-                .join(Complaint, ComplaintEscalation.complaint_id == Complaint.id)
-                .filter(Complaint.category_id.in_(dept_categories))
-                .scalar()
-            )
             
             department_stats.append({
                 "department_name": dept_name,
@@ -1470,112 +1403,31 @@ class AnalyticsRepository:
                 "pending": counts[ComplaintStatus.PENDING],
                 "in_progress": counts[ComplaintStatus.IN_PROGRESS],
                 "resolved": counts[ComplaintStatus.RESOLVED],
-                "closed": counts[ComplaintStatus.CLOSED],
-                "escalated": escalated,
-                "avg_resolution_days": round(avg_resolution, 2),
             })
         
         return department_stats
     
     @staticmethod
-    def get_monthly_trends(db: Session, months: int = 12) -> list[dict]:
-        """Get monthly complaint trends for the last N months."""
-        from datetime import timedelta
+    def get_best_ward(db: Session) -> dict | None:
+        """Get the best ward (highest resolution percentage)."""
+        ward_stats = AnalyticsRepository.get_ward_statistics(db)
         
-        results = []
-        today = date.today()
+        if not ward_stats:
+            return None
         
-        for i in range(months):
-            # Calculate month start and end
-            if i == 0:
-                # Current month
-                month_start = date(today.year, today.month, 1)
-                month_end = today
-            else:
-                # Previous months
-                prev_month = today.replace(day=1) - timedelta(days=i)
-                month_start = date(prev_month.year, prev_month.month, 1)
-                # Get last day of the month
-                if prev_month.month == 12:
-                    month_end = date(prev_month.year + 1, 1, 1) - timedelta(days=1)
-                else:
-                    month_end = date(prev_month.year, prev_month.month + 1, 1) - timedelta(days=1)
-            
-            # Total complaints in month
-            total = (
-                db.query(func.count(Complaint.id))
-                .filter(
-                    Complaint.created_at >= month_start,
-                    Complaint.created_at <= month_end
-                )
-                .scalar()
-            )
-            
-            # Resolved in month
-            resolved = (
-                db.query(func.count(Complaint.id))
-                .filter(
-                    Complaint.updated_at >= month_start,
-                    Complaint.updated_at <= month_end,
-                    Complaint.status == ComplaintStatus.RESOLVED
-                )
-                .scalar()
-            )
-            
-            # Closed in month
-            closed = (
-                db.query(func.count(Complaint.id))
-                .filter(
-                    Complaint.updated_at >= month_start,
-                    Complaint.updated_at <= month_end,
-                    Complaint.status == ComplaintStatus.CLOSED
-                )
-                .scalar()
-            )
-            
-            results.append({
-                "month": month_start.strftime("%Y-%m"),
-                "month_name": month_start.strftime("%B %Y"),
-                "total_complaints": total,
-                "resolved": resolved,
-                "closed": closed,
-            })
+        # Sort by resolution percentage (highest first)
+        ward_stats.sort(key=lambda x: x["resolution_percentage"], reverse=True)
         
-        # Reverse to show newest first
-        results.reverse()
+        best_ward = ward_stats[0]
         
-        return results
-    
-    @staticmethod
-    def get_category_analytics(db: Session) -> list[dict]:
-        """Get complaint statistics by category."""
-        results = (
-            db.query(
-                Category.id,
-                Category.name,
-                func.count(Complaint.id).label("total_complaints"),
-                func.sum(case((Complaint.status == ComplaintStatus.PENDING, 1), else_=0)).label("pending"),
-                func.sum(case((Complaint.status == ComplaintStatus.RESOLVED, 1), else_=0)).label("resolved"),
-                func.sum(case((Complaint.status == ComplaintStatus.CLOSED, 1), else_=0)).label("closed"),
-            )
-            .join(Complaint, Category.id == Complaint.category_id)
-            .group_by(Category.id, Category.name)
-            .order_by(func.count(Complaint.id).desc())
-            .all()
-        )
-        
-        category_stats = []
-        for result in results:
-            category_stats.append({
-                "category_id": result.id,
-                "category_name": result.name,
-                "total_complaints": result.total_complaints or 0,
-                "pending": result.pending or 0,
-                "resolved": result.resolved or 0,
-                "closed": result.closed or 0,
-            })
-        
-        return category_stats
+        return {
+            "ward_id": best_ward["ward_id"],
+            "ward_number": best_ward["ward_number"],
+            "ward_name": best_ward["ward_name"],
+            "total_complaints": best_ward["total_complaints"],
+            "resolved_complaints": best_ward["resolved"],
+            "resolution_percentage": best_ward["resolution_percentage"],
+        }
 
 
 class AuditLogRepository:
@@ -1599,6 +1451,31 @@ class AuditLogRepository:
             entity=entity,
             entity_id=entity_id,
             remarks=remarks,
+        )
+        db.add(log)
+        db.commit()
+        db.refresh(log)
+        return log
+    
+    @staticmethod
+    def create_audit_log(
+        db: Session,
+        action: str,
+        entity_type: str,
+        entity_id: int | None = None,
+        actor_role: str | None = None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+        details: str | None = None,
+    ) -> AuditLog:
+        """Create a new audit log entry with flexible actor information."""
+        log = AuditLog(
+            admin_name=actor_name or "System",
+            admin_role=actor_role or "System",
+            action=action,
+            entity=entity_type,
+            entity_id=entity_id,
+            remarks=details,
         )
         db.add(log)
         db.commit()

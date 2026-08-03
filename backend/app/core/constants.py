@@ -82,3 +82,30 @@ class UserState:
         "archived": ["active", "blocked", "restricted", "deleted"],
         "deleted": [],  # Cannot transition from deleted
     }
+
+
+class Department:
+    """Department constants for complaint categorization."""
+    VALID_DEPARTMENTS = {
+        "DEPT_PANI": "पाणी पुरवठा विभाग",
+        "DEPT_SWACHHTA": "स्वच्छता व घनकचरा विभाग",
+        "DEPT_BANDHKAM": "बांधकाम विभाग",
+        "DEPT_VIDYUT": "विद्युत विभाग",
+        "DEPT_AROGYA": "आरोग्य विभाग",
+        "DEPT_UDYAN": "उद्याने व बाग विभाग",
+    }
+
+
+# Category to Department mapping
+CATEGORY_TO_DEPARTMENT = {
+    "Water": "DEPT_PANI",
+    "Garbage": "DEPT_SWACHHTA",
+    "Gutter": "DEPT_SWACHHTA",
+    "Drainage": "DEPT_BANDHKAM",
+    "Road": "DEPT_BANDHKAM",
+    "Street Lights": "DEPT_VIDYUT",
+    "Animals": "DEPT_AROGYA",
+    "Tree": "DEPT_UDYAN",
+    "Traffic": "DEPT_BANDHKAM",
+    "Other": "DEPT_AROGYA",
+}

@@ -4,10 +4,10 @@ from app.db.repository import DepartmentOfficerRepository
 from app.models.department_officer import DepartmentOfficer
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
+from app.core.constants import Department
 from app.schemas.department_officer import (
     DepartmentOfficerLogin,
     DepartmentOfficerChangePassword,
-    VALID_DEPARTMENT_KEYS,
 )
 from app.utils.storage import upload_image_to_storage, PROFILE_PHOTOS_BUCKET
 
@@ -23,7 +23,7 @@ class DepartmentOfficerService:
     @staticmethod
     def login(login_data: DepartmentOfficerLogin) -> dict:
         # 1. Validate department key
-        department_name = VALID_DEPARTMENT_KEYS.get(login_data.department)
+        department_name = Department.VALID_DEPARTMENTS.get(login_data.department)
         if department_name is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,6 +1,6 @@
 from app.schemas.citizen import CitizenProfileCreate, CitizenProfileResponse
 from app.schemas.complaint import ComplaintCreate, ComplaintResponse
-from app.schemas.complaint_history import ComplaintHistoryCreate, ComplaintHistoryResponse
+from app.schemas.complaint_history import ComplaintHistoryResponse
 from app.schemas.nagarsevak_complaint import (
     NagarsevakComplaintDashboard,
     NagarsevakComplaintListItem,
@@ -13,7 +13,6 @@ __all__ = [
     "CitizenProfileResponse",
     "ComplaintCreate",
     "ComplaintResponse",
-    "ComplaintHistoryCreate",
     "ComplaintHistoryResponse",
     "NagarsevakComplaintDashboard",
     "NagarsevakComplaintListItem",

@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.db.repository import NagarsevakRepository
+from app.db.repository import NagarsevakRepository, WardRepository
 from app.models.nagarsevak import Nagarsevak
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.schemas.nagarsevak import NagarsevakLogin, NagarsevakChangePassword
@@ -17,9 +17,16 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 class NagarsevakService:
     @staticmethod
     def login(db: Session, login_data: NagarsevakLogin) -> dict:
-        # Find Nagarsevak by name + ward_id
+        ward = WardRepository.get_by_ward_number(db, str(login_data.ward_number))
+        if not ward:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid name, ward, or password.",
+            )
+
+        # Resolve the public ward number to the internal ward_id used by the database.
         nagarsevak = NagarsevakRepository.get_by_name_and_ward(
-            db, login_data.name, login_data.ward_id
+            db, login_data.name, ward.id
         )
         if not nagarsevak:
             raise HTTPException(

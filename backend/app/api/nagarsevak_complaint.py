@@ -7,11 +7,10 @@ from app.schemas.nagarsevak_complaint import (
     NagarsevakComplaintDashboard,
     NagarsevakComplaintListItem,
     NagarsevakComplaintDetail,
-    ComplaintStatusUpdate,
-    ComplaintEscalateRequest,
     ComplaintEscalationCreatedResponse,
     EscalatedComplaintResponse,
 )
+from app.schemas.complaint_common import ComplaintStatusUpdate, ComplaintEscalateRequest
 from app.schemas.complaint_history import ComplaintHistoryResponse
 from app.services.nagarsevak_complaint_service import NagarsevakComplaintService
 

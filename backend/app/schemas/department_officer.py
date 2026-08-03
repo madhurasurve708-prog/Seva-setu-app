@@ -1,17 +1,7 @@
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-
-
-# Valid department keys accepted in the login request.
-# Values must match VALID_DEPARTMENTS in the DepartmentOfficer model.
-VALID_DEPARTMENT_KEYS: dict[str, str] = {
-    "DEPT_PANI":        "पाणी पुरवठा विभाग",
-    "DEPT_SWACHHTA":    "स्वच्छता व घनकचरा विभाग",
-    "DEPT_BANDHKAM":    "बांधकाम विभाग",
-    "DEPT_VIDYUT":      "विद्युत विभाग",
-    "DEPT_AROGYA":      "आरोग्य विभाग",
-    "DEPT_UDYAN":       "उद्याने व बाग विभाग",
-}
+from app.core.constants import Department
 
 
 class DepartmentOfficerLogin(BaseModel):
@@ -21,7 +11,7 @@ class DepartmentOfficerLogin(BaseModel):
         ...,
         description=(
             "Department key, e.g. DEPT_PANI. "
-            f"Valid values: {', '.join(VALID_DEPARTMENT_KEYS)}"
+            f"Valid values: {', '.join(Department.VALID_DEPARTMENTS.keys())}"
         ),
     )
     name: str = Field(
@@ -53,6 +43,12 @@ class DepartmentOfficerProfile(BaseModel):
     profile_photo_url: Optional[str] = None
     role: str = "department_officer"
     is_active: bool
+    is_blocked: bool
+    is_restricted: bool
+    is_archived: bool
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

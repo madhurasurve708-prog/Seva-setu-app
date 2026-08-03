@@ -28,15 +28,12 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_date_range ON audit_logs(created_at DE
 CREATE INDEX IF NOT EXISTS idx_complaints_status ON complaints(status);
 CREATE INDEX IF NOT EXISTS idx_complaints_ward_id ON complaints(ward_id);
 CREATE INDEX IF NOT EXISTS idx_complaints_category_id ON complaints(category_id);
-CREATE INDEX IF NOT EXISTS idx_complaints_created_at ON complaints(created_at);
-CREATE INDEX IF NOT EXISTS idx_complaints_updated_at ON complaints(updated_at);
 
 -- Add index for complaint escalation queries
 CREATE INDEX IF NOT EXISTS idx_complaint_escalations_complaint_id ON complaint_escalations(complaint_id);
-CREATE INDEX IF NOT EXISTS idx_complaint_escalations_escalated_at ON complaint_escalations(escalated_at);
 
--- Add composite index for ward performance queries
+-- Add composite index for ward statistics queries
 CREATE INDEX IF NOT EXISTS idx_complaints_ward_status ON complaints(ward_id, status);
 
--- Add composite index for category analytics
+-- Add composite index for department statistics queries
 CREATE INDEX IF NOT EXISTS idx_complaints_category_status ON complaints(category_id, status);
