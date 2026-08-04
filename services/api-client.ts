@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const SESSION_KEY = '@seva-setu/official-access-token';
+const SESSION_KEY = 'seva-setu.official-access-token';
+// const SESSION_KEY = '@seva-setu/official-access-token';
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
 
 export class ApiError extends Error {
