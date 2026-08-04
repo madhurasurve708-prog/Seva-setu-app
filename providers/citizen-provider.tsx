@@ -8,7 +8,7 @@ import {
 } from '@/data/complaints';
 import type { CitizenComplaint, CitizenPreferences, CitizenProfile } from '@/types/citizen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createCitizenComplaint } from '@/services/citizen-api';
+import { createCitizenComplaint, getCategories, getCitizenComplaints, isCitizenAuthConfigured, uploadCitizenComplaintImage } from '@/services/citizen-api';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
 // Maps citizen complaint category labels to official department names.
@@ -43,6 +43,8 @@ const defaultPreferences: CitizenPreferences = {
 };
 
 type NewComplaint = Omit<CitizenComplaint, 'id' | 'submittedAt' | 'status' | 'ward' | 'locality'>;
+
+const categoryAliases: Record<string, string> = { 'Street Lights': 'Street Light', Animals: 'Stray Animals' };
 
 type CitizenContextValue = {
   ready: boolean;
@@ -83,6 +85,16 @@ async function readComplaintsForMobile(mobile: string): Promise<CitizenComplaint
 
 async function writeComplaintsForMobile(mobile: string, next: CitizenComplaint[]) {
   await AsyncStorage.setItem(complaintsKeyFor(mobile), JSON.stringify(next));
+}
+
+async function loadLiveComplaints(profile: CitizenProfile) {
+  const [items, categories] = await Promise.all([getCitizenComplaints(), getCategories()]);
+  const categoryById = new Map(categories.map((category) => [category.id, categoryAliases[category.name] ?? category.name]));
+  return items.map((item): CitizenComplaint => ({
+    id: String(item.id), title: item.title, description: item.description,
+    category: categoryById.get(item.category_id) ?? 'Other', ward: profile.ward, locality: profile.locality,
+    status: item.status, submittedAt: item.created_at, images: item.image_url ? [item.image_url] : [],
+  }));
 }
 
 async function persistSessionProfile(profile: CitizenProfile) {
@@ -145,7 +157,15 @@ export function CitizenProvider({ children }: PropsWithChildren) {
         const users = await readUsersMap();
         users[unifiedProfile.mobile] = unifiedProfile;
 
-        const userComplaints = await readComplaintsForMobile(unifiedProfile.mobile);
+        let userComplaints = await readComplaintsForMobile(unifiedProfile.mobile);
+        if (isCitizenAuthConfigured) {
+          try {
+            userComplaints = await loadLiveComplaints(unifiedProfile);
+            await writeComplaintsForMobile(unifiedProfile.mobile, userComplaints);
+          } catch {
+            // A profile may be created before any complaint exists; preserve the last local cache if offline.
+          }
+        }
 
         setProfile(unifiedProfile);
         setComplaints(userComplaints);
@@ -168,7 +188,9 @@ export function CitizenProvider({ children }: PropsWithChildren) {
           submittedAt: created.created_at,
           status: created.status,
           assignedDepartment: draft.category === 'Garbage' ? 'Sanitation Department' : undefined,
+          images: draft.photoUri ? [draft.photoUri] : [],
         };
+        if (draft.photoUri) await uploadCitizenComplaintImage(created.id, draft.photoUri);
         const next = [complaint, ...complaints];
         setComplaints(next);
         await writeComplaintsForMobile(profile.mobile, next);

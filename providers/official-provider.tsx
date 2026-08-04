@@ -1,5 +1,7 @@
-import { Complaint, complaints as initialComplaints } from '@/data/complaints';
+import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { addOfficialComplaintNote, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, updateOfficialComplaintStatus } from '@/services/official-api';
+import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
 export type UserRole = 'citizen' | 'nagarsevak' | 'department-officer' | 'nagaradhyaksha' | 'main-admin';
@@ -119,22 +121,7 @@ export function getEscalationTargets(role: UserRole | string | undefined) {
   return escalationTargetsByRole[(role as UserRole) ?? 'nagarsevak'] ?? escalationTargetsByRole.nagarsevak;
 }
 
-const defaultProfile: OfficialProfile = {
-  name: 'Rahul Mehta',
-  phone: '9420105073',
-  email: 'rahul.mehta@malvan.gov.in',
-  username: 'rahul_mehta',
-  password: 'password123',
-  employeeId: 'MMC-2026-N02',
-  designation: 'Ward Officer',
-  ward: 'Ward 2',
-  locality: 'Malvan Bazaar',
-  department: 'Water Department',
-  role: 'nagarsevak',
-  roleLabel: 'Nagarsevak',
-  avatarInitial: 'R',
-  language: 'English',
-};
+const defaultProfile: OfficialProfile = { name: '', phone: '', email: '', username: '', employeeId: '', designation: '', ward: '', locality: '', department: '', role: 'nagarsevak', roleLabel: 'Nagarsevak', avatarInitial: 'U', language: 'English' };
 
 const defaultPreferences: OfficialPreferences = {
   theme: 'light',
@@ -143,29 +130,7 @@ const defaultPreferences: OfficialPreferences = {
   smsAlerts: true,
 };
 
-const defaultAnnouncements: Announcement[] = [
-  {
-    id: 'ann-1',
-    title: 'Monsoon Cleanliness Drive Scheduled',
-    date: '18 July 2026',
-    priority: 'Pinned',
-    body: 'Malvan Municipal Council has organized a ward-wide cleanliness drive starting this Monday to clean deep gutters and prevent logging.',
-  },
-  {
-    id: 'ann-2',
-    title: 'Water Supply Maintenance Update',
-    date: '17 July 2026',
-    priority: 'High',
-    body: 'Water supply to Ward 1 and Ward 3 will be partially suspended on July 20th between 9:00 AM and 1:00 PM due to pipeline repair work.',
-  },
-  {
-    id: 'ann-3',
-    title: 'New Citizen Grievance Guidelines',
-    date: '15 July 2026',
-    priority: 'Normal',
-    body: 'Main Admin has updated the grievance escalation timeline. Officers are requested to review the updated SOP in their manuals.',
-  },
-];
+const defaultAnnouncements: Announcement[] = [];
 
 type OfficialContextValue = {
   ready: boolean;
@@ -199,14 +164,13 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     void (async () => {
       try {
-        const [storedProfile, storedComplaints, storedPreferences, storedAnnouncements] = await Promise.all([
+        const [storedProfile, storedPreferences, token] = await Promise.all([
           AsyncStorage.getItem(PROFILE_KEY),
-          AsyncStorage.getItem(COMPLAINTS_KEY),
           AsyncStorage.getItem(PREFERENCES_KEY),
-          AsyncStorage.getItem(ANNOUNCEMENTS_KEY),
+          getOfficialAccessToken(),
         ]);
 
-        if (storedProfile) {
+        if (storedProfile && token) {
           const parsedProfile = JSON.parse(storedProfile) as Partial<OfficialProfile>;
           const normalizedProfile: OfficialProfile = {
             ...defaultProfile,
@@ -217,13 +181,12 @@ export function OfficialProvider({ children }: PropsWithChildren) {
           };
           setProfile(normalizedProfile);
           setIsAuthenticated(true);
-        }
-
-        if (storedComplaints) {
-          setComplaints(JSON.parse(storedComplaints));
-        } else {
-          setComplaints(initialComplaints);
-          await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(initialComplaints));
+          const [liveComplaints, liveAnnouncements] = await Promise.all([
+            getOfficialComplaints(normalizedProfile.role, token),
+            getOfficialAnnouncements(normalizedProfile.role, token),
+          ]);
+          setComplaints(liveComplaints);
+          setAnnouncements(liveAnnouncements);
         }
 
         if (storedPreferences) {
@@ -232,11 +195,6 @@ export function OfficialProvider({ children }: PropsWithChildren) {
           await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(defaultPreferences));
         }
 
-        if (storedAnnouncements) {
-          setAnnouncements(JSON.parse(storedAnnouncements));
-        } else {
-          await AsyncStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(defaultAnnouncements));
-        }
       } catch (err) {
         console.error('Failed to load official state from AsyncStorage:', err);
       } finally {
@@ -263,64 +221,30 @@ export function OfficialProvider({ children }: PropsWithChildren) {
 
   const setAuthenticatedUser = async (next: OfficialProfile) => {
     await saveProfile(next);
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired. Please sign in again.');
+    const [liveComplaints, liveAnnouncements] = await Promise.all([
+      getOfficialComplaints(next.role, token),
+      getOfficialAnnouncements(next.role, token),
+    ]);
+    setComplaints(liveComplaints);
+    setAnnouncements(liveAnnouncements);
     setIsAuthenticated(true);
   };
 
   const updateComplaintStatus = async (id: string, status: Complaint['status'], noteText?: string) => {
-    const timestamp = new Date().toISOString();
-    const updated = complaints.map((c) => {
-      if (c.id === id) {
-        const notes = [...c.notes];
-        if (noteText) {
-          notes.push({
-            id: `note-${Date.now()}`,
-            author: profile.name,
-            text: `Status updated to ${status}. Note: ${noteText}`,
-            createdAt: timestamp,
-          });
-        } else {
-          notes.push({
-            id: `note-${Date.now()}`,
-            author: profile.name,
-            text: `Status updated to ${status}.`,
-            createdAt: timestamp,
-          });
-        }
-        return {
-          ...c,
-          status,
-          updatedAt: timestamp,
-          notes,
-        };
-      }
-      return c;
-    });
-    setComplaints(updated);
-    await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(updated));
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    await updateOfficialComplaintStatus(profile.role, id, status, token);
+    if (noteText) await addOfficialComplaintNote(profile.role, id, noteText, token);
+    setComplaints(await getOfficialComplaints(profile.role, token));
   };
 
   const addComplaintNote = async (id: string, text: string) => {
-    const timestamp = new Date().toISOString();
-    const updated = complaints.map((c) => {
-      if (c.id === id) {
-        return {
-          ...c,
-          updatedAt: timestamp,
-          notes: [
-            ...c.notes,
-            {
-              id: `note-${Date.now()}`,
-              author: profile.name,
-              text,
-              createdAt: timestamp,
-            },
-          ],
-        };
-      }
-      return c;
-    });
-    setComplaints(updated);
-    await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(updated));
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    await addOfficialComplaintNote(profile.role, id, text, token);
+    setComplaints(await getOfficialComplaints(profile.role, token));
   };
 
   const uploadComplaintImage = async (id: string, imageUri: string) => {
@@ -340,80 +264,32 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   };
 
   const escalateComplaint = async (id: string, target: string, reason: string) => {
-    const timestamp = new Date().toISOString();
-    const updated = complaints.map((c) => {
-      if (c.id === id) {
-        return {
-          ...c,
-          priority: 'Emergency' as const,
-          assignedDepartment: target,
-          is_escalated: true,
-          escalated_to: target,
-          updatedAt: timestamp,
-          notes: [
-            ...c.notes,
-            {
-              id: `note-${Date.now()}`,
-              author: profile.name,
-              text: `Escalated to ${target}. Reason: ${reason}`,
-              createdAt: timestamp,
-            },
-          ],
-        };
-      }
-      return c;
-    });
-    setComplaints(updated);
-    await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(updated));
+    if (profile.role !== 'nagarsevak') throw new Error('The deployed backend does not support this escalation for this role.');
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    await escalateOfficialComplaint(id, reason, target, token);
+    setComplaints(await getOfficialComplaints(profile.role, token));
   };
 
   const softDeleteComplaint = async (id: string, deletedBy: string, reason: string) => {
-    const timestamp = new Date().toISOString();
-    const updated = complaints.map((c) => {
-      if (c.id === id) {
-        return {
-          ...c,
-          is_deleted: true,
-          deleted_by: deletedBy,
-          deleted_at: timestamp,
-          delete_reason: reason,
-          updatedAt: timestamp,
-        };
-      }
-      return c;
-    });
-    setComplaints(updated);
-    await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(updated));
+    throw new Error('The deployed backend does not expose complaint deletion.');
   };
 
   const restoreComplaint = async (id: string) => {
-    const timestamp = new Date().toISOString();
-    const updated = complaints.map((c) => {
-      if (c.id === id) {
-        return {
-          ...c,
-          is_deleted: false,
-          deleted_by: undefined,
-          deleted_at: undefined,
-          delete_reason: undefined,
-          updatedAt: timestamp,
-        };
-      }
-      return c;
-    });
-    setComplaints(updated);
-    await AsyncStorage.setItem(COMPLAINTS_KEY, JSON.stringify(updated));
+    throw new Error('The deployed backend does not expose complaint restoration.');
   };
 
   const logout = async () => {
     setIsAuthenticated(false);
     setProfile(defaultProfile);
     setPreferences(defaultPreferences);
-    setComplaints(initialComplaints);
+    setComplaints([]);
     await Promise.all([
       AsyncStorage.removeItem(PROFILE_KEY),
       AsyncStorage.removeItem(PREFERENCES_KEY),
       AsyncStorage.removeItem(COMPLAINTS_KEY),
+      AsyncStorage.removeItem(ANNOUNCEMENTS_KEY),
+      clearOfficialAccessToken(),
     ]);
   };
 

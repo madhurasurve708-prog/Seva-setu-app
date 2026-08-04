@@ -20,6 +20,8 @@ import LanguageToggle from '@/components/common/LanguageToggle';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
+import { loginNagarsevak } from '@/services/official-api';
+import { saveOfficialAccessToken } from '@/services/api-client';
 
 export default function NagarsevakLoginScreen() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function NagarsevakLoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const canSubmit = officialId.trim().length > 0 && ward.trim().length > 0 && password.length > 0;
 
@@ -41,28 +44,15 @@ export default function NagarsevakLoginScreen() {
     setLoading(true);
     try {
       const normalizedOfficialId = officialId.trim();
-      const normalizedWard = ward.trim();
-
-      await setAuthenticatedUser({
-        name: normalizedOfficialId,
-        phone: '9420105073',
-        email: `${normalizedOfficialId.toLowerCase().replace(/\s+/g, '')}@malvan.gov.in`,
-        username: normalizedOfficialId.toLowerCase().replace(/\s+/g, '_'),
-        password,
-        employeeId: 'MMC-2026-N08',
-        designation: 'Nagarsevak (Ward Representative)',
-        ward: normalizedWard,
-        locality: 'Dhuriwada',
-        department: 'Sanitation & Health',
-        role: 'nagarsevak',
-        roleLabel: 'Nagarsevak',
-        avatarInitial: normalizedOfficialId.charAt(0).toUpperCase() || 'N',
-        language: 'English',
-      });
+      const wardNumber = Number(ward.replace(/\D/g, ''));
+      if (!wardNumber) throw new Error('Enter a valid ward number.');
+      const { token, profile } = await loginNagarsevak(normalizedOfficialId, wardNumber, password);
+      await saveOfficialAccessToken(token);
+      await setAuthenticatedUser(profile);
 
       router.replace('/(official)/dashboard' as any);
     } catch (error) {
-      console.error('Nagarsevak login failed', error);
+      setError(error instanceof Error ? error.message : 'Unable to sign in.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +147,7 @@ export default function NagarsevakLoginScreen() {
                 <Text style={styles.buttonText}>{t('login')}</Text>
               )}
             </Pressable>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -273,4 +264,5 @@ const styles = StyleSheet.create({
   buttonText: {
     ...TYPOGRAPHY.button,
   },
+  errorText: { color: COLORS.danger, fontSize: 13, fontWeight: '600', marginTop: 12, textAlign: 'center' },
 });

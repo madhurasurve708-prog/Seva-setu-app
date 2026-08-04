@@ -24,7 +24,8 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import { DEPT_DEMO_CREDENTIALS, loginDemoDepartmentOfficer } from '@/services/auth';
+import { loginDepartment } from '@/services/official-api';
+import { saveOfficialAccessToken } from '@/services/api-client';
 
 export default function DepartmentCredentialsScreen() {
   const router = useRouter();
@@ -36,7 +37,6 @@ export default function DepartmentCredentialsScreen() {
   const deptName = dept ?? '';
 
   const meta = DEPT_META[deptName];
-  const credential = DEPT_DEMO_CREDENTIALS.find((c) => c.deptName === deptName);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -60,19 +60,18 @@ export default function DepartmentCredentialsScreen() {
     return ok;
   };
 
-  const fillDemo = () => {
-    if (!credential) return;
-    setUsername(credential.username);
-    setPassword(credential.password);
-    setUsernameError('');
-    setPasswordError('');
-  };
-
   const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const profile = loginDemoDepartmentOfficer(deptName, username, password);
+      const departmentKeys: Record<string, string> = {
+        'पाणी पुरवठा विभाग': 'DEPT_PANI', 'स्वच्छता व घनकचरा विभाग': 'DEPT_SWACHHTA',
+        'बांधकाम विभाग': 'DEPT_BANDHKAM', 'विद्युत विभाग': 'DEPT_VIDYUT',
+        'आरोग्य विभाग': 'DEPT_AROGYA', 'उद्याने व बाग विभाग': 'DEPT_UDYAN',
+      };
+      const department = departmentKeys[deptName] ?? deptName;
+      const { token, profile } = await loginDepartment(department, username.trim(), password);
+      await saveOfficialAccessToken(token);
       await login(profile);
       router.replace('/(dept)/dashboard');
     } catch (err) {
@@ -149,22 +148,6 @@ export default function DepartmentCredentialsScreen() {
                 </Text>
               </Pressable>
             </Animated.View>
-
-            {/* Demo credentials pill */}
-            {credential ? (
-              <Animated.View entering={FadeInDown.duration(320).delay(80)}>
-                <Pressable onPress={fillDemo} style={styles.demoPill}>
-                  <MaterialCommunityIcons name="lightning-bolt" size={14} color="#A66A00" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.demoLabel}>{t('demoCredentialsTapToFill')}</Text>
-                    <Text style={styles.demoValue}>
-                      {credential.username} / {credential.password}
-                    </Text>
-                  </View>
-                  <MaterialCommunityIcons name="chevron-right" size={16} color="#A66A00" />
-                </Pressable>
-              </Animated.View>
-            ) : null}
 
             {/* Username field */}
             <Animated.View entering={FadeInDown.duration(320).delay(120)}>
