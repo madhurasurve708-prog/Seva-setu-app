@@ -844,6 +844,8 @@ class AnnouncementRepository:
         db: Session,
         include_archived: bool = False,
         include_deleted: bool = False,
+        offset: int = 0,
+        limit: int = 50,
     ) -> list[Announcement]:
         """Get all announcements for Main Admin with optional filters."""
         query = db.query(Announcement)
@@ -853,7 +855,7 @@ class AnnouncementRepository:
         if not include_archived:
             query = query.filter(Announcement.is_archived == False)
 
-        return query.order_by(Announcement.created_at.desc()).all()
+        return query.order_by(Announcement.created_at.desc()).offset(offset).limit(limit).all()
 
     @staticmethod
     def get_all_announcements_count(

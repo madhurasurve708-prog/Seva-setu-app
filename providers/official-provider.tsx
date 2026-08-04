@@ -181,12 +181,17 @@ export function OfficialProvider({ children }: PropsWithChildren) {
           };
           setProfile(normalizedProfile);
           setIsAuthenticated(true);
-          const [liveComplaints, liveAnnouncements] = await Promise.all([
-            getOfficialComplaints(normalizedProfile.role, token),
-            getOfficialAnnouncements(normalizedProfile.role, token),
-          ]);
+          const liveComplaints = await getOfficialComplaints(normalizedProfile.role, token);
           setComplaints(liveComplaints);
-          setAnnouncements(liveAnnouncements);
+          setTimeout(() => {
+            void (async () => {
+              try {
+                setAnnouncements(await getOfficialAnnouncements(normalizedProfile.role, token));
+              } catch (err) {
+                console.error('Failed to load announcements:', err);
+              }
+            })();
+          }, 8000);
         }
 
         if (storedPreferences) {
@@ -223,13 +228,18 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     await saveProfile(next);
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired. Please sign in again.');
-    const [liveComplaints, liveAnnouncements] = await Promise.all([
-      getOfficialComplaints(next.role, token),
-      getOfficialAnnouncements(next.role, token),
-    ]);
+    const liveComplaints = await getOfficialComplaints(next.role, token);
     setComplaints(liveComplaints);
-    setAnnouncements(liveAnnouncements);
     setIsAuthenticated(true);
+    setTimeout(() => {
+      void (async () => {
+        try {
+          setAnnouncements(await getOfficialAnnouncements(next.role, token));
+        } catch (err) {
+          console.error('Failed to load announcements:', err);
+        }
+      })();
+    }, 8000);
   };
 
   const updateComplaintStatus = async (id: string, status: Complaint['status'], noteText?: string) => {
