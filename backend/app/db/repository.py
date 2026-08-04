@@ -773,71 +773,92 @@ class ComplaintEscalationRepository:
 class AnnouncementRepository:
     @staticmethod
     def get_announcements_for_citizen(db: Session, ward_id: int) -> list[Announcement]:
-        return (
-            db.query(Announcement)
-            .filter(
-                and_(
-                    Announcement.is_deleted == False,
-                    Announcement.is_archived == False,
-                    or_(
-                        Announcement.target_type == "everyone",
-                        Announcement.target_type == "all_citizens",
-                        and_(
-                            Announcement.target_type == "ward_citizens",
-                            Announcement.target_ward_id == ward_id,
-                        ),
-                    ),
-                )
-            )
-            .order_by(desc(Announcement.created_at))
-            .all()
+        query = db.query(Announcement)
+
+        cols = Announcement.__table__.c
+        filters = []
+        if "is_deleted" in cols:
+            filters.append(Announcement.is_deleted == False)
+        if "is_archived" in cols:
+            filters.append(Announcement.is_archived == False)
+
+        targeting = or_(
+            Announcement.target_type == "everyone",
+            Announcement.target_type == "all_citizens",
+            and_(
+                Announcement.target_type == "ward_citizens",
+                Announcement.target_ward_id == ward_id,
+            ),
         )
+
+        if filters:
+            query = query.filter(and_(*filters, targeting))
+        else:
+            query = query.filter(targeting)
+
+        return query.order_by(desc(Announcement.created_at)).all()
 
     @staticmethod
     def get_announcements_for_nagarsevak(
         db: Session,
         ward_id: int,
     ) -> list[Announcement]:
-        return (
-            db.query(Announcement)
-            .filter(
-                and_(
-                    Announcement.is_deleted == False,
-                    Announcement.is_archived == False,
-                    or_(
-                        Announcement.target_type == "everyone",
-                        Announcement.target_type == "all_nagarsevaks",
-                        and_(
-                            Announcement.target_type == "ward_nagarsevaks",
-                            Announcement.target_ward_id == ward_id,
-                        ),
-                    ),
-                )
-            )
-            .order_by(desc(Announcement.created_at))
-            .all()
+        # Some deployments may not have the is_deleted / is_archived columns
+        # (older schema). Guard by checking table columns and only include the
+        # filters when the columns exist to avoid SQL errors like
+        # "column announcements.is_deleted does not exist".
+        query = db.query(Announcement)
+
+        filters = []
+        # Only add is_deleted/is_archived filters if the column exists in the table
+        cols = Announcement.__table__.c
+        if "is_deleted" in cols:
+            filters.append(Announcement.is_deleted == False)
+        if "is_archived" in cols:
+            filters.append(Announcement.is_archived == False)
+
+        # Add targeting filters
+        targeting = or_(
+            Announcement.target_type == "everyone",
+            Announcement.target_type == "all_nagarsevaks",
+            and_(
+                Announcement.target_type == "ward_nagarsevaks",
+                Announcement.target_ward_id == ward_id,
+            ),
         )
+
+        if filters:
+            query = query.filter(and_(*filters, targeting))
+        else:
+            query = query.filter(targeting)
+
+        return query.order_by(desc(Announcement.created_at)).all()
 
     @staticmethod
     def get_announcements_for_department_officer(
         db: Session,
     ) -> list[Announcement]:
         """Get announcements targeted at department officers or everyone."""
-        return (
-            db.query(Announcement)
-            .filter(
-                and_(
-                    Announcement.is_deleted == False,
-                    Announcement.is_archived == False,
-                    or_(
-                        Announcement.target_type == "everyone",
-                        Announcement.target_type == "all_department_officers",
-                    ),
-                )
-            )
-            .order_by(desc(Announcement.created_at))
-            .all()
+        query = db.query(Announcement)
+
+        cols = Announcement.__table__.c
+        filters = []
+        if "is_deleted" in cols:
+            filters.append(Announcement.is_deleted == False)
+        if "is_archived" in cols:
+            filters.append(Announcement.is_archived == False)
+
+        targeting = or_(
+            Announcement.target_type == "everyone",
+            Announcement.target_type == "all_department_officers",
         )
+
+        if filters:
+            query = query.filter(and_(*filters, targeting))
+        else:
+            query = query.filter(targeting)
+
+        return query.order_by(desc(Announcement.created_at)).all()
 
     @staticmethod
     def get_all_announcements(
@@ -848,9 +869,10 @@ class AnnouncementRepository:
         """Get all announcements for Main Admin with optional filters."""
         query = db.query(Announcement)
 
-        if not include_deleted:
+        cols = Announcement.__table__.c
+        if not include_deleted and "is_deleted" in cols:
             query = query.filter(Announcement.is_deleted == False)
-        if not include_archived:
+        if not include_archived and "is_archived" in cols:
             query = query.filter(Announcement.is_archived == False)
 
         return query.order_by(Announcement.created_at.desc()).all()
@@ -864,9 +886,10 @@ class AnnouncementRepository:
         """Get total count of announcements for Main Admin with optional filters."""
         query = db.query(Announcement)
 
-        if not include_deleted:
+        cols = Announcement.__table__.c
+        if not include_deleted and "is_deleted" in cols:
             query = query.filter(Announcement.is_deleted == False)
-        if not include_archived:
+        if not include_archived and "is_archived" in cols:
             query = query.filter(Announcement.is_archived == False)
 
         return query.count()
