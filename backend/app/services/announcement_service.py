@@ -22,7 +22,15 @@ class AnnouncementService:
                 "title": a.title,
                 "description": a.description,
                 "priority": a.priority,
+                "image_url": a.image_url,
+                "target_type": a.target_type,
+                "target_ward_id": a.target_ward_id,
+                "target_department": a.target_department,
+                "created_by": a.created_by,
+                "is_archived": a.is_archived,
+                "is_deleted": a.is_deleted,
                 "created_at": a.created_at,
+                "updated_at": a.updated_at,
                 "is_read": a.id in read_ids,
             }
             for a in announcements
@@ -61,7 +69,15 @@ class AnnouncementService:
             "title": announcement.title,
             "description": announcement.description,
             "priority": announcement.priority,
+            "image_url": announcement.image_url,
+            "target_type": announcement.target_type,
+            "target_ward_id": announcement.target_ward_id,
+            "target_department": announcement.target_department,
+            "created_by": announcement.created_by,
+            "is_archived": announcement.is_archived,
+            "is_deleted": announcement.is_deleted,
             "created_at": announcement.created_at,
+            "updated_at": announcement.updated_at,
             "is_read": read_state is not None,
         }
 
