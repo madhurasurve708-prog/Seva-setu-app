@@ -20,7 +20,8 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 import { COLORS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import { loginAdministrator, loginDemoAdministrator } from '@/services/auth';
+import { loginMainAdmin } from '@/services/official-api';
+import { saveOfficialAccessToken } from '@/services/api-client';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
@@ -32,23 +33,15 @@ export default function AdminLoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isDemo = !process.env.EXPO_PUBLIC_API_URL;
   const canSubmit = adminId.trim().length > 0 && password.length > 0;
-
-  const fillDemo = () => {
-    setAdminId('Mamta Waradkar');
-    setPassword('123456');
-    setError('');
-  };
 
   const handleLogin = async () => {
     if (!canSubmit) return;
     setLoading(true);
     setError('');
     try {
-      const profile = isDemo
-        ? loginDemoAdministrator(adminId.trim(), password)
-        : await loginAdministrator(adminId.trim(), password);
+      const { token, profile } = await loginMainAdmin(adminId.trim(), password);
+      await saveOfficialAccessToken(token);
       await setAuthenticatedUser(profile);
       router.replace('/(admin)/dashboard' as any);
     } catch (err) {
@@ -89,29 +82,6 @@ export default function AdminLoginScreen() {
                 {t('adminLoginHint')}
               </Text>
             </Animated.View>
-
-            {/* Demo credentials card */}
-            {isDemo && (
-              <Animated.View entering={FadeInDown.duration(420).delay(100)}>
-                <Pressable onPress={fillDemo} style={styles.demoCard}>
-                  <LinearGradient
-                    colors={['rgba(124,58,237,0.08)', 'rgba(124,58,237,0.04)']}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <View style={styles.demoLeft}>
-                    <MaterialCommunityIcons name="shield-crown-outline" size={20} color="#7C3AED" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.demoTitle}>{t('demoCredentials')}</Text>
-                      <Text style={styles.demoLine}>{t('adminId')}: <Text style={styles.demoBold}>Mamta Waradkar</Text></Text>
-                      <Text style={styles.demoLine}>{t('password')}: <Text style={styles.demoBold}>123456</Text></Text>
-                    </View>
-                  </View>
-                  <View style={styles.tapBadge}>
-                    <Text style={styles.tapText}>{t('tapToFill')}</Text>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            )}
 
             {/* Form */}
             <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.formContainer}>

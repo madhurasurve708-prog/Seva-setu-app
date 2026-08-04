@@ -53,6 +53,8 @@ export async function verifyCitizenOtp(phone: string, token: string) {
 export const getCitizenProfile = () => request<CitizenApiProfile>('/api/citizen/profile');
 
 export type Category = { id: number; name: string };
+export type CitizenApiComplaint = { id: number; category_id: number; title: string; description: string; manual_location?: string | null; image_url?: string | null; status: 'Pending' | 'In Progress' | 'Resolved'; created_at: string; updated_at: string };
+export type CitizenApiAnnouncement = { id: number; title: string; description: string; priority: string; created_at: string; is_read?: boolean };
 
 export const getCategories = () => request<Category[]>('/api/categories');
 
@@ -72,6 +74,17 @@ export async function createCitizenComplaint(input: { category: string; title: s
       manual_location: input.location,
     }),
   });
+}
+
+export const getCitizenComplaints = () => request<CitizenApiComplaint[]>('/api/citizen/complaints');
+export const getCitizenAnnouncements = () => request<CitizenApiAnnouncement[]>('/api/citizen/announcements');
+
+export async function uploadCitizenComplaintImage(complaintId: number, imageUri: string) {
+  const filename = imageUri.split('/').pop() || 'complaint.jpg';
+  const type = filename.endsWith('.png') ? 'image/png' : filename.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+  const form = new FormData();
+  form.append('image', { uri: imageUri, name: filename, type } as unknown as Blob);
+  return request<CitizenApiComplaint>(`/api/citizen/complaints/${complaintId}/image`, { method: 'PUT', body: form });
 }
 
 export async function createCitizenProfile(input: { fullName: string; phoneNumber: string; wardNumber: number; locality: string }) {

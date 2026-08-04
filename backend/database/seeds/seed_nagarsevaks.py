@@ -192,7 +192,7 @@ def _seed_nagarsevaks(db: Session) -> None:
     # Remove any Nagarsevak whose (name, ward_id) pair is not in the official
     # master sheet.  This catches both wholly unknown names and known names
     # that were previously seeded against the wrong ward.
-    official_pairs = {(r["name"], ward_map[r["ward_number"]]) for r in rows}
+    official_pairs = {(n["name"], ward_map[n["ward_number"]]) for n in NAGARSEVAKS_DATA}
     stale = [
         n for n in db.query(Nagarsevak).all()
         if (n.name, n.ward_id) not in official_pairs
