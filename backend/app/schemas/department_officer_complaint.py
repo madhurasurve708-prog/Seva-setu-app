@@ -25,6 +25,7 @@ class DepartmentOfficerComplaintListItem(BaseModel):
     status: str
     created_at: datetime
     image_url: Optional[str] = None
+    assigned_department: str
 
     model_config = ConfigDict(from_attributes=True)
 

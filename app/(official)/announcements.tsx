@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,9 +25,10 @@ type Tab = typeof TABS[number];
 
 export default function AnnouncementsScreen() {
   const router = useRouter();
-  const { announcements } = useOfficial();
+  const { announcements, announcementsError, announcementsLoading, loadAnnouncements } = useOfficial();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
+  useEffect(() => { void loadAnnouncements().catch(() => {}); }, [loadAnnouncements]);
 
   const filtered = tab === 'All'
     ? announcements
@@ -53,6 +54,8 @@ export default function AnnouncementsScreen() {
         contentContainerStyle={styles.tabs}
         style={styles.tabsWrap}
       >
+        {announcementsLoading && <Text style={styles.emptyText}>Loading announcements…</Text>}
+        {announcementsError && <Text style={styles.emptyText}>{announcementsError}</Text>}
         {TABS.map((t) => (
           <Pressable
             key={t}

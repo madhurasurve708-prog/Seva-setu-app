@@ -103,6 +103,7 @@ class DepartmentOfficerComplaintService:
                 "status": c.status,
                 "created_at": c.created_at,
                 "image_url": c.image_url,
+                "assigned_department": context.department_name,
             }
             for c in complaints
         ]

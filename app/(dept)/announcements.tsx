@@ -1,13 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 
 import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
-import { useOfficial } from '@/providers/official-provider';
+import type { Announcement } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
+import { getOfficialAccessToken } from '@/services/api-client';
+import { getDepartmentAnnouncements } from '@/services/official-api';
 
 // Priority display config — mirrors official portal style
 const PRIORITY_STYLES: Record<string, {
@@ -25,9 +27,16 @@ const TABS = ['All', 'Emergency', 'High', 'Pinned', 'Normal'] as const;
 type Tab = typeof TABS[number];
 
 export default function DepartmentAnnouncements() {
-  const { announcements } = useOfficial();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const token = await getOfficialAccessToken();
+      if (token) setAnnouncements(await getDepartmentAnnouncements(token));
+    })().catch(() => setAnnouncements([]));
+  }, []);
 
   const filtered = tab === 'All'
     ? announcements

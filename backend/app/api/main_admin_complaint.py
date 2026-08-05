@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi import APIRouter, Depends, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
 from app.dependencies.main_admin_auth import get_current_main_admin
@@ -183,7 +183,7 @@ def close_complaint(
 )
 def add_complaint_note(
     complaint_id: int,
-    note_text: str,
+    note_text: str = Form(..., min_length=1, max_length=2000),
     image: UploadFile | None = File(None),
     current_admin: MainAdmin = Depends(get_current_main_admin),
     db: Session = Depends(get_db),
