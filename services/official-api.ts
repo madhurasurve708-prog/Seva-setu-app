@@ -22,7 +22,11 @@ export function mapComplaint(item: ApiComplaint): Complaint {
     location: String(item.manual_location ?? item.locality ?? ''),
     images: Array.isArray(item.images) ? item.images.map(String) : item.image_url ? [String(item.image_url)] : [],
     notes: [], createdAt: String(item.created_at ?? new Date().toISOString()), updatedAt: String(item.updated_at ?? item.created_at ?? new Date().toISOString()),
-    assignedDepartment: typeof item.department_name === 'string' ? item.department_name : undefined,
+    assignedDepartment: typeof item.assigned_department === 'string'
+      ? item.assigned_department
+      : typeof item.department_name === 'string'
+        ? item.department_name
+        : undefined,
     is_escalated: Boolean(item.is_escalated),
   };
 }
