@@ -10,9 +10,9 @@ from app.core.constants import ComplaintStatus, ImageValidation, CATEGORY_TO_DEP
 from app.schemas.complaint_common import ComplaintStatusUpdate as ComplaintStatusUpdateSchema, ComplaintEscalateRequest as ComplaintEscalateRequestSchema
 
 
-def _get_category_names_for_department(department_name: str) -> list[str]:
+def _get_category_names_for_department(department: str) -> list[str]:
     """Get category names that belong to a department."""
-    return [category for category, dept in CATEGORY_TO_DEPARTMENT.items() if dept == department_name]
+    return [category for category, dept in CATEGORY_TO_DEPARTMENT.items() if dept == department]
 
 
 def _build_detail_dict(complaint, department_name: str) -> dict:
@@ -40,7 +40,7 @@ class DepartmentOfficerComplaintService:
     @staticmethod
     def get_dashboard_counts(db: Session, context: DepartmentOfficerContext) -> dict:
         """Get dashboard statistics for the department officer's department."""
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             return {
@@ -72,7 +72,7 @@ class DepartmentOfficerComplaintService:
         page_size: int = 20,
     ) -> list[dict]:
         """Get complaints for the department officer's department with filtering."""
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             return []
@@ -114,7 +114,7 @@ class DepartmentOfficerComplaintService:
         complaint_id: int,
     ) -> dict:
         """Get a specific complaint if it belongs to the department officer's department."""
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             raise HTTPException(
@@ -150,7 +150,7 @@ class DepartmentOfficerComplaintService:
                 detail=f"Invalid status '{new_status}'. Allowed: {', '.join(ComplaintStatus.VALID_STATUSES)}",
             )
 
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             raise HTTPException(
@@ -218,7 +218,7 @@ class DepartmentOfficerComplaintService:
         content_type: Optional[str] = None,
     ) -> dict:
         """Add a note to a complaint for department officer's department."""
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             raise HTTPException(
@@ -304,7 +304,7 @@ class DepartmentOfficerComplaintService:
         complaint_id: int,
     ) -> list[dict]:
         """Get complaint timeline for department officer's department."""
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             raise HTTPException(
@@ -359,7 +359,7 @@ class DepartmentOfficerComplaintService:
             )
         ensure_appropriate_text(escalation_note, "Escalation note")
 
-        category_names = _get_category_names_for_department(context.department_name)
+        category_names = _get_category_names_for_department(context.department)
         
         if not category_names:
             raise HTTPException(

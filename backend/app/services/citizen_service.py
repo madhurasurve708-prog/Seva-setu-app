@@ -15,6 +15,9 @@ class CitizenService:
         authenticated_user_id: str,
         authenticated_phone_number: str | None,
     ) -> Citizen:
+        if not citizen_in.supabase_user_id and authenticated_user_id.startswith("dev-bypass-"):
+            citizen_in.supabase_user_id = authenticated_user_id
+
         if citizen_in.supabase_user_id != authenticated_user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

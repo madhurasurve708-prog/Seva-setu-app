@@ -16,11 +16,10 @@ def main():
     engine = create_engine(database_url)
     inspector = inspect(engine)
     
-    # List columns for complaints
-    columns = inspector.get_columns('complaints')
-    print("Columns in 'complaints' table:")
-    for col in columns:
-        print(f" - {col['name']}: {col['type']}")
+    for table_name in inspector.get_table_names():
+        print(f"\nTable: {table_name}")
+        for col in inspector.get_columns(table_name):
+            print(f" - {col['name']}: {col['type']}")
 
 if __name__ == '__main__':
     main()
