@@ -31,15 +31,25 @@ app = FastAPI(
     description="Backend API for Seva Setu civic-service portals.",
 )
 
-cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
-if cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"],
-    )
+# Configure CORS origins
+cors_origins = []
+if settings.CORS_ORIGINS:
+    cors_origins.extend([origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()])
+
+# During development, allow localhost:8081 and 127.0.0.1:8081 for Expo Web
+if settings.ALLOW_DEV_MODE:
+    dev_origins = ["http://localhost:8081", "http://127.0.0.1:8081"]
+    for origin in dev_origins:
+        if origin not in cors_origins:
+            cors_origins.append(origin)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(SQLAlchemyError)
