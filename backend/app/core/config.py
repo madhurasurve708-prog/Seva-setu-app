@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     DEPT_TEMP_PASSWORD: str = ""
     # Comma-separated browser origins. Native applications do not use CORS.
     CORS_ORIGINS: str = ""
+    ALLOW_DEV_MODE: bool = False
+    DEV_MODE_SECRET: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
