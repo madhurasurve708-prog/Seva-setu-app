@@ -87,27 +87,52 @@ export async function addDepartmentComplaintNote(id: string, noteText: string, t
 export async function getOfficialComplaints(role: OfficialProfile['role'], token: string) {
   if (role === 'nagarsevak') return (await apiRequest<ApiComplaint[]>('/api/nagarsevak/complaints', {}, token)).map(mapComplaint);
   if (role === 'main-admin') return (await apiRequest<{ complaints: ApiComplaint[] }>('/api/main-admin/complaints', {}, token)).complaints.map(mapComplaint);
+  if (role === 'department-officer') return getDepartmentComplaints(token);
   return [];
 }
 
 export async function getOfficialAnnouncements(role: OfficialProfile['role'], token: string) {
   if (role === 'nagarsevak') return (await apiRequest<Record<string, unknown>[]>('/api/nagarsevak/announcements', {}, token)).map(mapAnnouncement);
   if (role === 'main-admin') return (await apiRequest<{ announcements: Record<string, unknown>[] }>('/api/main-admin/announcements', {}, token)).announcements.map(mapAnnouncement);
+  if (role === 'department-officer') return getDepartmentAnnouncements(token);
   return [];
 }
 
 export async function updateOfficialComplaintStatus(role: OfficialProfile['role'], id: string, status: ComplaintStatus, token: string) {
+  if (role === 'department-officer') {
+    await updateDepartmentComplaintStatus(id, status, token);
+    return;
+  }
   const path = role === 'nagarsevak' ? `/api/nagarsevak/complaints/${id}/status` : `/api/main-admin/complaints/${id}/status`;
   await apiRequest(path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }, token);
 }
 
 export async function addOfficialComplaintNote(role: OfficialProfile['role'], id: string, noteText: string, token: string) {
+  if (role === 'department-officer') {
+    await addDepartmentComplaintNote(id, noteText, token);
+    return;
+  }
   const form = new FormData();
   form.append('note_text', noteText);
   await apiRequest(`/api/${role === 'main-admin' ? 'main-admin' : 'nagarsevak'}/complaints/${id}/notes`, { method: 'POST', body: form }, token);
 }
 
-export async function escalateOfficialComplaint(id: string, reason: string, target: string, token: string) {
+export async function escalateOfficialComplaint(role: OfficialProfile['role'], id: string, reason: string, target: string, token: string) {
   const escalation_target = target.toLowerCase().includes('main') ? 'Main Admin' : 'Department';
-  await apiRequest(`/api/nagarsevak/complaints/${id}/escalate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ escalation_target, escalation_note: reason }) }, token);
+  const path = role === 'department-officer'
+    ? `/api/department/complaints/${id}/escalate`
+    : `/api/nagarsevak/complaints/${id}/escalate`;
+  await apiRequest(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ escalation_target, escalation_note: reason }) }, token);
+}
+
+export async function getNagarsevakComplaintTimeline(id: string, token: string) {
+  return apiRequest<Record<string, unknown>[]>(`/api/complaints/${id}/timeline`, {}, token);
+}
+
+export async function getDepartmentComplaintTimeline(id: string, token: string) {
+  return apiRequest<Record<string, unknown>[]>(`/api/department/complaints/${id}/timeline`, {}, token);
+}
+
+export async function getMainAdminComplaintDetail(id: string, token: string) {
+  return apiRequest<Record<string, unknown>>(`/api/main-admin/complaints/${id}`, {}, token);
 }

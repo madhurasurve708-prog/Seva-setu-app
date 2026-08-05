@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,9 +14,26 @@ import { useOfficial } from '@/providers/official-provider';
 export default function ComplaintDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { profile, complaints, updateComplaintStatus, uploadComplaintImage } = useOfficial();
+  const { profile, complaints, updateComplaintStatus, uploadComplaintImage, fetchNotes } = useOfficial();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
 
   const complaint = complaints.find((c) => c.id === id);
+
+  useEffect(() => {
+    if (complaint) {
+      fetchNotes(complaint.id)
+        .then((data) => {
+          setNotes(data);
+        })
+        .catch((err) => {
+          console.error("Failed to load timeline notes:", err);
+        })
+        .finally(() => {
+          setLoadingNotes(false);
+        });
+    }
+  }, [complaint?.id, fetchNotes]);
 
   if (!complaint) {
     return (
@@ -52,6 +70,8 @@ export default function ComplaintDetailsScreen() {
     note: string,
   ) => {
     await updateComplaintStatus(complaint.id, status, note);
+    const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+    setNotes(freshNotes);
     Alert.alert('Updated', `Status set to ${status}.`);
   };
 
@@ -74,7 +94,7 @@ export default function ComplaintDetailsScreen() {
           },
         ]
       : []),
-    ...complaint.notes.map((n) => ({
+    ...notes.map((n) => ({
       title: 'Action taken',
       description: `${n.text} — ${n.author}`,
       time: fmtDateTime(n.createdAt),
@@ -245,15 +265,15 @@ export default function ComplaintDetailsScreen() {
         </Animated.View>
 
         {/* ── Section 6: Notes ── */}
-        {complaint.notes.length > 0 && (
+        {notes.length > 0 && (
           <Animated.View entering={FadeInDown.duration(340).delay(300)} style={styles.card}>
             <SectionLabel icon="note-text-outline" label="Notes" />
-            {complaint.notes.map((n, idx) => (
+            {notes.map((n, idx) => (
               <View
                 key={n.id}
                 style={[
                   styles.noteRow,
-                  idx === complaint.notes.length - 1 && { borderBottomWidth: 0 },
+                  idx === notes.length - 1 && { borderBottomWidth: 0 },
                 ]}
               >
                 <View style={styles.noteIconCircle}>
