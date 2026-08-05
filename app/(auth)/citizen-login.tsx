@@ -2,7 +2,7 @@ import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffol
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { createCitizenProfile, getCitizenProfile, isCitizenAuthConfigured, requestCitizenOtp, verifyCitizenOtp } from '@/services/citizen-api';
-import { isDevOtpMode } from '@/services/dev-otp';
+import { isDevOtpMode, requestDevOtp } from '@/services/dev-otp';
 import type { CitizenProfile } from '@/types/citizen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -244,8 +244,12 @@ export default function CitizenLoginScreen() {
     setOtp(Array(OTP_LENGTH).fill(''));
     setOtpError('');
     try {
-      if (isCitizenAuthConfigured) {
-        await requestCitizenOtp(`+91${mobile}`);
+      if (isCitizenAuthConfigured || isDevOtpMode()) {
+        if (isDevOtpMode()) {
+          await requestDevOtp(mobile);
+        } else {
+          await requestCitizenOtp(`+91${mobile}`);
+        }
       }
       startCountdown();
       setTimeout(() => otpRefs.current[0]?.focus(), 150);
@@ -278,7 +282,7 @@ export default function CitizenLoginScreen() {
     if (!validateRegistration()) return;
     setRegistering(true);
     try {
-      const profile = isCitizenAuthConfigured
+      const profile = (isCitizenAuthConfigured || isDevOtpMode())
         ? await createCitizenProfile({
             fullName: fullName.trim(), phoneNumber: `+91${mobile}`,
             wardNumber: Number(ward.replace(/\D/g, '')), locality: locality.trim(),

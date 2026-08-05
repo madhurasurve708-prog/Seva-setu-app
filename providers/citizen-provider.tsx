@@ -149,7 +149,7 @@ export function CitizenProvider({ children }: PropsWithChildren) {
   }, []);
 
   const loadComplaints = useCallback(async (force = false) => {
-    if (!profile || !isCitizenAuthConfigured) return;
+    if (!profile || (!isCitizenAuthConfigured && process.env.EXPO_PUBLIC_DEV_MODE !== 'true')) return;
     if (!force && complaintsRequest.current) return complaintsRequest.current;
     const request = (async () => {
       setComplaintsLoading(true);
@@ -197,7 +197,7 @@ export function CitizenProvider({ children }: PropsWithChildren) {
       },
       submitComplaint: async (draft) => {
         if (!profile) throw new Error('Citizen profile is required.');
-        if (!isCitizenAuthConfigured) {
+        if (!isCitizenAuthConfigured && process.env.EXPO_PUBLIC_DEV_MODE !== 'true') {
           const complaint: CitizenComplaint = {
             ...draft,
             id: `SS-${Date.now().toString().slice(-6)}`,
