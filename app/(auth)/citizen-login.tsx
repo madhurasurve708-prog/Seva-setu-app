@@ -1,8 +1,9 @@
 import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffold';
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import type { CitizenProfile } from '@/types/citizen';
 import { createCitizenProfile, getCitizenProfile, isCitizenAuthConfigured, requestCitizenOtp, verifyCitizenOtp } from '@/services/citizen-api';
+import { isDevOtpMode } from '@/services/dev-otp';
+import type { CitizenProfile } from '@/types/citizen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -130,9 +131,11 @@ export default function CitizenLoginScreen() {
     setSendingOtp(true);
 
     try {
-      if (isCitizenAuthConfigured) {
+      // requestCitizenOtp now handles both Supabase and dev mode internally
+      if (isCitizenAuthConfigured || isDevOtpMode()) {
         await requestCitizenOtp(`+91${mobile}`);
       } else {
+        // Fallback for when neither is configured (legacy behavior)
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
       setSendingOtp(false);
@@ -146,7 +149,7 @@ export default function CitizenLoginScreen() {
       setSendingOtp(false);
       setMobileError(error instanceof Error ? error.message : 'Could not send OTP.');
     }
-  }, [isMobileValid, mobile, animateToStep, startCountdown, t]);
+  }, [isMobileValid, mobile, animateToStep, startCountdown, t, isCitizenAuthConfigured, isDevOtpMode]);
 
   const handleOtpChange = useCallback((value: string, index: number) => {
     const sanitized = value.replace(/[^0-9]/g, '');
@@ -202,22 +205,12 @@ export default function CitizenLoginScreen() {
     setVerifying(true);
 
     try {
-      if (!isCitizenAuthConfigured) {
-        const storedUser = await getStoredProfile(mobile);
-        setVerifying(false);
-        playSuccessAnimation();
-        if (storedUser) {
-          await saveProfile({ ...storedUser, mobile, phone: mobile });
-          router.replace('/(citizen)/dashboard' as any);
-        } else {
-          animateToStep(4);
-        }
-        return;
-      }
-
+      // Verify OTP (either Supabase or dev mode)
       await verifyCitizenOtp(`+91${mobile}`, otp.join(''));
       setVerifying(false);
       playSuccessAnimation();
+      
+      // Check real backend API for existing profile (works for both Supabase and dev mode)
       setCheckingUser(true);
       let existingProfile: Awaited<ReturnType<typeof getCitizenProfile>> | null = null;
       try {
@@ -244,7 +237,7 @@ export default function CitizenLoginScreen() {
       setCheckingUser(false);
       setOtpError(error instanceof Error ? error.message : 'OTP verification failed.');
     }
-  }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, getStoredProfile, t]);
+  }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, getStoredProfile, t, isDevOtpMode, getCitizenProfile]);
 
   const handleResend = useCallback(async () => {
     if (!canResend) return;

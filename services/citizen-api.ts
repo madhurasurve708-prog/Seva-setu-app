@@ -1,3 +1,4 @@
+import { getDevModeSecret, getDevPhone, isDevOtpMode, requestDevOtp, verifyDevOtp } from '@/services/dev-otp';
 import { getSupabaseClient, isCitizenAuthConfigured } from '@/services/supabase';
 
 export { isCitizenAuthConfigured };
@@ -19,7 +20,21 @@ function getApiUrl() {
   return API_URL;
 }
 
-async function authHeaders() {
+async function authHeaders(): Promise<Record<string, string>> {
+  // In development mode, use a dev bypass token for real backend
+  if (isDevOtpMode()) {
+    const phone = getDevPhone();
+    const secret = getDevModeSecret();
+    if (!phone) throw new Error('Development mode requires phone number from OTP verification.');
+    if (!secret) throw new Error('Development mode secret not configured. Set EXPO_PUBLIC_DEV_MODE_SECRET.');
+    return { 
+      'X-Dev-Mode': 'true',
+      'X-Dev-Phone': phone,
+      'X-Dev-Secret': secret,
+      'Authorization': 'Bearer dev-bypass-token'
+    };
+  }
+  
   const supabase = getSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
@@ -38,12 +53,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export async function requestCitizenOtp(phone: string) {
+  // Use dev OTP if development mode is enabled
+  if (isDevOtpMode()) {
+    return requestDevOtp(phone);
+  }
+  
+  // Use Supabase OTP for production
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.signInWithOtp({ phone });
   if (error) throw new Error(error.message);
 }
 
 export async function verifyCitizenOtp(phone: string, token: string) {
+  // Use dev OTP if development mode is enabled
+  if (isDevOtpMode()) {
+    const result = await verifyDevOtp(phone, token);
+    return result.session;
+  }
+  
+  // Use Supabase OTP for production
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
   if (error || !data.session) throw new Error(error?.message ?? 'OTP verification failed.');
@@ -63,11 +91,16 @@ export async function createCitizenComplaint(input: { category: string; title: s
   const aliases: Record<string, string> = { 'Street Light': 'Street Lights', 'Stray Animals': 'Animals' };
   const category = categories.find((item) => item.name === (aliases[input.category] ?? input.category));
   if (!category) throw new Error('The selected complaint category is unavailable. Please refresh and try again.');
+  
+  // In dev mode, backend will extract user_id from X-Dev-Phone header
+  // In production, we send empty string and backend uses Supabase auth
+  const supabaseUserId = '';
+  
   return request<{ id: number; created_at: string; status: 'Pending' | 'In Progress' | 'Resolved' }>('/api/citizen/complaints', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      supabase_user_id: '',
+      supabase_user_id: supabaseUserId,
       category_id: category.id,
       title: input.title,
       description: input.description,
@@ -88,14 +121,24 @@ export async function uploadCitizenComplaintImage(complaintId: number, imageUri:
 }
 
 export async function createCitizenProfile(input: { fullName: string; phoneNumber: string; wardNumber: number; locality: string }) {
-  const supabase = getSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Your session has expired. Please sign in again.');
+  let userId: string;
+  
+  if (isDevOtpMode()) {
+    // In dev mode, use a fake user ID based on phone number
+    // Backend will use X-Dev-Phone header to identify the user
+    userId = `dev-user-${input.phoneNumber}`;
+  } else {
+    const supabase = getSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Your session has expired. Please sign in again.');
+    userId = user.id;
+  }
+  
   return request<CitizenApiProfile>('/api/citizen/profile', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      supabase_user_id: user.id,
+      supabase_user_id: userId,
       full_name: input.fullName,
       phone_number: input.phoneNumber,
       ward_number: input.wardNumber,
