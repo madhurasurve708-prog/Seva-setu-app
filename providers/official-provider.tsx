@@ -1,6 +1,6 @@
 import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus } from '@/services/official-api';
+import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail } from '@/services/official-api';
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -152,6 +152,7 @@ type OfficialContextValue = {
   publishAnnouncement: (input: AnnouncementInput) => Promise<void>;
   uploadComplaintImage: (id: string, imageUri: string) => Promise<void>;
   escalateComplaint: (id: string, department: string, reason: string) => Promise<void>;
+  fetchNotes: (id: string) => Promise<any[]>;
   softDeleteComplaint: (id: string, deletedBy: string, reason: string) => Promise<void>;
   restoreComplaint: (id: string) => Promise<void>;
   savePreferences: (preferences: OfficialPreferences) => Promise<void>;
@@ -312,12 +313,37 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   };
 
   const escalateComplaint = async (id: string, target: string, reason: string) => {
-    if (profile.role !== 'nagarsevak') throw new Error('The deployed backend does not support this escalation for this role.');
+    if (profile.role !== 'nagarsevak' && profile.role !== 'department-officer') throw new Error('This role does not support escalation.');
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired.');
-    await escalateOfficialComplaint(id, reason, target, token);
+    await escalateOfficialComplaint(profile.role, id, reason, target, token);
     await loadComplaints(true);
   };
+
+  const fetchNotes = useCallback(async (id: string) => {
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    
+    if (profile.role === 'nagarsevak') {
+      const timeline = await getNagarsevakComplaintTimeline(id, token);
+      return timeline.map((h: any) => ({
+        id: String(h.id || Math.random()),
+        author: `${h.author_name} (${h.author_role})`,
+        text: String(h.note_text),
+        createdAt: String(h.created_at),
+      }));
+    } else if (profile.role === 'main-admin') {
+      const detail = await getMainAdminComplaintDetail(id, token);
+      const history = (detail.history || []) as any[];
+      return history.map((h: any) => ({
+        id: String(h.id || Math.random()),
+        author: `${h.author_name} (${h.author_role})`,
+        text: String(h.note_text),
+        createdAt: String(h.created_at),
+      }));
+    }
+    return [];
+  }, [profile.role]);
 
   const softDeleteComplaint = async (id: string, deletedBy: string, reason: string) => {
     throw new Error('The deployed backend does not expose complaint deletion.');
@@ -362,12 +388,13 @@ export function OfficialProvider({ children }: PropsWithChildren) {
       publishAnnouncement,
       uploadComplaintImage,
       escalateComplaint,
+      fetchNotes,
       softDeleteComplaint,
       restoreComplaint,
       savePreferences,
       logout,
     }),
-    [ready, isAuthenticated, profile, complaints, preferences, announcements, announcementsLoading, announcementsError, loadAnnouncements, complaintsLoading, complaintsError, loadComplaints]
+    [ready, isAuthenticated, profile, complaints, preferences, announcements, announcementsLoading, announcementsError, loadAnnouncements, complaintsLoading, complaintsError, loadComplaints, fetchNotes]
   );
 
   return <OfficialContext.Provider value={value}>{children}</OfficialContext.Provider>;

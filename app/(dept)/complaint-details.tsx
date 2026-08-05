@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -17,9 +17,22 @@ export default function DepartmentComplaintDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const { profile, complaints, updateStatus, addNote } = useDepartment();
+  const { profile, complaints, updateStatus, addNote, fetchNotes, escalateComplaint } = useDepartment();
   const complaint = complaints.find(c => c.id === id && c.assignedDepartment === profile?.department);
   const [note, setNote] = useState('');
+  const [notes, setNotes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (complaint) {
+      fetchNotes(complaint.id)
+        .then((data) => {
+          setNotes(data);
+        })
+        .catch((err) => {
+          console.error("Failed to load timeline notes:", err);
+        });
+    }
+  }, [complaint?.id, fetchNotes]);
 
   if (!complaint) {
     return (
@@ -34,6 +47,8 @@ export default function DepartmentComplaintDetails() {
   const change = async (status: 'Pending' | 'In Progress' | 'Resolved') => {
     await updateStatus(complaint.id, status, note || undefined);
     setNote('');
+    const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+    setNotes(freshNotes);
   };
 
   return (
@@ -79,13 +94,34 @@ export default function DepartmentComplaintDetails() {
             ))}
           </View>
           <Pressable
-            onPress={async () => { if (note.trim()) { await addNote(complaint.id, note); setNote(''); } }}
+            onPress={async () => {
+              if (note.trim()) {
+                await addNote(complaint.id, note);
+                setNote('');
+                const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+                setNotes(freshNotes);
+              }
+            }}
             style={styles.noteBtn}
           >
             <Text style={styles.noteText}>{t('addNoteBtn')}</Text>
           </Pressable>
           <Pressable
-            onPress={() => Alert.alert(t('escalatedTitle'), t('escalatedMsg'))}
+            onPress={async () => {
+              if (!note.trim()) {
+                Alert.alert(t('required') || 'Required', t('enterNoteEscalate') || 'Please enter the escalation reason in the note box first.');
+                return;
+              }
+              try {
+                await escalateComplaint(complaint.id, note.trim());
+                setNote('');
+                Alert.alert(t('escalatedTitle') || 'Escalated', t('escalatedMsg') || 'Grievance escalated successfully.');
+                const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+                setNotes(freshNotes);
+              } catch (err) {
+                Alert.alert('Error', err instanceof Error ? err.message : 'Failed to escalate.');
+              }
+            }}
             style={styles.escalate}
           >
             <Text style={styles.escalateText}>{t('escalateToNagaradhyaksha')}</Text>
@@ -94,7 +130,7 @@ export default function DepartmentComplaintDetails() {
 
         <Text style={styles.heading}>{t('timelineDeptNotes')}</Text>
         <GlassCard style={styles.card}>
-          {complaint.notes.length ? complaint.notes.map(item => (
+          {notes.length ? notes.map(item => (
             <View key={item.id} style={styles.note}>
               <Text style={styles.line}>{item.author}</Text>
               <Text style={styles.sub}>{item.text}</Text>
