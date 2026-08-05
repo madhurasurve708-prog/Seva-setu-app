@@ -369,7 +369,7 @@ export default function CitizenLoginScreen() {
                       onSubmitEditing={handleSendOtp}
                     />
                   </View>
-                  {mobileError ? <Text style={authStyles.errorText}>{t('mobileError')}</Text> : null}
+                  {mobileError ? <Text style={authStyles.errorText}>{mobileError}</Text> : null}
 
                   <View style={{ marginTop: 12 }}>
                     <Pressable

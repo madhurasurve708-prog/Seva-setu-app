@@ -174,6 +174,22 @@ export function CitizenProvider({ children }: PropsWithChildren) {
       },
       submitComplaint: async (draft) => {
         if (!profile) throw new Error('Citizen profile is required.');
+        if (!isCitizenAuthConfigured) {
+          const complaint: CitizenComplaint = {
+            ...draft,
+            id: `SS-${Date.now().toString().slice(-6)}`,
+            ward: profile.ward,
+            locality: profile.locality,
+            submittedAt: new Date().toISOString(),
+            status: 'Pending',
+            assignedDepartment: draft.category === 'Garbage' ? 'Sanitation Department' : undefined,
+            images: draft.photoUri ? [draft.photoUri] : [],
+          };
+          const next = [complaint, ...complaints];
+          setComplaints(next);
+          await writeComplaintsForMobile(profile.mobile, next);
+          return complaint;
+        }
         const created = await createCitizenComplaint({
           category: draft.category,
           title: draft.title,

@@ -5,8 +5,9 @@ import { Platform } from 'react-native';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const bypassSupabase = process.env.EXPO_PUBLIC_BYPASS_SUPABASE === 'true';
 
-export const isCitizenAuthConfigured = Boolean(url && anonKey);
+export const isCitizenAuthConfigured = Boolean(url && anonKey) && !bypassSupabase;
 
 // Lazy initialization - client is created only when first needed
 let supabaseClient: ReturnType<typeof createClient> | null = null;
