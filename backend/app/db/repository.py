@@ -400,6 +400,18 @@ class ComplaintRepository:
         return complaint
 
     @staticmethod
+    def update_complaint_priority(
+        db: Session, complaint: Complaint, priority: str, *, commit: bool = True
+    ) -> Complaint:
+        complaint.priority = priority
+        if commit:
+            db.commit()
+            db.refresh(complaint)
+        else:
+            db.flush()
+        return complaint
+
+    @staticmethod
     def get_ward_status_counts(
         db: Session,
         ward_id: int,
@@ -428,7 +440,7 @@ class ComplaintRepository:
     def get_all_complaints(
         db: Session,
         ward_filter: int | None = None,
-        category_filter: int | None = None,
+        category_filter: int | list[int] | None = None,
         status_filter: str | None = None,
         sort_newest: bool = True,
         offset: int = 0,
@@ -450,7 +462,8 @@ class ComplaintRepository:
             query = query.filter(Complaint.ward_id == ward_filter)
         
         if category_filter:
-            query = query.filter(Complaint.category_id == category_filter)
+            category_ids = category_filter if isinstance(category_filter, list) else [category_filter]
+            query = query.filter(Complaint.category_id.in_(category_ids))
         
         if status_filter:
             query = query.filter(Complaint.status == status_filter)
@@ -464,7 +477,7 @@ class ComplaintRepository:
     def get_all_complaints_count(
         db: Session,
         ward_filter: int | None = None,
-        category_filter: int | None = None,
+        category_filter: int | list[int] | None = None,
         status_filter: str | None = None,
     ) -> int:
         """Get total count of complaints for Main Admin with optional filters."""
@@ -474,7 +487,8 @@ class ComplaintRepository:
             query = query.filter(Complaint.ward_id == ward_filter)
         
         if category_filter:
-            query = query.filter(Complaint.category_id == category_filter)
+            category_ids = category_filter if isinstance(category_filter, list) else [category_filter]
+            query = query.filter(Complaint.category_id.in_(category_ids))
         
         if status_filter:
             query = query.filter(Complaint.status == status_filter)
@@ -509,6 +523,8 @@ class ComplaintHistoryRepository:
         note_text: str,
         author_id: int | None = None,
         image_url: str | None = None,
+        *,
+        commit: bool = True,
     ) -> ComplaintHistory:
         db_note = ComplaintHistory(
             complaint_id=complaint_id,
@@ -519,8 +535,11 @@ class ComplaintHistoryRepository:
             image_url=image_url,
         )
         db.add(db_note)
-        db.commit()
-        db.refresh(db_note)
+        if commit:
+            db.commit()
+            db.refresh(db_note)
+        else:
+            db.flush()
         return db_note
 
     @staticmethod
@@ -696,6 +715,8 @@ class ComplaintEscalationRepository:
         escalated_by_name: str,
         escalated_to: str,
         escalation_note: str,
+        *,
+        commit: bool = True,
     ) -> ComplaintEscalation:
         db_escalation = ComplaintEscalation(
             complaint_id=complaint_id,
@@ -706,8 +727,11 @@ class ComplaintEscalationRepository:
             escalation_note=escalation_note,
         )
         db.add(db_escalation)
-        db.commit()
-        db.refresh(db_escalation)
+        if commit:
+            db.commit()
+            db.refresh(db_escalation)
+        else:
+            db.flush()
         return db_escalation
 
     @staticmethod
@@ -1397,6 +1421,8 @@ class AuditLogRepository:
         actor_id: int | None = None,
         actor_name: str | None = None,
         details: str | None = None,
+        *,
+        commit: bool = True,
     ) -> AuditLog:
         """Create a new audit log entry with flexible actor information."""
         log = AuditLog(
@@ -1408,8 +1434,11 @@ class AuditLogRepository:
             remarks=details,
         )
         db.add(log)
-        db.commit()
-        db.refresh(log)
+        if commit:
+            db.commit()
+            db.refresh(log)
+        else:
+            db.flush()
         return log
     
     @staticmethod

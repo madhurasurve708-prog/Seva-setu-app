@@ -269,38 +269,29 @@ class NagarsevakComplaintService:
                     detail=f"No department mapping found for category '{category_name}'.",
                 )
 
-        # Create escalation entry
-        escalation = ComplaintEscalationRepository.create_escalation(
-            db=db,
-            complaint_id=complaint_id,
-            escalated_by_role="Nagarsevak",
-            escalated_by_id=nagarsevak.id,
-            escalated_by_name=nagarsevak.name,
-            escalated_to=escalated_to,
-            escalation_note=escalation_note.strip(),
-        )
-
-        # Create note in history/timeline
-        ComplaintHistoryRepository.create_note(
-            db=db,
-            complaint_id=complaint_id,
-            author_role="Nagarsevak",
-            author_name=nagarsevak.name,
-            author_id=nagarsevak.id,
-            note_text=f"Escalated to {escalated_to}. Reason: {escalation_note.strip()}",
-        )
-        
-        # Create audit log for escalation
-        AuditLogRepository.create_audit_log(
-            db=db,
-            action="ESCALATE",
-            entity_type="Complaint",
-            entity_id=complaint_id,
-            actor_role="Nagarsevak",
-            actor_id=nagarsevak.id,
-            actor_name=nagarsevak.name,
-            details=f"Escalated complaint to {escalated_to}: {escalation_note.strip()}",
-        )
+        try:
+            escalation = ComplaintEscalationRepository.create_escalation(
+                db=db, complaint_id=complaint_id, escalated_by_role="Nagarsevak",
+                escalated_by_id=nagarsevak.id, escalated_by_name=nagarsevak.name,
+                escalated_to=escalated_to, escalation_note=escalation_note.strip(), commit=False,
+            )
+            if complaint.priority not in {"High", "Emergency"}:
+                ComplaintRepository.update_complaint_priority(db, complaint, "High", commit=False)
+            ComplaintHistoryRepository.create_note(
+                db=db, complaint_id=complaint_id, author_role="Nagarsevak",
+                author_name=nagarsevak.name, author_id=nagarsevak.id,
+                note_text=f"Escalated to {escalated_to}. Reason: {escalation_note.strip()}", commit=False,
+            )
+            AuditLogRepository.create_audit_log(
+                db=db, action="ESCALATE", entity_type="Complaint", entity_id=complaint_id,
+                actor_role="Nagarsevak", actor_id=nagarsevak.id, actor_name=nagarsevak.name,
+                details=f"Escalated complaint to {escalated_to}: {escalation_note.strip()}", commit=False,
+            )
+            db.commit()
+            db.refresh(escalation)
+        except Exception:
+            db.rollback()
+            raise
 
         return {
             "id": escalation.id,

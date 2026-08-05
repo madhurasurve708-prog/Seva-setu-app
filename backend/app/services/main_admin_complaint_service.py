@@ -46,7 +46,7 @@ class MainAdminComplaintService:
                     cat.id for cat in categories if cat.name in category_names
                 ]
                 if category_ids:
-                    category_filter = category_ids[0]  # Use first matching category ID
+                    category_filter = category_ids
         
         # Get complaints with filters
         complaints = ComplaintRepository.get_all_complaints(

@@ -31,6 +31,27 @@ function mapAnnouncement(item: Record<string, unknown>): Announcement {
   return { id: String(item.id), title: String(item.title), body: String(item.description), date: new Date(String(item.created_at)).toLocaleDateString(), priority: item.priority === 'Emergency' || item.priority === 'High' ? item.priority : 'Normal' };
 }
 
+export type AnnouncementInput = {
+  title: string;
+  description: string;
+  priority: string;
+  target_type: string;
+  target_ward_id?: number;
+  target_department?: string;
+};
+
+export async function getDepartmentAnnouncements(token: string) {
+  return (await apiRequest<Record<string, unknown>[]>('/api/department/announcements', {}, token)).map(mapAnnouncement);
+}
+
+export async function createMainAdminAnnouncement(input: AnnouncementInput, token: string) {
+  return apiRequest<Record<string, unknown>>('/api/main-admin/announcements', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  }, token);
+}
+
 export async function loginNagarsevak(name: string, wardNumber: number, password: string) {
   const response = await apiRequest<LoginResponse>('/api/nagarsevak/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, ward_number: wardNumber, password }) });
   const user = response.nagarsevak ?? {};
@@ -81,7 +102,9 @@ export async function updateOfficialComplaintStatus(role: OfficialProfile['role'
 }
 
 export async function addOfficialComplaintNote(role: OfficialProfile['role'], id: string, noteText: string, token: string) {
-  await apiRequest(`/api/${role === 'main-admin' ? 'main-admin' : 'nagarsevak'}/complaints/${id}/notes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note_text: noteText }) }, token);
+  const form = new FormData();
+  form.append('note_text', noteText);
+  await apiRequest(`/api/${role === 'main-admin' ? 'main-admin' : 'nagarsevak'}/complaints/${id}/notes`, { method: 'POST', body: form }, token);
 }
 
 export async function escalateOfficialComplaint(id: string, reason: string, target: string, token: string) {

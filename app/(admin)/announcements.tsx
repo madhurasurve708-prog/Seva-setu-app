@@ -60,7 +60,7 @@ function priorityLabel(t: (key: string) => string, key: string): string {
 
 export default function AdminAnnouncements() {
   const { t } = useTranslation();
-  const { announcements } = useOfficial();
+  const { announcements, publishAnnouncement } = useOfficial();
 
   const AUDIENCE_GROUPS = useMemo(() => buildAudienceGroups(t), [t]);
 
@@ -87,10 +87,19 @@ export default function AdminAnnouncements() {
 
   const canSend = title.trim().length > 0 && message.trim().length > 0;
 
-  const send = () => {
+  const send = async () => {
     if (!canSend) {
       Alert.alert(t('missingInfo'), t('fillTitleMessage'));
       return;
+    }
+    const targetTypes: Record<string, string> = { everyone: 'everyone', 'all-citizens': 'all_citizens', 'ward-citizens': 'ward_citizens', 'all-nagarsevaks': 'all_nagarsevaks', departments: 'all_department_officers' };
+    const wardMatch = subTarget?.match(/(\d+)/);
+    try {
+      await publishAnnouncement({ title: title.trim(), description: message.trim(), priority: priority === 'Normal' ? 'Medium' : priority === 'Pinned' ? 'Low' : priority, target_type: targetTypes[audience] ?? 'everyone', ...(audience === 'ward-citizens' && wardMatch ? { target_ward_id: Number(wardMatch[1]) } : {}) });
+      setTitle(''); setMessage(''); setPreview(false);
+      Alert.alert(t('success'), t('announcementReadyTitle'));
+    } catch (error) {
+      Alert.alert(t('error'), error instanceof Error ? error.message : t('announcementReadyTitle'));
     }
     Alert.alert(
       t('announcementReadyTitle'),

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -16,9 +16,10 @@ const wardDisplay = (t, ward) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 export default function DepartmentComplaints() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { profile, complaints } = useDepartment();
+  const { profile, complaints, complaintsError, complaintsLoading, loadComplaints } = useDepartment();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
+  useEffect(() => { void loadComplaints().catch(() => {}); }, [loadComplaints]);
 
   const mine = useMemo(
     () => complaints.filter(c =>
@@ -33,6 +34,8 @@ export default function DepartmentComplaints() {
   return (
     <DepartmentScreen title={t('deptComplaintsTitle')} tab="complaints">
       <ScrollView contentContainerStyle={styles.content}>
+        {complaintsLoading && <Text style={styles.scope}>Loading complaints…</Text>}
+        {complaintsError && <Text style={styles.scope}>{complaintsError}</Text>}
         <View style={styles.search}>
           <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textMuted} />
           <TextInput

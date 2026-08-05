@@ -9,7 +9,7 @@ import {
 import type { CitizenComplaint, CitizenPreferences, CitizenProfile } from '@/types/citizen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createCitizenComplaint, getCategories, getCitizenComplaints, isCitizenAuthConfigured, uploadCitizenComplaintImage } from '@/services/citizen-api';
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 // Maps citizen complaint category labels to official department names.
 // The citizen never picks a department — this mapping is automatic.
@@ -51,6 +51,9 @@ type CitizenContextValue = {
   profile?: CitizenProfile;
   complaints: CitizenComplaint[];
   preferences: CitizenPreferences;
+  complaintsLoading: boolean;
+  complaintsError?: string;
+  loadComplaints: (force?: boolean) => Promise<void>;
   saveProfile: (profile: CitizenProfile) => Promise<void>;
   submitComplaint: (complaint: NewComplaint) => Promise<CitizenComplaint>;
   savePreferences: (preferences: CitizenPreferences) => Promise<void>;
@@ -114,6 +117,9 @@ export function CitizenProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<CitizenProfile>();
   const [complaints, setComplaints] = useState<CitizenComplaint[]>([]);
   const [preferences, setPreferences] = useState<CitizenPreferences>(defaultPreferences);
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [complaintsError, setComplaintsError] = useState<string>();
+  const complaintsRequest = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -142,12 +148,37 @@ export function CitizenProvider({ children }: PropsWithChildren) {
     })();
   }, []);
 
+  const loadComplaints = useCallback(async (force = false) => {
+    if (!profile || !isCitizenAuthConfigured) return;
+    if (!force && complaintsRequest.current) return complaintsRequest.current;
+    const request = (async () => {
+      setComplaintsLoading(true);
+      setComplaintsError(undefined);
+      try {
+        const liveComplaints = await loadLiveComplaints(profile);
+        setComplaints(liveComplaints);
+        await writeComplaintsForMobile(profile.mobile, liveComplaints);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unable to load complaints.';
+        setComplaintsError(message);
+        throw error;
+      } finally {
+        setComplaintsLoading(false);
+      }
+    })();
+    complaintsRequest.current = request;
+    try { await request; } finally { complaintsRequest.current = null; }
+  }, [profile]);
+
   const value = useMemo<CitizenContextValue>(
     () => ({
       ready,
       profile,
       complaints,
       preferences,
+      complaintsLoading,
+      complaintsError,
+      loadComplaints,
       getStoredProfile: async (mobile: string) => {
         const users = await readUsersMap();
         return users[mobile];
@@ -157,15 +188,7 @@ export function CitizenProvider({ children }: PropsWithChildren) {
         const users = await readUsersMap();
         users[unifiedProfile.mobile] = unifiedProfile;
 
-        let userComplaints = await readComplaintsForMobile(unifiedProfile.mobile);
-        if (isCitizenAuthConfigured) {
-          try {
-            userComplaints = await loadLiveComplaints(unifiedProfile);
-            await writeComplaintsForMobile(unifiedProfile.mobile, userComplaints);
-          } catch {
-            // A profile may be created before any complaint exists; preserve the last local cache if offline.
-          }
-        }
+        const userComplaints = await readComplaintsForMobile(unifiedProfile.mobile);
 
         setProfile(unifiedProfile);
         setComplaints(userComplaints);
@@ -223,7 +246,7 @@ export function CitizenProvider({ children }: PropsWithChildren) {
         setPreferences(defaultPreferences);
       },
     }),
-    [complaints, preferences, profile, ready],
+    [complaints, preferences, profile, ready, complaintsLoading, complaintsError, loadComplaints],
   );
 
   return <CitizenContext.Provider value={value}>{children}</CitizenContext.Provider>;

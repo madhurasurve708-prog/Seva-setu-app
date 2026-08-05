@@ -1,8 +1,8 @@
 import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addOfficialComplaintNote, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, updateOfficialComplaintStatus } from '@/services/official-api';
+import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus } from '@/services/official-api';
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export type UserRole = 'citizen' | 'nagarsevak' | 'department-officer' | 'nagaradhyaksha' | 'main-admin';
 
@@ -139,10 +139,17 @@ type OfficialContextValue = {
   complaints: Complaint[];
   preferences: OfficialPreferences;
   announcements: Announcement[];
+  announcementsLoading: boolean;
+  announcementsError?: string;
+  loadAnnouncements: (force?: boolean) => Promise<void>;
+  complaintsLoading: boolean;
+  complaintsError?: string;
+  loadComplaints: (force?: boolean) => Promise<void>;
   setAuthenticatedUser: (profile: OfficialProfile) => Promise<void>;
   saveProfile: (profile: OfficialProfile) => Promise<void>;
   updateComplaintStatus: (id: string, status: Complaint['status'], noteText?: string) => Promise<void>;
   addComplaintNote: (id: string, text: string) => Promise<void>;
+  publishAnnouncement: (input: AnnouncementInput) => Promise<void>;
   uploadComplaintImage: (id: string, imageUri: string) => Promise<void>;
   escalateComplaint: (id: string, department: string, reason: string) => Promise<void>;
   softDeleteComplaint: (id: string, deletedBy: string, reason: string) => Promise<void>;
@@ -160,17 +167,22 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [preferences, setPreferences] = useState<OfficialPreferences>(defaultPreferences);
   const [announcements, setAnnouncements] = useState<Announcement[]>(defaultAnnouncements);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const [announcementsError, setAnnouncementsError] = useState<string>();
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [complaintsError, setComplaintsError] = useState<string>();
+  const complaintsRequest = useRef<Promise<void> | null>(null);
+  const announcementsRequest = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     void (async () => {
       try {
-        const [storedProfile, storedPreferences, token] = await Promise.all([
+        const [storedProfile, storedPreferences] = await Promise.all([
           AsyncStorage.getItem(PROFILE_KEY),
           AsyncStorage.getItem(PREFERENCES_KEY),
-          getOfficialAccessToken(),
         ]);
 
-        if (storedProfile && token) {
+        if (storedProfile) {
           const parsedProfile = JSON.parse(storedProfile) as Partial<OfficialProfile>;
           const normalizedProfile: OfficialProfile = {
             ...defaultProfile,
@@ -181,17 +193,6 @@ export function OfficialProvider({ children }: PropsWithChildren) {
           };
           setProfile(normalizedProfile);
           setIsAuthenticated(true);
-          const liveComplaints = await getOfficialComplaints(normalizedProfile.role, token);
-          setComplaints(liveComplaints);
-          setTimeout(() => {
-            void (async () => {
-              try {
-                setAnnouncements(await getOfficialAnnouncements(normalizedProfile.role, token));
-              } catch (err) {
-                console.error('Failed to load announcements:', err);
-              }
-            })();
-          }, 8000);
         }
 
         if (storedPreferences) {
@@ -207,6 +208,48 @@ export function OfficialProvider({ children }: PropsWithChildren) {
       }
     })();
   }, []);
+
+  const loadComplaints = useCallback(async (force = false) => {
+    if (!force && complaintsRequest.current) return complaintsRequest.current;
+    const request = (async () => {
+      const token = await getOfficialAccessToken();
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      setComplaintsLoading(true);
+      setComplaintsError(undefined);
+      try {
+        setComplaints(await getOfficialComplaints(profile.role, token));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unable to load complaints.';
+        setComplaintsError(message);
+        throw error;
+      } finally {
+        setComplaintsLoading(false);
+      }
+    })();
+    complaintsRequest.current = request;
+    try { await request; } finally { complaintsRequest.current = null; }
+  }, [profile.role]);
+
+  const loadAnnouncements = useCallback(async (force = false) => {
+    if (!force && announcementsRequest.current) return announcementsRequest.current;
+    const request = (async () => {
+      const token = await getOfficialAccessToken();
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      setAnnouncementsLoading(true);
+      setAnnouncementsError(undefined);
+      try {
+        setAnnouncements(await getOfficialAnnouncements(profile.role, token));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unable to load announcements.';
+        setAnnouncementsError(message);
+        throw error;
+      } finally {
+        setAnnouncementsLoading(false);
+      }
+    })();
+    announcementsRequest.current = request;
+    try { await request; } finally { announcementsRequest.current = null; }
+  }, [profile.role]);
 
   const saveProfile = async (next: OfficialProfile) => {
     const updated = {
@@ -226,20 +269,7 @@ export function OfficialProvider({ children }: PropsWithChildren) {
 
   const setAuthenticatedUser = async (next: OfficialProfile) => {
     await saveProfile(next);
-    const token = await getOfficialAccessToken();
-    if (!token) throw new Error('Your session has expired. Please sign in again.');
-    const liveComplaints = await getOfficialComplaints(next.role, token);
-    setComplaints(liveComplaints);
     setIsAuthenticated(true);
-    setTimeout(() => {
-      void (async () => {
-        try {
-          setAnnouncements(await getOfficialAnnouncements(next.role, token));
-        } catch (err) {
-          console.error('Failed to load announcements:', err);
-        }
-      })();
-    }, 8000);
   };
 
   const updateComplaintStatus = async (id: string, status: Complaint['status'], noteText?: string) => {
@@ -247,14 +277,22 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     if (!token) throw new Error('Your session has expired.');
     await updateOfficialComplaintStatus(profile.role, id, status, token);
     if (noteText) await addOfficialComplaintNote(profile.role, id, noteText, token);
-    setComplaints(await getOfficialComplaints(profile.role, token));
+    await loadComplaints(true);
   };
 
   const addComplaintNote = async (id: string, text: string) => {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired.');
     await addOfficialComplaintNote(profile.role, id, text, token);
-    setComplaints(await getOfficialComplaints(profile.role, token));
+    await loadComplaints(true);
+  };
+
+  const publishAnnouncement = async (input: AnnouncementInput) => {
+    if (profile.role !== 'main-admin') throw new Error('Only Main Admin can publish announcements.');
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    await createMainAdminAnnouncement(input, token);
+    await loadAnnouncements(true);
   };
 
   const uploadComplaintImage = async (id: string, imageUri: string) => {
@@ -278,7 +316,7 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired.');
     await escalateOfficialComplaint(id, reason, target, token);
-    setComplaints(await getOfficialComplaints(profile.role, token));
+    await loadComplaints(true);
   };
 
   const softDeleteComplaint = async (id: string, deletedBy: string, reason: string) => {
@@ -311,10 +349,17 @@ export function OfficialProvider({ children }: PropsWithChildren) {
       complaints,
       preferences,
       announcements,
+      announcementsLoading,
+      announcementsError,
+      loadAnnouncements,
+      complaintsLoading,
+      complaintsError,
+      loadComplaints,
       setAuthenticatedUser,
       saveProfile,
       updateComplaintStatus,
       addComplaintNote,
+      publishAnnouncement,
       uploadComplaintImage,
       escalateComplaint,
       softDeleteComplaint,
@@ -322,7 +367,7 @@ export function OfficialProvider({ children }: PropsWithChildren) {
       savePreferences,
       logout,
     }),
-    [ready, isAuthenticated, profile, complaints, preferences, announcements]
+    [ready, isAuthenticated, profile, complaints, preferences, announcements, announcementsLoading, announcementsError, loadAnnouncements, complaintsLoading, complaintsError, loadComplaints]
   );
 
   return <OfficialContext.Provider value={value}>{children}</OfficialContext.Provider>;

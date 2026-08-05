@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Pressable,
     ScrollView,
@@ -22,11 +22,13 @@ type StatusTab = (typeof STATUS_TABS)[number];
 export default function ComplaintsScreen() {
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
-  const { complaints } = useOfficial();
+  const { complaints, complaintsError, complaintsLoading, loadComplaints } = useOfficial();
 
   const [search, setSearch]         = useState('');
   const [category, setCategory]     = useState<string>(initialCategory || 'all');
   const [status, setStatus]         = useState<StatusTab>('All');
+
+  useEffect(() => { void loadComplaints().catch(() => {}); }, [loadComplaints]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -68,6 +70,8 @@ export default function ComplaintsScreen() {
         keyboardShouldPersistTaps="handled"
         overScrollMode="never"
       >
+        {complaintsLoading && <Text style={styles.headerSub}>Loading complaints…</Text>}
+        {complaintsError && <Text style={styles.headerSub}>{complaintsError}</Text>}
         {/* ── Search ── */}
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={18} color={COLORS.textMuted} />

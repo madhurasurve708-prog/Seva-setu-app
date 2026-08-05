@@ -2,6 +2,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
 import { CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
@@ -13,8 +14,9 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 
 export default function MyComplaints() {
   const router = useRouter();
-  const { complaints } = useCitizen();
+  const { complaints, complaintsError, complaintsLoading, loadComplaints } = useCitizen();
   const { t } = useTranslation();
+  useEffect(() => { void loadComplaints().catch(() => {}); }, [loadComplaints]);
 
   return (
     <CitizenScreen title={t('myComplaints')}>
@@ -23,6 +25,8 @@ export default function MyComplaints() {
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
+        {complaintsLoading && <Text style={styles.listHeading}>Loading complaints…</Text>}
+        {complaintsError && <Text style={styles.emptyText}>{complaintsError}</Text>}
         {complaints.length === 0 ? (
           <Animated.View entering={FadeInUp.duration(600)} style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>

@@ -43,7 +43,7 @@ def get_current_supabase_citizen(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Phone number required in development mode",
             )
-        return SupabaseCitizen(user_id=f"dev-bypass-{x_dev_phone}", phone_number=x_dev_phone)
+        return SupabaseCitizen(user_id=f"dev-user-{x_dev_phone}", phone_number=x_dev_phone)
 
     try:
         response = get_supabase_anon_client().auth.get_user(credentials.credentials)
@@ -64,7 +64,7 @@ def get_current_citizen(
     db: Session = Depends(get_db),
 ) -> Citizen:
     citizen = CitizenRepository.get_by_supabase_id(db, identity.user_id)
-    if citizen is None and identity.user_id.startswith("dev-bypass-"):
+    if citizen is None and identity.user_id.startswith("dev-user-"):
         # Fallback to phone number lookup in development mode
         citizen = CitizenRepository.get_by_phone_number(db, identity.phone_number)
         
