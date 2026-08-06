@@ -43,7 +43,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "EXPO_PUBLIC_API_URL": "http://localhost:8002"
+      "EXPO_PUBLIC_API_URL": "https://seva-setu-app.onrender.com"
     }
   }
 }

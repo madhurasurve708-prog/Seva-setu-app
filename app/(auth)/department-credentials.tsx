@@ -26,6 +26,7 @@ import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { loginDepartment } from '@/services/official-api';
 import { saveOfficialAccessToken } from '@/services/api-client';
+import { DEPT_DEMO_CREDENTIALS } from '@/services/auth';
 
 export default function DepartmentCredentialsScreen() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function DepartmentCredentialsScreen() {
   const deptName = dept ?? '';
 
   const meta = DEPT_META[deptName];
+  const demoCred = DEPT_DEMO_CREDENTIALS.find((c) => c.deptName === deptName);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -148,6 +150,27 @@ export default function DepartmentCredentialsScreen() {
                 </Text>
               </Pressable>
             </Animated.View>
+
+            {/* Demo Credentials Pill */}
+            {demoCred ? (
+              <Animated.View entering={FadeInDown.duration(320).delay(80)}>
+                <Pressable
+                  onPress={() => {
+                    setUsername(demoCred.username);
+                    setPassword(demoCred.password);
+                  }}
+                  style={styles.demoPill}
+                >
+                  <MaterialCommunityIcons name="information-outline" size={18} color="#A66A00" style={{ marginTop: 1 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.demoLabel}>Demo Credentials • Tap to fill</Text>
+                    <Text style={styles.demoValue}>
+                      ID: {demoCred.username}  |  Password: {demoCred.password}
+                    </Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            ) : null}
 
             {/* Username field */}
             <Animated.View entering={FadeInDown.duration(320).delay(120)}>

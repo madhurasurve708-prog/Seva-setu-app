@@ -89,7 +89,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_BANDHKAM,
     username: 'bandhkaam',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Ramesh Sawant',
     phone: '9420100101',
     email: 'ramesh.sawant@malvan.gov.in',
@@ -99,7 +99,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_PANI,
     username: 'water',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Ajay More',
     phone: '9420100102',
     email: 'ajay.more@malvan.gov.in',
@@ -109,7 +109,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_SWACHHATA,
     username: 'garbage',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Sneha Jadhav',
     phone: '9420100103',
     email: 'sneha.jadhav@malvan.gov.in',
@@ -119,7 +119,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_VIDYUT,
     username: 'electric',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Vijaya Patil',
     phone: '9420100104',
     email: 'vijaya.patil@malvan.gov.in',
@@ -129,7 +129,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_UDYANE,
     username: 'environment',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Pooja Naik',
     phone: '9420100105',
     email: 'pooja.naik@malvan.gov.in',
@@ -139,7 +139,7 @@ export const DEPT_DEMO_CREDENTIALS: DeptDemoCredential[] = [
   {
     deptName: DEPT_AROGYA,
     username: 'health',
-    password: '123456',
+    password: 'dept@123',
     officerName: 'Dr. Vilas Palan',
     phone: '9420100106',
     email: 'vilas.palan@malvan.gov.in',
