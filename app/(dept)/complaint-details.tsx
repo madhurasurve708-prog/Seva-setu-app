@@ -67,7 +67,9 @@ export default function DepartmentComplaintDetails() {
         <GlassCard style={styles.card}>
           <Text style={styles.line}>{complaint.citizenName}</Text>
           <Text style={styles.sub}>{complaint.citizenPhone}</Text>
-          <Text style={styles.sub}>{wardDisplay(t, complaint.ward)} · {complaint.location}</Text>
+          <Text style={styles.sub}>{wardDisplay(t, complaint.ward)}</Text>
+          <Text style={styles.sub}>{t('complaintLocationLabel') || 'Complaint Location'}: {complaint.manualLocation || complaint.title}</Text>
+          <Text style={styles.sub}>{t('localityLabel') || 'Locality'}: {complaint.locality || complaint.location}</Text>
         </GlassCard>
 
         <Text style={styles.heading}>{t('imagesLabel')}</Text>

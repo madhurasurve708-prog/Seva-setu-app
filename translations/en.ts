@@ -321,12 +321,15 @@ export const en = {
   awaitingResolution: 'Awaiting final resolution',
   civicTaskCompleted: 'Civic task marked completed',
   categoryLabel: 'Category',
-  titleLabel: 'Title',
+  titleLabel: 'Complaint Location',
   descriptionLabel: 'Description',
   wardLabel: 'Ward',
   localityLabel: 'Locality',
   submittedOn: 'Submitted On',
   assignedDept: 'Assigned Dept',
+  complaintLocationLabel: 'Complaint Location',
+  progressUpdates: 'Progress Updates',
+  noUpdatesYet: 'No updates from officials yet.',
 
   // Ward Screen
   myWardInfo: 'My Ward Info',

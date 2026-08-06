@@ -45,7 +45,7 @@ class ComplaintService:
         return ComplaintRepository.get_complaints_by_supabase_user(db, citizen.supabase_user_id)
 
     @staticmethod
-    def get_complaint_detail(db: Session, citizen, complaint_id: int) -> Complaint:
+    def get_complaint_detail(db: Session, citizen, complaint_id: int) -> dict:
         complaint = ComplaintRepository.get_complaint_by_id_for_citizen(
             db=db,
             complaint_id=complaint_id,
@@ -57,7 +57,51 @@ class ComplaintService:
                 detail="Complaint not found.",
             )
 
-        return complaint
+        # Filter the history entries to only include manual notes from officials.
+        # NOTE: Since the `ComplaintHistory` database model does not contain a structured field
+        # (e.g., event type, action type, or history type) to distinguish manual comments from
+        # automated logs (like status transitions, escalations, resolutions, closures), we filter
+        # these notes by checking for characteristic prefix/content substrings.
+        filtered_notes = []
+        for h in complaint.history:
+            text = h.note_text.strip()
+            # Skip system status changes
+            if text.startswith("Status updated from"):
+                continue
+            # Skip escalation logs
+            if text.startswith("Escalated to") or "Reason:" in text:
+                continue
+            # Skip closing logs and automatic system resolution logs
+            if text.startswith("Complaint resolved by") or text.startswith("Complaint closed by"):
+                continue
+            if text.startswith("Resolution note:") or text.startswith("Closing note:"):
+                continue
+            # Also skip audit-like system transitions
+            if text.lower().startswith("system updated") or text.lower().startswith("system resolved"):
+                continue
+
+            filtered_notes.append({
+                "author_role": h.author_role,
+                "author_name": h.author_name,
+                "note_text": text,
+                "created_at": h.created_at,
+                "image_url": h.image_url,
+            })
+
+        return {
+            "id": complaint.id,
+            "citizen_id": complaint.citizen_id,
+            "ward_id": complaint.ward_id,
+            "category_id": complaint.category_id,
+            "title": complaint.title,
+            "description": complaint.description,
+            "manual_location": complaint.manual_location,
+            "image_url": complaint.image_url,
+            "status": complaint.status,
+            "created_at": complaint.created_at,
+            "updated_at": complaint.updated_at,
+            "notes": filtered_notes,
+        }
 
     @staticmethod
     def upload_complaint_image(

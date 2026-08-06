@@ -13,6 +13,17 @@ class ComplaintCreate(BaseModel):
     manual_location: Optional[str] = Field(None, max_length=255, description="Free-text location entered by the citizen")
 
 
+class ComplaintNoteCitizenResponse(BaseModel):
+    author_role: str
+    author_name: str
+    note_text: str
+    created_at: datetime
+    image_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class ComplaintResponse(BaseModel):
     id: int
     citizen_id: int
@@ -25,6 +36,7 @@ class ComplaintResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    notes: list[ComplaintNoteCitizenResponse] = []
 
     class Config:
         from_attributes = True

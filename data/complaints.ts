@@ -22,6 +22,8 @@ export interface Complaint {
   citizenPhone: string;
   ward: string;
   location: string;
+  manualLocation?: string;
+  locality?: string;
   images: string[];
   notes: ComplaintNote[];
   createdAt: string;

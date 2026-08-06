@@ -110,6 +110,7 @@ export async function createCitizenComplaint(input: { category: string; title: s
 }
 
 export const getCitizenComplaints = () => request<CitizenApiComplaint[]>('/api/citizen/complaints');
+export const getCitizenComplaintDetail = (complaintId: number) => request<CitizenApiComplaint & { notes: { author_role: string; author_name: string; note_text: string; created_at: string; image_url?: string | null }[] }>(`/api/citizen/complaints/${complaintId}`);
 export const getCitizenAnnouncements = () => request<CitizenApiAnnouncement[]>('/api/citizen/announcements');
 
 export async function uploadCitizenComplaintImage(complaintId: number, imageUri: string) {
