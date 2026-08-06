@@ -1,16 +1,17 @@
+// app/(auth)/admin-login.tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -18,15 +19,17 @@ import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
 import CustomTextInput from '@/components/common/CustomTextInput';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { COLORS, TYPOGRAPHY } from '@/constants/theme';
-import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import { loginMainAdmin } from '@/services/official-api';
+import { useOfficial } from '@/providers/official-provider';
 import { saveOfficialAccessToken } from '@/services/api-client';
+import { loginMainAdmin } from '@/services/official-api';
 
 export default function AdminLoginScreen() {
   const router = useRouter();
   const { setAuthenticatedUser } = useOfficial();
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
@@ -52,7 +55,7 @@ export default function AdminLoginScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDesktop && styles.desktopPage]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <AuthHero
         title={t('nagaradhyaksha')}
@@ -65,69 +68,133 @@ export default function AdminLoginScreen() {
       />
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={[{ flex: 1 }, isDesktop && styles.desktopCenter]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <AuthSheet>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            overScrollMode="never"
-          >
-            {/* Heading */}
-            <Animated.View entering={FadeInDown.duration(420).delay(60)}>
-              <Text style={styles.screenTitle}>{t('restrictedPortal')}</Text>
-              <Text style={styles.screenHint}>
-                {t('adminLoginHint')}
-              </Text>
-            </Animated.View>
+        <AuthSheet
+          style={isDesktop ? styles.desktopSheet : undefined}
+          contentStyle={isDesktop ? styles.desktopFormContent : undefined}
+        >
+          {isDesktop ? (
+            <View style={[styles.scrollContent, styles.desktopScrollContent]}>
+              <Animated.View entering={FadeInDown.duration(420).delay(60)}>
+                <Text style={styles.screenTitle}>{t('restrictedPortal')}</Text>
+                <Text style={styles.screenHint}>{t('adminLoginHint')}</Text>
+              </Animated.View>
 
-            {/* Form */}
-            <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.formContainer}>
-              <CustomTextInput
-                icon="shield-account-outline"
-                placeholder={t('adminIdPlaceholder')}
-                label={t('adminId')}
-                value={adminId}
-                onChangeText={(v) => { setAdminId(v); setError(''); }}
-                autoCapitalize="words"
-              />
-              <CustomTextInput
-                icon="lock-outline"
-                placeholder={t('enterPassword')}
-                label={t('password')}
-                secureTextEntry
-                value={password}
-                onChangeText={(v) => { setPassword(v); setError(''); }}
-              />
-            </Animated.View>
+              <Animated.View entering={FadeInDown.duration(420).delay(140)} style={[styles.formContainer, styles.desktopFormCard]}>
+                <CustomTextInput
+                  icon="shield-account-outline"
+                  placeholder={t('adminIdPlaceholder')}
+                  label={t('adminId')}
+                  value={adminId}
+                  onChangeText={(v) => {
+                    setAdminId(v);
+                    setError('');
+                  }}
+                  autoCapitalize="words"
+                />
+                <CustomTextInput
+                  icon="lock-outline"
+                  placeholder={t('enterPassword')}
+                  label={t('password')}
+                  secureTextEntry
+                  value={password}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    setError('');
+                  }}
+                />
+              </Animated.View>
 
-            {error ? (
-              <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorText}>
-                {error}
-              </Animated.Text>
-            ) : null}
+              {error ? (
+                <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorText}>
+                  {error}
+                </Animated.Text>
+              ) : null}
 
-            <Pressable style={styles.forgotBtn} hitSlop={8}>
-              <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
-            </Pressable>
+              <Pressable style={styles.forgotBtn} hitSlop={8}>
+                <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
+              </Pressable>
 
-            <Animated.View entering={FadeInDown.duration(420).delay(200)}>
-              <PrimaryButton
-                label={loading ? t('verifying') : t('loginToAdminPortal')}
-                disabled={!canSubmit || loading}
-                loading={loading}
-                onPress={handleLogin}
-                style={styles.loginBtn}
-              />
-            </Animated.View>
+              <Animated.View entering={FadeInDown.duration(420).delay(200)}>
+                <PrimaryButton
+                  label={loading ? t('verifying') : t('loginToAdminPortal')}
+                  disabled={!canSubmit || loading}
+                  loading={loading}
+                  onPress={handleLogin}
+                  style={styles.loginBtn}
+                />
+              </Animated.View>
 
-            <Animated.View entering={FadeInDown.duration(420).delay(240)} style={styles.securityBadge}>
-              <MaterialCommunityIcons name="shield-lock-outline" size={15} color={COLORS.textMuted} />
-              <Text style={styles.securityText}>{t('secureEncryption')}</Text>
-            </Animated.View>
-          </ScrollView>
+              <Animated.View entering={FadeInDown.duration(420).delay(240)} style={styles.securityBadge}>
+                <MaterialCommunityIcons name="shield-lock-outline" size={15} color={COLORS.textMuted} />
+                <Text style={styles.securityText}>{t('secureEncryption')}</Text>
+              </Animated.View>
+            </View>
+          ) : (
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              overScrollMode="never"
+            >
+              <Animated.View entering={FadeInDown.duration(420).delay(60)}>
+                <Text style={styles.screenTitle}>{t('restrictedPortal')}</Text>
+                <Text style={styles.screenHint}>{t('adminLoginHint')}</Text>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.duration(420).delay(140)} style={styles.formContainer}>
+                <CustomTextInput
+                  icon="shield-account-outline"
+                  placeholder={t('adminIdPlaceholder')}
+                  label={t('adminId')}
+                  value={adminId}
+                  onChangeText={(v) => {
+                    setAdminId(v);
+                    setError('');
+                  }}
+                  autoCapitalize="words"
+                />
+                <CustomTextInput
+                  icon="lock-outline"
+                  placeholder={t('enterPassword')}
+                  label={t('password')}
+                  secureTextEntry
+                  value={password}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    setError('');
+                  }}
+                />
+              </Animated.View>
+
+              {error ? (
+                <Animated.Text entering={FadeInDown.duration(300)} style={styles.errorText}>
+                  {error}
+                </Animated.Text>
+              ) : null}
+
+              <Pressable style={styles.forgotBtn} hitSlop={8}>
+                <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
+              </Pressable>
+
+              <Animated.View entering={FadeInDown.duration(420).delay(200)}>
+                <PrimaryButton
+                  label={loading ? t('verifying') : t('loginToAdminPortal')}
+                  disabled={!canSubmit || loading}
+                  loading={loading}
+                  onPress={handleLogin}
+                  style={styles.loginBtn}
+                />
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.duration(420).delay(240)} style={styles.securityBadge}>
+                <MaterialCommunityIcons name="shield-lock-outline" size={15} color={COLORS.textMuted} />
+                <Text style={styles.securityText}>{t('secureEncryption')}</Text>
+              </Animated.View>
+            </ScrollView>
+          )}
         </AuthSheet>
       </KeyboardAvoidingView>
     </View>
@@ -136,8 +203,13 @@ export default function AdminLoginScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#081B2B' },
+  desktopPage: { backgroundColor: '#F3F7FB', paddingHorizontal: 24, paddingBottom: 24 },
+  desktopCenter: { justifyContent: 'flex-start', paddingTop: 16, paddingBottom: 24 },
 
   scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 32 },
+  desktopScrollContent: { paddingHorizontal: 8, paddingTop: 4, paddingBottom: 20 },
+  desktopFormContent: { width: '100%', maxWidth: 560, alignSelf: 'center' },
+  desktopSheet: { maxWidth: 620, paddingHorizontal: 24 },
 
   screenTitle: { ...TYPOGRAPHY.h2, color: COLORS.primary },
   screenHint: {
@@ -148,31 +220,16 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
-  demoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(124,58,237,0.25)',
-    padding: 14,
-    marginBottom: 20,
-    overflow: 'hidden',
-    gap: 10,
-  },
-  demoLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 },
-  demoTitle: { fontSize: 11, fontWeight: '800', color: '#7C3AED', letterSpacing: 0.6, marginBottom: 3 },
-  demoLine: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted, lineHeight: 18 },
-  demoBold: { fontWeight: '800', color: COLORS.text },
-  tapBadge: {
-    backgroundColor: 'rgba(124,58,237,0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  tapText: { fontSize: 10, fontWeight: '800', color: '#7C3AED' },
-
   formContainer: { marginTop: 4 },
+  desktopFormCard: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    elevation: 3,
+  },
 
   errorText: {
     fontSize: 13,

@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -21,7 +22,7 @@ interface ComplaintCardProps {
   onEscalate?: () => void;
 }
 
-export default function ComplaintCard({
+function ComplaintCard({
   complaint,
   onView,
   onNotes,
@@ -361,3 +362,5 @@ function formatDate(date: string) {
     year: 'numeric',
   });
 }
+
+export default memo(ComplaintCard);

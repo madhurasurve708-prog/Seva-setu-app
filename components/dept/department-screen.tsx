@@ -5,7 +5,7 @@ import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import type { PropsWithChildren } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import DesktopPortal from '@/components/common/DesktopPortal';
 
 const TAB_DEFS = [
   ['dashboard',     'home-variant-outline',   'home-variant',    'dashboard'],
@@ -89,13 +90,31 @@ export function DepartmentScreen({
 }: PropsWithChildren<{ title: string; tab?: string; back?: boolean }>) {
   const router = useRouter() as any;
   const pathname = usePathname();
-  const { profile, complaints } = useDepartment();
+  const { profile, complaints, logout } = useDepartment();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   const pendingCount = complaints.filter(
     (c) => c.assignedDepartment === profile?.department && c.status === 'Pending' && !c.is_deleted,
   ).length;
+
+  if (isDesktop) {
+    return (
+      <DesktopPortal title={title} initial={profile?.avatarInitial ?? 'D'} onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection')); }}
+        items={[
+          { label: 'Dashboard', route: '/(dept)/dashboard', icon: 'view-dashboard-outline' },
+          { label: 'Complaints', route: '/(dept)/complaints', icon: 'clipboard-text-outline' },
+          { label: 'Announcements', route: '/(dept)/announcements', icon: 'bullhorn-outline' },
+          { label: 'Reports', route: '/(dept)/analytics', icon: 'chart-bar' },
+          { label: 'Settings', route: '/(dept)/settings', icon: 'cog-outline' },
+          { label: 'Profile', route: '/(dept)/profile', icon: 'account-outline' },
+        ]}>
+        {children}
+      </DesktopPortal>
+    );
+  }
 
   return (
     <View style={styles.root}>

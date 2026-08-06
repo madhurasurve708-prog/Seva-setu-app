@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -15,21 +15,34 @@ export default function PeopleScreen() {
   const [blocked,  setBlocked]  = useState<string[]>([]);
   const [search,   setSearch]   = useState('');
 
-  const citizens = Array.from(
-    new Map(
-      complaints.map((c) => [
-        c.citizenPhone,
-        {
-          name:       c.citizenName,
-          phone:      c.citizenPhone,
-          ward:       c.ward,
-          complaints: complaints.filter((x) => x.citizenPhone === c.citizenPhone).length,
-        },
-      ]),
-    ).values(),
-  ).filter((c) =>
-    !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.ward.toLowerCase().includes(search.toLowerCase()),
-  );
+  // O(N) Grouping and counting
+  const allCitizens = useMemo(() => {
+    const phoneMap = new Map<string, { name: string; phone: string; ward: string; complaints: number }>();
+    for (let i = 0; i < complaints.length; i++) {
+      const c = complaints[i];
+      const existing = phoneMap.get(c.citizenPhone);
+      if (existing) {
+        existing.complaints += 1;
+      } else {
+        phoneMap.set(c.citizenPhone, {
+          name: c.citizenName,
+          phone: c.citizenPhone,
+          ward: c.ward,
+          complaints: 1,
+        });
+      }
+    }
+    return Array.from(phoneMap.values());
+  }, [complaints]);
+
+  // Memoized filtering
+  const citizens = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return allCitizens;
+    return allCitizens.filter((c) =>
+      c.name.toLowerCase().includes(q) || c.ward.toLowerCase().includes(q)
+    );
+  }, [allCitizens, search]);
 
   const moderate = (phone: string, name: string) => {
     const isBlocked = blocked.includes(phone);

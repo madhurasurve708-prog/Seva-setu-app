@@ -1,6 +1,7 @@
 // app/(citizen)/about.tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
@@ -19,13 +20,13 @@ const TEAM: TeamMember[] = [
     name: 'Madhura Surve',
     title: 'Founder',
     bio: 'Madhura leads the vision and development of Seva Setu, overseeing product strategy, backend development, project management, and collaboration with municipal authorities to build an efficient digital civic platform.',
-    photo: require('../../assets/images/madhura.jpeg'),
+    photo: require('../../assets/images/madhura.webp'),
   },
   {
     name: 'Apurva Sawant',
     title: 'Co-Founder',
     bio: 'As Co-Founder, leads the UI/UX design, frontend development, and branding of Seva Setu, ensuring the platform delivers a seamless, user-friendly, and accessible experience for every citizen.',
-    photo: require('../../assets/images/apurva.png'),
+    photo: require('../../assets/images/apurva.webp'),
   },
 ];
 
@@ -50,9 +51,9 @@ export default function About() {
         >
           <View style={styles.innerLogoRing}>
             <Image
-              source={require('../../assets/images/logo.jpeg')}
+              source={require('../../assets/images/logo.webp')}
               style={styles.logoImage}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </View>
         </Animated.View>
@@ -122,7 +123,7 @@ export default function About() {
                   <Image 
                     source={member.photo} 
                     style={styles.teamPhoto} 
-                    resizeMode="cover" 
+                    contentFit="cover" 
                   />
                 </View>
 

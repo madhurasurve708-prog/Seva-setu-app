@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
+import DesktopPortal from '@/components/common/DesktopPortal';
 
 const PRIORITY_STYLES: Record<string, {
   bg: string; text: string;
@@ -26,18 +27,21 @@ type Tab = typeof TABS[number];
 export default function AnnouncementsScreen() {
   const router = useRouter();
   const { announcements, announcementsError, announcementsLoading, loadAnnouncements } = useOfficial();
+  const { profile, logout } = useOfficial();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
   useEffect(() => { void loadAnnouncements().catch(() => {}); }, [loadAnnouncements]);
 
   const filtered = tab === 'All'
     ? announcements
     : announcements.filter((a) => a.priority === tab);
 
-  return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+  const page = (
+    <>
       {/* Header */}
-      <View style={styles.header}>
+      {!isDesktop && <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.primary} />
         </Pressable>
@@ -45,7 +49,7 @@ export default function AnnouncementsScreen() {
           <Text style={styles.headerTitle}>{t('announcementsTitle')}</Text>
           <Text style={styles.headerSub}>{t('municipalAlerts')}</Text>
         </View>
-      </View>
+      </View>}
 
       {/* Tab strip */}
       <ScrollView
@@ -69,7 +73,7 @@ export default function AnnouncementsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isDesktop && styles.desktopContent]}
         overScrollMode="never"
       >
         {filtered.length === 0 ? (
@@ -85,7 +89,7 @@ export default function AnnouncementsScreen() {
             const s = PRIORITY_STYLES[a.priority] ?? PRIORITY_STYLES.Normal;
             return (
               <Animated.View key={a.id} entering={FadeInLeft.duration(380).delay(idx * 70)}>
-                <GlassCard style={styles.card}>
+                <GlassCard style={isDesktop ? { ...styles.card, ...styles.desktopCard } : styles.card}>
                   <View style={styles.cardTop}>
                     <View style={[styles.badge, { backgroundColor: s.bg }]}>
                       <MaterialCommunityIcons name={s.icon} size={11} color={s.text} />
@@ -105,8 +109,23 @@ export default function AnnouncementsScreen() {
           })
         )}
       </ScrollView>
-    </SafeAreaView>
+    </>
   );
+
+  if (isDesktop) {
+    return <DesktopPortal title={t('announcementsTitle')} initial={profile.avatarInitial}
+      onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
+      items={[
+        { label: 'Dashboard', route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
+        { label: 'Complaints', route: '/(official)/complaints', icon: 'clipboard-text-outline' },
+        { label: 'Announcements', route: '/(official)/announcements', icon: 'bullhorn-outline' },
+        { label: 'Reports', route: '/(official)/analytics', icon: 'chart-bar' },
+        { label: 'Settings', route: '/(official)/settings', icon: 'cog-outline' },
+        { label: 'Profile', route: '/(official)/profile', icon: 'account-outline' },
+      ]}><View style={styles.root}>{page}</View></DesktopPortal>;
+  }
+
+  return <SafeAreaView style={styles.root} edges={['top']}>{page}</SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
@@ -135,10 +154,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    flexGrow: 0,
+    flexShrink: 0,
+    height: 62,
   },
-  tabs: { gap: 8, paddingHorizontal: 16, paddingVertical: 10, paddingRight: 20 },
+  tabs: { gap: 8, alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, paddingRight: 20 },
   tab: {
-    paddingHorizontal: 16, paddingVertical: 8,
+    alignSelf: 'center', minHeight: 38, justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 8,
     borderRadius: 999, backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: COLORS.border,
   },
@@ -147,8 +169,10 @@ const styles = StyleSheet.create({
   tabTextActive: { color: COLORS.white },
 
   content: { padding: 18, paddingBottom: 44 },
+  desktopContent: { width: '100%', maxWidth: 1120, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 28 },
 
   card: { padding: 16, marginBottom: 14 },
+  desktopCard: { padding: 22, marginBottom: 18, borderRadius: 18 },
   cardTop: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 12,
