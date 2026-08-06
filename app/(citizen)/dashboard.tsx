@@ -10,8 +10,6 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import {
   Dimensions,
-  Image,
-  ImageBackground,
   Linking,
   Pressable,
   ScrollView,
@@ -19,6 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Image, ImageBackground } from 'expo-image';
 import Animated, { FadeInDown, FadeInRight, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
@@ -89,7 +88,7 @@ export default function Dashboard() {
       <SafeAreaView style={styles.safeHeader} edges={['top']}>
         <View style={styles.brandedHeader}>
           <View style={styles.headerLeft}>
-            <Image source={require('../../assets/images/logo.jpeg')} style={styles.headerLogo} resizeMode="contain" />
+            <Image source={require('../../assets/images/logo.webp')} style={styles.headerLogo} contentFit="contain" />
             <View>
               <Text style={styles.headerTitle}>SEVA SETU</Text>
               <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
@@ -118,10 +117,9 @@ export default function Dashboard() {
         {/* ---------------- HERO BANNER ---------------- */}
         <View style={styles.heroWrapper}>
           <ImageBackground
-            source={require('../../assets/images/hero_banner.png')}
+            source={require('../../assets/images/hero_banner.webp')}
             style={styles.heroBanner}
-            imageStyle={styles.heroBannerImage}
-            resizeMode="cover"
+            contentFit="cover"
           >
             {/* Dark Blue Overlay */}
             <LinearGradient

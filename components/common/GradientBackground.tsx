@@ -1,5 +1,6 @@
 import React from "react";
-import { ImageBackground, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { ImageBackground } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
 type Props = {
@@ -9,9 +10,9 @@ type Props = {
 export default function GradientOverlay({ children }: Props) {
   return (
     <ImageBackground
-      source={require("../../assets/images/shivaji.png")}
+      source={require("../../assets/images/shivaji.webp")}
       style={styles.background}
-      resizeMode="cover"
+      contentFit="cover"
     >
       <LinearGradient
         colors={[

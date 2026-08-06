@@ -7,6 +7,8 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    Platform,
+    useWindowDimensions,
     View,
 } from 'react-native';
 
@@ -16,13 +18,21 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
 
-const STATUS_TABS = ['All', 'Pending', 'In Progress', 'Resolved'] as const;
-type StatusTab = (typeof STATUS_TABS)[number];
+const STATUS_TABS = ['Pending', 'In Progress', 'Resolved'] as const;
+type StatusTab = 'All' | (typeof STATUS_TABS)[number];
 
 export default function ComplaintsScreen() {
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
   const { complaints, complaintsError, complaintsLoading, loadComplaints } = useOfficial();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const statusTabs: readonly StatusTab[] = isDesktop ? STATUS_TABS : ['All', ...STATUS_TABS];
+  // The category source also includes an "all" entry. The explicit category
+  // control below owns that option, so omit the duplicate on desktop only.
+  const visibleCategories = isDesktop
+    ? categories.filter((item) => item.id !== 'all' && item.label.toLowerCase() !== 'all')
+    : categories;
 
   const [search, setSearch]         = useState('');
   const [category, setCategory]     = useState<string>(initialCategory || 'all');
@@ -55,18 +65,18 @@ export default function ComplaintsScreen() {
   return (
     <OfficialScreen title="Ward Complaints" tab="complaints" hideHeader={true}>
       {/* ── Header ── */}
-      <View style={styles.headerBar}>
+      {!isDesktop && <View style={styles.headerBar}>
         <View style={styles.headerLeft}>
           <View style={{ marginLeft: 4 }}>
             <Text style={styles.headerTitle}>Ward Complaints</Text>
             <Text style={styles.headerSub}>Nagarsevak ward review</Text>
           </View>
         </View>
-      </View>
+      </View>}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isDesktop && styles.desktopContent]}
         keyboardShouldPersistTaps="handled"
         overScrollMode="never"
       >
@@ -105,7 +115,7 @@ export default function ComplaintsScreen() {
               All
             </Text>
           </Pressable>
-          {categories.map((cat) => {
+          {visibleCategories.map((cat) => {
             const active = category === cat.id;
             return (
               <Pressable
@@ -123,12 +133,12 @@ export default function ComplaintsScreen() {
 
         {/* ── Status tabs ── */}
         <View style={styles.statusRow}>
-          {STATUS_TABS.map((item) => {
+          {statusTabs.map((item) => {
             const active = status === item;
             return (
               <Pressable
                 key={item}
-                onPress={() => setStatus(item)}
+                onPress={() => setStatus(isDesktop ? (active ? 'All' : item) : item)}
                 style={[styles.statusTab, active && styles.statusTabActive]}
               >
                 <Text style={[styles.statusTabText, active && styles.statusTabTextActive]}>
@@ -147,8 +157,8 @@ export default function ComplaintsScreen() {
           Showing {filtered.length} complaint{filtered.length === 1 ? '' : 's'}
         </Text>
 
-        {filtered.map((complaint) => (
-          <ComplaintCard
+        <View style={[styles.complaintGrid, isDesktop && styles.complaintGridDesktop]}>{filtered.map((complaint) => (
+          <View key={complaint.id} style={isDesktop ? styles.complaintCell : undefined}><ComplaintCard
             key={complaint.id}
             complaint={complaint}
             onView={() =>
@@ -169,8 +179,8 @@ export default function ComplaintsScreen() {
                 params: { id: complaint.id },
               } as any)
             }
-          />
-        ))}
+          /></View>
+        ))}</View>
 
         {filtered.length === 0 && (
           <View style={styles.emptyCard}>
@@ -226,6 +236,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 32,
   },
+  desktopContent: { width: '100%', maxWidth: 1320, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 28 },
 
   /* Search */
   searchBar: {
@@ -308,4 +319,7 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textAlign: 'center',
   },
+  complaintGrid: { width: '100%' },
+  complaintGridDesktop: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
+  complaintCell: { width: 'calc(50% - 9px)' as any },
 });

@@ -4,7 +4,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { PropsWithChildren } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedStyle,
@@ -16,6 +16,7 @@ import Animated, {
 import { COLORS, SHADOWS } from "@/constants/theme";
 import { useOfficial } from "@/providers/official-provider";
 import { useTranslation } from "@/providers/localization-provider";
+import DesktopPortal from '@/components/common/DesktopPortal';
 
 type OfficialScreenProps = PropsWithChildren<{
   title: string;
@@ -109,8 +110,10 @@ export function OfficialScreen({
 }: OfficialScreenProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { profile } = useOfficial();
+  const { profile, logout } = useOfficial();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   const handleBack = () => {
     if (backHref) {
@@ -121,6 +124,22 @@ export function OfficialScreen({
   };
 
   const showBottomNav = !showBack && !hideNav;
+
+  if (isDesktop) {
+    return (
+      <DesktopPortal title={title} initial={profile.avatarInitial} onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
+        items={[
+          { label: 'Dashboard', route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
+          { label: 'Complaints', route: '/(official)/complaints', icon: 'clipboard-text-outline' },
+          { label: 'Announcements', route: '/(official)/announcements', icon: 'bullhorn-outline' },
+          { label: 'Reports', route: '/(official)/analytics', icon: 'chart-bar' },
+          { label: 'Settings', route: '/(official)/settings', icon: 'cog-outline' },
+          { label: 'Profile', route: '/(official)/profile', icon: 'account-outline' },
+        ]}>
+        {children}
+      </DesktopPortal>
+    );
+  }
 
   return (
     <View style={styles.root}>

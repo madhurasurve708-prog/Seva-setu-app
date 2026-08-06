@@ -4,7 +4,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { PropsWithChildren } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS } from '@/constants/theme';
@@ -48,9 +49,9 @@ export function AdminShell({ title, children, showBack = true, backHref, rightAc
             </Pressable>
           ) : (
             <Image
-              source={require('@/assets/images/logo.jpeg')}
+              source={require('@/assets/images/logo.webp')}
               style={styles.logo}
-              resizeMode="contain"
+              contentFit="contain"
             />
           )}
           <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>

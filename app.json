@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "seva-setu-app",
+    "name": "Seva Setu – Malvan Municipal Council",
     "slug": "seva-setu-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.jpeg",
+    "icon": "./play-store/assets/app-icon-512x512.png",
     "scheme": "sevasetuapp",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -12,18 +12,26 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/logo.jpeg"
+        "backgroundColor": "#0A4B8C",
+        "foregroundImage": "./play-store/assets/app-icon-512x512.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.sevasetuapp"
+      "package": "com.malvan.municipal.sevasetu"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/logo.jpeg"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": true,
+            "default": false
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {

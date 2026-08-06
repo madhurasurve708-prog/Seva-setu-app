@@ -14,24 +14,27 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AuthHero, AuthSheet } from '@/components/common/AuthScaffold';
 import PrimaryButton from '@/components/common/PrimaryButton';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
+import { COLORS, SHADOWS } from '@/constants/theme';
 import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import { loginDepartment } from '@/services/official-api';
 import { saveOfficialAccessToken } from '@/services/api-client';
 import { DEPT_DEMO_CREDENTIALS } from '@/services/auth';
+import { loginDepartment } from '@/services/official-api';
 
 export default function DepartmentCredentialsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { login } = useDepartment();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   // dept is the selected department name passed from Step 1
   const { dept } = useLocalSearchParams<{ dept: string }>();
@@ -85,7 +88,7 @@ export default function DepartmentCredentialsScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDesktop && styles.desktopPage]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <AuthHero
@@ -102,9 +105,12 @@ export default function DepartmentCredentialsScreen() {
         }}
       />
 
-      <AuthSheet>
+      <AuthSheet
+        style={isDesktop ? styles.desktopSheet : undefined}
+        contentStyle={isDesktop ? styles.desktopFormContent : undefined}
+      >
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          style={[{ flex: 1 }, isDesktop && styles.desktopCenter]}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
@@ -256,6 +262,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 4,
   },
+  desktopPage: { backgroundColor: '#F3F7FB' },
+  desktopCenter: { justifyContent: 'flex-start' },
+  desktopFormContent: { width: '100%', maxWidth: 560, alignSelf: 'center' },
+  desktopSheet: { maxWidth: 640, alignSelf: 'center' },
 
   /* Department banner */
   deptBanner: {

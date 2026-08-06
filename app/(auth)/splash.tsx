@@ -5,13 +5,13 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
-  ImageBackground,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { ImageBackground } from "expo-image";
 import Animated, {
   Easing,
   interpolate,
@@ -177,9 +177,9 @@ export default function SplashScreen() {
 
       <Animated.View style={[StyleSheet.absoluteFill, bgAnimatedStyle]}>
         <ImageBackground
-          source={require("../../assets/images/shivaji.png")}
+          source={require("../../assets/images/shivaji.webp")}
           style={styles.bgImage}
-          resizeMode="cover"
+          contentFit="cover"
         />
       </Animated.View>
 
@@ -213,7 +213,7 @@ export default function SplashScreen() {
             style={[StyleSheet.absoluteFill, styles.glowRing, glowAnimatedStyle]}
           />
           <Animated.Image
-            source={require("../../assets/images/logo.jpeg")}
+            source={require("../../assets/images/logo.webp")}
             style={[styles.logo, logoAnimatedStyle]}
             resizeMode="contain"
           />
