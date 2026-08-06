@@ -3,7 +3,8 @@
 // Uses OfficialScreen shell + same card/layout language as the Citizen about page.
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { GlassCard } from '@/components/common/GlassCard';
@@ -23,13 +24,13 @@ const TEAM: TeamMember[] = [
     name: 'Madhura Surve',
     titleKey: 'founderTitle',
     bioKey: 'founderBio',
-    photo: require('../../../assets/images/madhura.jpeg'),
+    photo: require('../../../assets/images/madhura.webp'),
   },
   {
     name: 'Apurva Sawant',
     titleKey: 'coFounderTitle',
     bioKey: 'coFounderBio',
-    photo: require('../../../assets/images/apurva.png'),
+    photo: require('../../../assets/images/apurva.webp'),
   },
 ];
 
@@ -75,9 +76,9 @@ export default function SettingsAboutScreen() {
         >
           <View style={styles.innerLogoRing}>
             <Image
-              source={require('../../../assets/images/logo.jpeg')}
+              source={require('../../../assets/images/logo.webp')}
               style={styles.logoImage}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </View>
         </Animated.View>
@@ -138,7 +139,7 @@ export default function SettingsAboutScreen() {
                   <Image
                     source={member.photo}
                     style={styles.teamPhoto}
-                    resizeMode="cover"
+                    contentFit="cover"
                   />
                 </View>
                 <Text style={styles.teamName}>{member.name}</Text>

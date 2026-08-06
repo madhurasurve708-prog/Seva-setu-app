@@ -1,3 +1,4 @@
+// app/(auth)/citizen-login.tsx
 import { AuthHero, AuthSheet, authStyles } from '@/components/common/AuthScaffold';
 import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
@@ -8,19 +9,20 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Dimensions,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
@@ -43,8 +45,10 @@ const OTP_BOX_SIZE = Math.min(46, Math.floor((SCREEN_WIDTH - 48 - 5 * 10) / OTP_
 
 export default function CitizenLoginScreen() {
   const router = useRouter();
-  const { saveProfile, getStoredProfile } = useCitizen();
+  const { saveProfile } = useCitizen();
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   const [step, setStep] = useState<Step>(1);
   const [sendingOtp, setSendingOtp] = useState(false);
@@ -73,7 +77,7 @@ export default function CitizenLoginScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const otpRefs = useRef<Array<TextInput | null>>(Array(OTP_LENGTH).fill(null));
+  const otpRefs = useRef<(TextInput | null)[]>(Array(OTP_LENGTH).fill(null));
   const countdownRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -149,7 +153,7 @@ export default function CitizenLoginScreen() {
       setSendingOtp(false);
       setMobileError(error instanceof Error ? error.message : 'Could not send OTP.');
     }
-  }, [isMobileValid, mobile, animateToStep, startCountdown, t, isCitizenAuthConfigured, isDevOtpMode]);
+  }, [isMobileValid, mobile, animateToStep, startCountdown, t]);
 
   const handleOtpChange = useCallback((value: string, index: number) => {
     const sanitized = value.replace(/[^0-9]/g, '');
@@ -209,7 +213,7 @@ export default function CitizenLoginScreen() {
       await verifyCitizenOtp(`+91${mobile}`, otp.join(''));
       setVerifying(false);
       playSuccessAnimation();
-      
+
       // Check real backend API for existing profile (works for both Supabase and dev mode)
       setCheckingUser(true);
       let existingProfile: Awaited<ReturnType<typeof getCitizenProfile>> | null = null;
@@ -237,7 +241,7 @@ export default function CitizenLoginScreen() {
       setCheckingUser(false);
       setOtpError(error instanceof Error ? error.message : 'OTP verification failed.');
     }
-  }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, getStoredProfile, t, isDevOtpMode, getCitizenProfile]);
+  }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, t]);
 
   const handleResend = useCallback(async () => {
     if (!canResend) return;
@@ -324,23 +328,30 @@ export default function CitizenLoginScreen() {
   }, [step, router, animateToStep]);
 
   return (
-    <View style={authStyles.root}>
+    <View style={[authStyles.root, isDesktop && styles.desktopPage]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <AuthHero compact title={t('citizenLogin')} subtitle="Seva Setu - Malvan" showLogo={true} onBack={goBackStep} />
 
-      <KeyboardAvoidingView style={authStyles.keyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <AuthSheet>
+      <KeyboardAvoidingView
+        style={[authStyles.keyboard, isDesktop && styles.desktopCenter]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <AuthSheet
+          style={isDesktop ? styles.desktopSheet : undefined}
+          contentStyle={isDesktop ? styles.desktopFormContent : undefined}
+        >
           <View style={styles.dotsRow}>
             {[1, 2, 3, 4].map((n) => (
               <View key={n} style={[styles.dot, n === step && styles.dotActive, n < step && styles.dotDone]} />
             ))}
           </View>
 
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={authStyles.scrollContent} overScrollMode="never">
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
+          {isDesktop ? (
+            <View style={[authStyles.scrollContent, styles.desktopScrollContent]}>
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
 
               {step === 1 && (
-                <View>
+                <View style={isDesktop ? styles.desktopCard : undefined}>
                   <Text style={authStyles.screenTitle}>{t('enterMobile')}</Text>
                   <Text style={authStyles.screenHint}>{t('mobileHint')}</Text>
 
@@ -392,7 +403,7 @@ export default function CitizenLoginScreen() {
               )}
 
               {step === 3 && (
-                <View>
+                <View style={isDesktop ? styles.desktopCard : undefined}>
                   <Text style={authStyles.screenTitle}>{t('enterOtp')}</Text>
                   <Text style={authStyles.screenHint}>
                     {t('otpSentTo')}{mobile.slice(0, 5)}xxxxx. <Text style={styles.linkText} onPress={() => animateToStep(1)}>{t('change')}</Text>
@@ -450,7 +461,7 @@ export default function CitizenLoginScreen() {
               )}
 
               {step === 4 && (
-                <View>
+                <View style={isDesktop ? styles.desktopCard : undefined}>
                   <Text style={authStyles.screenTitle}>{t('createCitizenProfile')}</Text>
                   <Text style={authStyles.screenHint}>{t('addressVerificationHint')}</Text>
 
@@ -520,8 +531,196 @@ export default function CitizenLoginScreen() {
                 </View>
               )}
 
-            </Animated.View>
-          </ScrollView>
+              </Animated.View>
+            </View>
+          ) : (
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={authStyles.scrollContent}
+              overScrollMode="never"
+            >
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
+                {step === 1 && (
+                  <View>
+                    <Text style={authStyles.screenTitle}>{t('enterMobile')}</Text>
+                    <Text style={authStyles.screenHint}>{t('mobileHint')}</Text>
+
+                    <View style={[styles.phoneInputContainer, mobileError ? { borderColor: COLORS.danger } : null]}>
+                      <MaterialCommunityIcons name="cellphone" size={20} color={mobileError ? COLORS.danger : COLORS.primaryLight} style={styles.phoneIcon} />
+                      <View style={styles.indiaWrap}>
+                        <Text style={styles.indiaCode}>+91</Text>
+                      </View>
+                      <View style={styles.divider} />
+                      <TextInput
+                        placeholder={t('mobilePlaceholder')}
+                        placeholderTextColor={COLORS.textPlaceholder}
+                        keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                        maxLength={10}
+                        value={mobile}
+                        onChangeText={(text) => {
+                          const value = text.replace(/[^0-9]/g, '').slice(0, 10);
+                          setMobile(value);
+                          if (/^[6-9]\d{9}$/.test(value)) setMobileError('');
+                        }}
+                        style={styles.phoneInput}
+                        returnKeyType="send"
+                        onSubmitEditing={handleSendOtp}
+                      />
+                    </View>
+                    {mobileError ? <Text style={authStyles.errorText}>{mobileError}</Text> : null}
+
+                    <View style={{ marginTop: 12 }}>
+                      <Pressable
+                        onPress={handleSendOtp}
+                        disabled={!isMobileValid || sendingOtp}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: !isMobileValid ? '#CBD5E1' : COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {sendingOtp ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('sendOtp')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+
+                {step === 2 && (
+                  <View style={styles.centerLoading}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <Text style={styles.loadingText}>{t('sendingOtp')} +91 {mobile}...</Text>
+                  </View>
+                )}
+
+                {step === 3 && (
+                  <View>
+                    <Text style={authStyles.screenTitle}>{t('enterOtp')}</Text>
+                    <Text style={authStyles.screenHint}>
+                      {t('otpSentTo')}{mobile.slice(0, 5)}xxxxx. <Text style={styles.linkText} onPress={() => animateToStep(1)}>{t('change')}</Text>
+                    </Text>
+
+                    <View style={styles.otpRow}>
+                      {otp.map((d, i) => {
+                        const isFocused = focusedIndex === i;
+                        return (
+                          <TextInput
+                            key={i}
+                            ref={(ref) => {
+                              otpRefs.current[i] = ref;
+                            }}
+                            value={d}
+                            onChangeText={(v) => handleOtpChange(v, i)}
+                            onKeyPress={(e) => handleOtpKeyPress(e, i)}
+                            onFocus={() => setFocusedIndex(i)}
+                            onBlur={() => setFocusedIndex(null)}
+                            keyboardType="numeric"
+                            maxLength={1}
+                            style={[
+                              styles.otpBox,
+                              d ? styles.otpBoxFilled : null,
+                              isFocused && styles.otpBoxFocused,
+                            ]}
+                            textContentType="oneTimeCode"
+                          />
+                        );
+                      })}
+                    </View>
+                    {otpError ? <Text style={authStyles.errorText}>{otpError}</Text> : null}
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                      <Text style={styles.resendText}>{canResend ? t('canResendNow') : `${t('resendIn')}${countdown}s`}</Text>
+                      <Pressable onPress={handleResend} disabled={!canResend} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+                        <Text style={[styles.resendLink, !canResend ? { color: COLORS.textMuted } : null]}>{t('resendOtp')}</Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={{ marginTop: 20 }}>
+                      <Pressable
+                        onPress={handleVerifyOtp}
+                        disabled={!isOtpComplete || verifying}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: !isOtpComplete ? '#CBD5E1' : COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {verifying || checkingUser ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('verify')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+
+                {step === 4 && (
+                  <View>
+                    <Text style={authStyles.screenTitle}>{t('createCitizenProfile')}</Text>
+                    <Text style={authStyles.screenHint}>{t('addressVerificationHint')}</Text>
+
+                    <View style={authStyles.formContainer}>
+                      <Text style={styles.formInputLabel}>{t('nameLabel')}</Text>
+                      <View style={[styles.formInputContainer, nameError ? { borderColor: COLORS.danger } : null]}>
+                        <MaterialCommunityIcons name="account-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <TextInput
+                          placeholder={t('namePlaceholder')}
+                          placeholderTextColor={COLORS.textPlaceholder}
+                          value={fullName}
+                          onChangeText={(t) => {
+                            setFullName(t);
+                            if (t.trim()) setNameError('');
+                          }}
+                          style={styles.fieldInput}
+                        />
+                      </View>
+                      {nameError ? <Text style={authStyles.errorText}>{nameError}</Text> : null}
+
+                      <Text style={styles.formInputLabel}>{t('selectWard')}</Text>
+                      <Pressable
+                        onPress={() => setShowWardModal(true)}
+                        style={[styles.formInputContainer, wardError ? { borderColor: COLORS.danger } : null]}
+                      >
+                        <MaterialCommunityIcons name="map-marker-radius-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <Text style={[styles.fieldInputText, ward ? { color: COLORS.text } : null]}>
+                          {ward || t('wardPickerHint')}
+                        </Text>
+                        <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.textMuted} />
+                      </Pressable>
+                      {wardError ? <Text style={authStyles.errorText}>{wardError}</Text> : null}
+
+                      <Text style={styles.formInputLabel}>{t('localityStreetLandmark')}</Text>
+                      <View style={[styles.formInputContainer, localityError ? { borderColor: COLORS.danger } : null]}>
+                        <MaterialCommunityIcons name="home-city-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <TextInput
+                          placeholder={t('localityExample')}
+                          placeholderTextColor={COLORS.textPlaceholder}
+                          value={locality}
+                          onChangeText={(t) => {
+                            setLocality(t);
+                            if (t.trim()) setLocalityError('');
+                          }}
+                          style={styles.fieldInput}
+                        />
+                      </View>
+                      {localityError ? <Text style={authStyles.errorText}>{localityError}</Text> : null}
+                    </View>
+
+                    <View style={{ marginTop: 24 }}>
+                      <Pressable
+                        onPress={handleCompleteRegistration}
+                        disabled={registering}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {registering ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('completeRegistration')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+              </Animated.View>
+            </ScrollView>
+          )}
         </AuthSheet>
       </KeyboardAvoidingView>
 
@@ -559,6 +758,23 @@ export default function CitizenLoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  desktopPage: { backgroundColor: '#F3F7FB', paddingHorizontal: 24, paddingBottom: 24 },
+  desktopCenter: { justifyContent: 'flex-start', paddingTop: 16, paddingBottom: 24 },
+  desktopSheet: { maxWidth: 620, paddingHorizontal: 26 },
+  desktopFormContent: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+  },
+  desktopScrollContent: { paddingTop: 4, paddingBottom: 12 },
+  desktopCard: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 22,
+    padding: 18,
+    ...SHADOWS.soft,
+  },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',

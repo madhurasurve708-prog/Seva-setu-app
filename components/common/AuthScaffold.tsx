@@ -1,24 +1,25 @@
 // components/common/AuthScaffold.tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image, ImageBackground } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { type ReactNode } from 'react';
 import {
-  Image,
-  ImageBackground,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+    type StyleProp,
+    type ViewStyle,
 } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -67,14 +68,24 @@ export function AuthHero({
   badge,
 }: AuthHeroProps) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const desktopHeroHeight = compact ? 160 : Math.round(Math.min(200, Math.max(160, height * 0.22)));
 
   return (
-    <View style={[styles.hero, compact && styles.heroCompact]}>
+    <View
+      style={[
+        styles.hero,
+        compact && styles.heroCompact,
+        isDesktop && styles.heroDesktop,
+        isDesktop && compact && styles.heroCompactDesktop,
+        isDesktop && { height: desktopHeroHeight, minHeight: desktopHeroHeight },
+      ]}
+    >
       <ImageBackground
-        source={require('../../assets/images/shivaji.png')}
-        style={StyleSheet.absoluteFill}
-        imageStyle={styles.heroImageStyle}
-        resizeMode="cover"
+        source={require('../../assets/images/shivaji.webp')}
+        style={[StyleSheet.absoluteFill, { opacity: 0.45 }]}
+        contentFit="cover"
       >
         {/* Cinematic dark-blue gradient overlay */}
         <LinearGradient
@@ -88,7 +99,7 @@ export function AuthHero({
         />
 
         {/* Safe-area spacer + optional back button */}
-        <View style={[styles.heroTopRow, { paddingTop: insets.top + 10 }]}>
+        <View style={[styles.heroTopRow, isDesktop && styles.heroTopRowDesktop, { paddingTop: insets.top + (isDesktop ? 20 : 10) }]}>
           {onBack ? (
             <Pressable
               android_ripple={{ color: 'rgba(255,255,255,0.18)', borderless: true }}
@@ -102,20 +113,20 @@ export function AuthHero({
             <View style={styles.backPlaceholder} />
           )}
           <View style={{ flex: 1 }} />
-          <LanguageToggle size={36} variant="dark" />
+          <LanguageToggle size={isDesktop ? 40 : 36} variant="dark" />
         </View>
 
         {/* Logo · Title · Subtitle · Slogan — all centered */}
-        <Animated.View entering={FadeIn.duration(500)} style={styles.heroContent}>
+        <Animated.View entering={FadeIn.duration(500)} style={[styles.heroContent, isDesktop && styles.heroContentDesktop]}>
           <Animated.View
             entering={FadeInUp.duration(600).delay(60)}
             style={styles.logoWrap}
           >
             {showLogo ? (
               <Image
-                source={require('../../assets/images/logo.jpeg')}
+                source={require('../../assets/images/logo.webp')}
                 style={styles.logo}
-                resizeMode="contain"
+                contentFit="contain"
               />
             ) : (
               <MaterialCommunityIcons
@@ -128,14 +139,14 @@ export function AuthHero({
 
           <Animated.Text
             entering={FadeInDown.duration(600).delay(100)}
-            style={styles.heroTitle}
+            style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}
           >
             {title}
           </Animated.Text>
 
           <Animated.Text
             entering={FadeInDown.duration(600).delay(150)}
-            style={styles.heroSubtitle}
+            style={[styles.heroSubtitle, isDesktop && styles.heroSubtitleDesktop]}
           >
             {subtitle}
           </Animated.Text>
@@ -165,10 +176,12 @@ export function AuthHero({
 // AuthSheet — white rounded panel that overlaps the bottom of the hero
 // ─────────────────────────────────────────────────────────────────────────────
 export function AuthSheet({ children, style, contentStyle }: AuthSheetProps) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
   return (
     <Animated.View
       entering={FadeInDown.duration(600).delay(160)}
-      style={[styles.sheet, style]}
+      style={[styles.sheet, isDesktop && styles.sheetDesktop, style]}
     >
       {/* Drag handle */}
       <View style={styles.sheetHandle} />
@@ -265,6 +278,9 @@ const styles = StyleSheet.create({
     height: 260,
     minHeight: 230,
   },
+  // Desktop keeps the visual identity without pushing the form below the fold.
+  heroDesktop: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, paddingBottom: 4 },
+  heroCompactDesktop: {},
 
   heroImageStyle: {
     width: '100%',
@@ -278,6 +294,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  heroTopRowDesktop: { width: '100%', maxWidth: 1280, alignSelf: 'center', paddingHorizontal: 32 },
   backButton: {
     width: 36,
     height: 36,
@@ -298,6 +315,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 36,
   },
+  heroContentDesktop: { paddingBottom: 6, paddingTop: 4 },
 
   logoWrap: {
     width: 80,
@@ -321,6 +339,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.3,
   },
+  heroTitleDesktop: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
   heroSubtitle: {
     marginTop: 5,
     color: 'rgba(255,255,255,0.90)',
@@ -328,6 +350,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  heroSubtitleDesktop: {
+    fontSize: 13,
+    lineHeight: 19,
   },
   heroSlogan: {
     color: '#4FC3F7',
@@ -369,6 +395,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  sheetDesktop: { flex: 0, width: '100%', maxWidth: 640, alignSelf: 'center', marginTop: -40, marginBottom: 24, minHeight: 0, borderRadius: 24, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 20, borderWidth: 1, borderColor: 'rgba(226,232,240,0.95)', ...SHADOWS.xl },
   sheetHandle: {
     alignSelf: 'center',
     width: 44,

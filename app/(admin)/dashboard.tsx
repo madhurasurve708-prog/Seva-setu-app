@@ -1,7 +1,9 @@
+import React, { useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, Platform, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -61,28 +63,37 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints, announcements } = useOfficial();
+  const { width } = useWindowDimensions();
 
-  const total       = complaints.length;
-  const pending     = complaints.filter((c) => c.status === 'Pending').length;
-  const inProgress  = complaints.filter((c) => c.status === 'In Progress').length;
-  const resolved    = complaints.filter((c) => c.status === 'Resolved').length;
-  const escalated   = complaints.filter((c) => c.is_escalated).length;
-  const successRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  const isDesktop = Platform.OS === 'web' && width > 768;
 
-  const STAT_CARDS = [
-    { key: 'Pending',     label: t('pending'),     value: pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },
-    { key: 'In Progress', label: t('inProgress'), value: inProgress, color: '#2563EB', icon: 'progress-wrench'       as const, grad: ['#EFF6FF','#DBEAFE'] as const },
-    { key: 'Resolved',    label: t('resolved'),    value: resolved,   color: '#10B981', icon: 'check-circle-outline'  as const, grad: ['#ECFDF5','#D1FAE5'] as const },
-    { key: 'Escalated',   label: t('escalated'),   value: escalated,  color: '#DC2626', icon: 'alert-octagon-outline' as const, grad: ['#FEF2F2','#FEE2E2'] as const },
-  ];
-  const exploreItems = EXPLORE_ITEMS(t);
+  const stats = useMemo(() => {
+    const total       = complaints.length;
+    const pending     = complaints.filter((c) => c.status === 'Pending').length;
+    const inProgress  = complaints.filter((c) => c.status === 'In Progress').length;
+    const resolved    = complaints.filter((c) => c.status === 'Resolved').length;
+    const escalated   = complaints.filter((c) => c.is_escalated).length;
+    const successRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    return { total, pending, inProgress, resolved, escalated, successRate };
+  }, [complaints]);
+
+  const { total, pending, inProgress, resolved, escalated, successRate } = stats;
+
+  const STAT_CARDS = useMemo(() => [
+    { key: 'Pending',     label: t('pending'),     value: stats.pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },
+    { key: 'In Progress', label: t('inProgress'), value: stats.inProgress, color: '#2563EB', icon: 'progress-wrench'       as const, grad: ['#EFF6FF','#DBEAFE'] as const },
+    { key: 'Resolved',    label: t('resolved'),    value: stats.resolved,   color: '#10B981', icon: 'check-circle-outline'  as const, grad: ['#ECFDF5','#D1FAE5'] as const },
+    { key: 'Escalated',   label: t('escalated'),   value: stats.escalated,  color: '#DC2626', icon: 'alert-octagon-outline' as const, grad: ['#FEF2F2','#FEE2E2'] as const },
+  ], [t, stats]);
+
+  const exploreItems = useMemo(() => EXPLORE_ITEMS(t), [t]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
-          <Image source={require('@/assets/images/logo.jpeg')} style={styles.logo} resizeMode="contain" />
+          <Image source={require('@/assets/images/logo.webp')} style={styles.logo} contentFit="contain" />
           <View>
             <Text style={styles.brandTitle}>{t('sevaSetuTitle')}</Text>
             <Text style={styles.brandSub}>{t('malvanMunicipal')}</Text>
@@ -108,7 +119,7 @@ export default function AdminDashboard() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isDesktop && { maxWidth: 1200, alignSelf: 'center', width: '100%', paddingHorizontal: 24 }]}
         overScrollMode="never"
       >
         {/* ── Premium Hero Banner ── */}
@@ -165,7 +176,7 @@ export default function AdminDashboard() {
               <Animated.View
                 key={s.key}
                 entering={FadeInDown.duration(360).delay(80 + idx * 55)}
-                style={styles.statWrap}
+                style={[styles.statWrap, isDesktop && { width: '23%' }]}
               >
                 <Pressable onPress={() => router.push({ pathname: '/(admin)/complaints', params: { status: s.key === 'Pending' ? 'Pending' : s.key === 'In Progress' ? 'In Progress' : s.key === 'Resolved' ? 'Resolved' : undefined } } as any)}>
                   <LinearGradient colors={s.grad} style={[styles.statCard, { borderColor: `${s.color}22` }]}>
@@ -189,7 +200,7 @@ export default function AdminDashboard() {
               <Animated.View
                 key={item.route}
                 entering={FadeInRight.duration(340).delay(80 + idx * 60)}
-                style={styles.exploreWrap}
+                style={[styles.exploreWrap, isDesktop && { width: '23%' }]}
               >
                 <Pressable
                   onPress={() => router.push(item.route as any)}
@@ -260,7 +271,7 @@ export default function AdminDashboard() {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function HeroStat({ label, value, highlight, warn, danger }: {
+const HeroStat = React.memo(function HeroStat({ label, value, highlight, warn, danger }: {
   label: string; value: number;
   highlight?: boolean; warn?: boolean; danger?: boolean;
 }) {
@@ -271,9 +282,9 @@ function HeroStat({ label, value, highlight, warn, danger }: {
       <Text style={styles.heroStatLabel}>{label}</Text>
     </View>
   );
-}
+});
 
-function SectionHeader({ title, subtitle, actionLabel, onAction }: {
+const SectionHeader = React.memo(function SectionHeader({ title, subtitle, actionLabel, onAction }: {
   title: string; subtitle?: string; actionLabel?: string; onAction?: () => void;
 }) {
   return (
@@ -289,16 +300,18 @@ function SectionHeader({ title, subtitle, actionLabel, onAction }: {
       ) : null}
     </View>
   );
-}
+});
 
-function QuickAction({ icon, label, color, bg, onPress }: {
+const QuickAction = React.memo(function QuickAction({ icon, label, color, bg, onPress }: {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   label: string; color: string; bg: string; onPress: () => void;
 }) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 768;
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.quickCard, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [styles.quickCard, isDesktop && { width: '15%' }, pressed && { opacity: 0.85 }]}
     >
       <View style={[styles.quickIcon, { backgroundColor: bg }]}>
         <MaterialCommunityIcons name={icon} size={20} color={color} />
@@ -306,7 +319,7 @@ function QuickAction({ icon, label, color, bg, onPress }: {
       <Text style={styles.quickLabel}>{label}</Text>
     </Pressable>
   );
-}
+});
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({

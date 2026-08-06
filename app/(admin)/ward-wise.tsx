@@ -1,8 +1,8 @@
+import React, { useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, Platform, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -29,6 +29,9 @@ export default function WardWiseScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { complaints } = useOfficial();
+  const { width } = useWindowDimensions();
+
+  const isDesktop = Platform.OS === 'web' && width > 768;
 
   const wardData = useMemo(() =>
     WARDS.map((ward) => {
@@ -55,7 +58,7 @@ export default function WardWiseScreen() {
         <Text style={styles.headerSub}>{t('allMunicipalWardsHeader').replace('{count}', String(WARDS.length))}</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, isDesktop && { maxWidth: 1200, alignSelf: 'center', width: '100%', paddingHorizontal: 24 }]} overScrollMode="never">
         {/* City summary */}
         <Animated.View entering={FadeInDown.duration(380).delay(0)}>
           <LinearGradient colors={['#0B4F8A', '#2E86DE']} style={styles.summaryCard}>
@@ -74,55 +77,57 @@ export default function WardWiseScreen() {
 
         <Text style={styles.sectionTitle}>{t('wardPerformance')}</Text>
 
-        {wardData.map((item, idx) => (
-          <Animated.View key={item.ward} entering={FadeInDown.duration(360).delay(60 + idx * 45)}>
-            <Pressable
-              onPress={() => router.push({ pathname: '/(admin)/complaints', params: { ward: item.ward } } as any)}
-              style={({ pressed }) => [styles.wardCard, pressed && styles.cardPressed]}
-            >
-              {/* Ward header */}
-              <View style={styles.wardTop}>
-                <View style={styles.wardBadge}>
-                  <Text style={styles.wardNum}>{item.ward.split(' ')[1]}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.wardName}>{item.ward}</Text>
-                  <Text style={styles.wardSub}>{item.label}</Text>
-                </View>
-                {item.emergency > 0 && (
-                  <View style={styles.emergBadge}>
-                    <MaterialCommunityIcons name="alert-circle" size={11} color="#DC2626" />
-                    <Text style={styles.emergText}>{t('emergencyCountSuffix').replace('{count}', String(item.emergency))}</Text>
+        <View style={isDesktop ? styles.desktopGrid : undefined}>
+          {wardData.map((item, idx) => (
+            <Animated.View key={item.ward} entering={FadeInDown.duration(360).delay(60 + idx * 45)} style={isDesktop && { width: '49%', marginBottom: 12 }}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/(admin)/complaints', params: { ward: item.ward } } as any)}
+                style={({ pressed }) => [styles.wardCard, pressed && styles.cardPressed]}
+              >
+                {/* Ward header */}
+                <View style={styles.wardTop}>
+                  <View style={styles.wardBadge}>
+                    <Text style={styles.wardNum}>{item.ward.split(' ')[1]}</Text>
                   </View>
-                )}
-                <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
-              </View>
-
-              {/* Stats row */}
-              <View style={styles.statsRow}>
-                <StatPill label={t('totalLabel')} value={item.total} color={COLORS.primary} bg="#EFF6FF" />
-                <StatPill label={t('resolved')} value={item.resolved} color="#10B981" bg="#ECFDF5" />
-                <StatPill label={t('pending')} value={item.pending} color="#F59E0B" bg="#FFF8ED" />
-              </View>
-
-              {/* Resolution bar */}
-              <View style={styles.barArea}>
-                <View style={styles.barBg}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      {
-                        width: `${item.rate}%`,
-                        backgroundColor: item.rate >= 70 ? '#10B981' : item.rate >= 40 ? '#F59E0B' : '#EF4444',
-                      },
-                    ]}
-                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.wardName}>{item.ward}</Text>
+                    <Text style={styles.wardSub}>{item.label}</Text>
+                  </View>
+                  {item.emergency > 0 && (
+                    <View style={styles.emergBadge}>
+                      <MaterialCommunityIcons name="alert-circle" size={11} color="#DC2626" />
+                      <Text style={styles.emergText}>{t('emergencyCountSuffix').replace('{count}', String(item.emergency))}</Text>
+                    </View>
+                  )}
+                  <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.textMuted} />
                 </View>
-                <Text style={styles.barLabel}>{item.rate}% {t('resolved').toLowerCase()}</Text>
-              </View>
-            </Pressable>
-          </Animated.View>
-        ))}
+
+                {/* Stats row */}
+                <View style={styles.statsRow}>
+                  <StatPill label={t('totalLabel')} value={item.total} color={COLORS.primary} bg="#EFF6FF" />
+                  <StatPill label={t('resolved')} value={item.resolved} color="#10B981" bg="#ECFDF5" />
+                  <StatPill label={t('pending')} value={item.pending} color="#F59E0B" bg="#FFF8ED" />
+                </View>
+
+                {/* Resolution bar */}
+                <View style={styles.barArea}>
+                  <View style={styles.barBg}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        {
+                          width: `${item.rate}%`,
+                          backgroundColor: item.rate >= 70 ? '#10B981' : item.rate >= 40 ? '#F59E0B' : '#EF4444',
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.barLabel}>{item.rate}% {t('resolved').toLowerCase()}</Text>
+                </View>
+              </Pressable>
+            </Animated.View>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -212,4 +217,10 @@ const styles = StyleSheet.create({
   barBg: { flex: 1, height: 6, backgroundColor: '#F1F5F9', borderRadius: 3, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 3 },
   barLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, width: 72 },
+  desktopGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
 });

@@ -3,7 +3,8 @@
 // Same content and layout as all other About pages.
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
@@ -32,8 +33,8 @@ const FOUNDER_MR = {
 type TeamMember = { name: string; titleKey: string; bioKey: string; photo: number };
 
 const TEAM: TeamMember[] = [
-  { name: 'Madhura Surve',  titleKey: 'founderTitle',   bioKey: 'founderBio',   photo: require('../../assets/images/madhura.jpeg') },
-  { name: 'Apurva Sawant',  titleKey: 'coFounderTitle', bioKey: 'coFounderBio', photo: require('../../assets/images/apurva.png')   },
+  { name: 'Madhura Surve',  titleKey: 'founderTitle',   bioKey: 'founderBio',   photo: require('../../assets/images/madhura.webp') },
+  { name: 'Apurva Sawant',  titleKey: 'coFounderTitle', bioKey: 'coFounderBio', photo: require('../../assets/images/apurva.webp')   },
 ];
 
 export default function AdminAboutScreen() {
@@ -54,9 +55,9 @@ export default function AdminAboutScreen() {
         <Animated.View entering={hydrated ? ZoomIn.duration(600) : undefined} style={styles.logoFrame}>
           <View style={styles.innerLogoRing}>
             <Image
-              source={require('../../assets/images/logo.jpeg')}
+              source={require('../../assets/images/logo.webp')}
               style={styles.logoImage}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </View>
         </Animated.View>
@@ -105,7 +106,7 @@ export default function AdminAboutScreen() {
             >
               <GlassCard style={styles.teamMemberCard}>
                 <View style={styles.teamPhotoRing}>
-                  <Image source={member.photo} style={styles.teamPhoto} resizeMode="cover" />
+                  <Image source={member.photo} style={styles.teamPhoto} contentFit="cover" />
                 </View>
                 <Text style={styles.teamName}>{member.name}</Text>
                 <Text style={styles.teamTitle}>{local[member.titleKey as keyof typeof local]}</Text>

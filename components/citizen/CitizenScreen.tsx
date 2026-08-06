@@ -3,10 +3,11 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { PropsWithChildren } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../../constants/theme';
 import BottomNav from './BottomNav';
+import DesktopPortal from '@/components/common/DesktopPortal';
 
 type CitizenScreenProps = PropsWithChildren<{
   title: string;
@@ -23,7 +24,26 @@ export function CitizenScreen({
   hideHeader = false,
 }: CitizenScreenProps) {
   const router = useRouter();
-  const { profile } = useCitizen();
+  const { profile, logout } = useCitizen();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
+
+  if (isDesktop) {
+    return (
+      <DesktopPortal title={title} initial={(profile?.firstName || profile?.fullName || profile?.name || 'C').charAt(0).toUpperCase()}
+        onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
+        items={[
+          { label: 'Dashboard', route: '/(citizen)/dashboard', icon: 'view-dashboard-outline' },
+          { label: 'Ward Wise', route: '/(citizen)/ward', icon: 'map-marker-outline' },
+          { label: 'Complaints', route: '/(citizen)/my-complaints', icon: 'clipboard-text-outline' },
+          { label: 'Announcements', route: '/(citizen)/announcements', icon: 'bullhorn-outline' },
+          { label: 'Settings', route: '/(citizen)/settings', icon: 'cog-outline' },
+          { label: 'Profile', route: '/(citizen)/profile', icon: 'account-outline' },
+        ]}>
+        {children}
+      </DesktopPortal>
+    );
+  }
 
   return (
     <View style={styles.root}>

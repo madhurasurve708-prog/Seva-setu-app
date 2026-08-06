@@ -1,14 +1,12 @@
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
 import {
     Alert, Modal, Pressable, ScrollView,
-    StyleSheet, Text, TextInput, View,
+    StyleSheet, Text, TextInput, View, FlatList, Platform, useWindowDimensions
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { categories } from '@/data/categories';
@@ -58,7 +56,11 @@ export default function AdminComplaints() {
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ ward?: string; category?: string; department?: string; status?: string }>();
   const { complaints, updateComplaintStatus, softDeleteComplaint } = useOfficial();
+  const { width } = useWindowDimensions();
 
+  const isDesktop = Platform.OS === 'web' && width > 768;
+
+  const [searchVal, setSearchVal] = useState('');
   const [search,    setSearch]    = useState('');
   const [status,    setStatus]    = useState<string>(params.status ?? 'All');
   const [priority,  setPriority]  = useState<string>('All');
@@ -67,6 +69,14 @@ export default function AdminComplaints() {
   const [noteModal, setNoteModal] = useState<{ id: string; type: 'note' | 'restrict' | 'block' | 'remove' } | null>(null);
   const [noteText,  setNoteText]  = useState('');
 
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchVal);
+    }, 180);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
   const ctxLabel =
     params.ward       ? `${t('ctxWardLabel')} ${params.ward}` :
     params.category   ? `${t('ctxCategoryLabel')} ${params.category}` :
@@ -74,7 +84,7 @@ export default function AdminComplaints() {
 
   const filtered = useMemo(() =>
     complaints.filter((c) => {
-      const q       = search.toLowerCase();
+      const q       = search.toLowerCase().trim();
       const mSearch = !q || `${c.id} ${c.title} ${c.citizenName} ${c.location}`.toLowerCase().includes(q);
       const mWard   = !params.ward       || c.ward.startsWith(params.ward);
       const mCat    = !params.category   || c.category === params.category;
@@ -86,16 +96,28 @@ export default function AdminComplaints() {
     }),
   [complaints, params, search, status, priority, escalatedOnly]);
 
-  const handleStatusChange = (id: string, s: Complaint['status']) => {
-    void updateComplaintStatus(id, s);
-    setActiveId(null);
-  };
+  const handleToggle = useCallback((id: string) => {
+    setActiveId((prev) => (prev === id ? null : id));
+  }, []);
 
-  const openModal = (id: string, type: 'note' | 'restrict' | 'block' | 'remove') => {
+  const openModal = useCallback((id: string, type: 'note' | 'restrict' | 'block' | 'remove') => {
     setNoteText('');
     setNoteModal({ id, type });
     setActiveId(null);
-  };
+  }, []);
+
+  const handleStatusChange = useCallback(async (id: string, s: Complaint['status']) => {
+    await updateComplaintStatus(id, s);
+    setActiveId(null);
+  }, [updateComplaintStatus]);
+
+  const handleView = useCallback((id: string) => {
+    router.push({ pathname: '/(official)/complaint-details', params: { id } } as any);
+  }, [router]);
+
+  const handleEscalate = useCallback((id: string) => {
+    router.push({ pathname: '/(official)/escalate', params: { id } } as any);
+  }, [router]);
 
   const submitModal = async () => {
     if (!noteModal) return;
@@ -124,87 +146,97 @@ export default function AdminComplaints() {
         <View style={s.countBubble}><Text style={s.countBubbleText}>{filtered.length}</Text></View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}
-        keyboardShouldPersistTaps="handled" overScrollMode="never">
-        <View style={s.searchBar}>
-          <MaterialCommunityIcons name="magnify" size={18} color={COLORS.textMuted} />
-          <TextInput value={search} onChangeText={setSearch}
-            placeholder={t('searchComplaintsAdmin')}
-            placeholderTextColor={COLORS.textPlaceholder} style={s.searchInput} />
-          {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} hitSlop={8}>
-              <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
-            </Pressable>
-          )}
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.chipRow} style={s.chipScroll}>
-          <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
-          {categories.filter((c) => c.id !== 'all').map((c) => (
-            <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
-              onPress={() => router.setParams({ category: c.id })} />
-          ))}
-        </ScrollView>
-
-        <View style={s.filterRow}>
-          {STATUSES.map((st) => (
-            <Pressable key={st} onPress={() => setStatus(st)}
-              style={[s.filterChip, status === st && s.filterChipActive]}>
-              <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{statusLabel(t, st)}</Text>
-            </Pressable>
-          ))}
-          {/* Escalated toggle */}
-          <Pressable
-            onPress={() => setEscalatedOnly((v) => !v)}
-            style={[s.filterChip, escalatedOnly && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}
-          >
-            <MaterialCommunityIcons
-              name="arrow-up-bold-circle-outline"
-              size={12}
-              color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index * 20, 200))}>
+            <MemoizedPremiumCard
+              t={t}
+              complaint={item}
+              expanded={activeId === item.id}
+              onToggle={() => handleToggle(item.id)}
+              onView={() => handleView(item.id)}
+              onNote={() => openModal(item.id, 'note')}
+              onEscalate={() => handleEscalate(item.id)}
+              onArchive={() => openModal(item.id, 'remove')}
+              onRestrict={() => openModal(item.id, 'restrict')}
+              onBlock={() => openModal(item.id, 'block')}
+              onStatusChange={(st) => handleStatusChange(item.id, st)}
             />
-            <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
-              {t('escalated')}
-            </Text>
-          </Pressable>
-        </View>
+          </Animated.View>
+        )}
+        ListHeaderComponent={
+          <>
+            <View style={s.searchBar}>
+              <MaterialCommunityIcons name="magnify" size={18} color={COLORS.textMuted} />
+              <TextInput value={searchVal} onChangeText={setSearchVal}
+                placeholder={t('searchComplaintsAdmin')}
+                placeholderTextColor={COLORS.textPlaceholder} style={s.searchInput} />
+              {searchVal.length > 0 && (
+                <Pressable onPress={() => setSearchVal('')} hitSlop={8}>
+                  <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
+                </Pressable>
+              )}
+            </View>
 
-        <View style={[s.filterRow, { marginBottom: 14 }]}>
-          {PRIORITIES.map((p) => (
-            <Pressable key={p} onPress={() => setPriority(p)}
-              style={[s.filterChip, priority === p && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-              <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{priorityLabel(t, p)}</Text>
-            </Pressable>
-          ))}
-        </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.chipRow} style={s.chipScroll}>
+              <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
+              {categories.filter((c) => c.id !== 'all').map((c) => (
+                <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
+                  onPress={() => router.setParams({ category: c.id })} />
+              ))}
+            </ScrollView>
 
-        {filtered.length === 0 ? (
+            <View style={s.filterRow}>
+              {STATUSES.map((st) => (
+                <Pressable key={st} onPress={() => setStatus(st)}
+                  style={[s.filterChip, status === st && s.filterChipActive]}>
+                  <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{statusLabel(t, st)}</Text>
+                </Pressable>
+              ))}
+              {/* Escalated toggle */}
+              <Pressable
+                onPress={() => setEscalatedOnly((v) => !v)}
+                style={[s.filterChip, escalatedOnly && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}
+              >
+                <MaterialCommunityIcons
+                  name="arrow-up-bold-circle-outline"
+                  size={12}
+                  color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
+                />
+                <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
+                  {t('escalated')}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[s.filterRow, { marginBottom: 14 }]}>
+              {PRIORITIES.map((p) => (
+                <Pressable key={p} onPress={() => setPriority(p)}
+                  style={[s.filterChip, priority === p && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+                  <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{priorityLabel(t, p)}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        }
+        ListEmptyComponent={
           <View style={s.emptyCard}>
             <MaterialCommunityIcons name="clipboard-search-outline" size={32} color={COLORS.textMuted} />
             <Text style={s.emptyTitle}>{t('noMatchingComplaintsAdmin')}</Text>
             <Text style={s.emptyText}>{t('adjustFiltersAdmin')}</Text>
           </View>
-        ) : (
-          filtered.map((c, idx) => (
-            <Animated.View key={c.id} entering={FadeInDown.duration(320).delay(idx * 30)}>
-              <PremiumCard
-                t={t}
-                complaint={c}
-                expanded={activeId === c.id}
-                onToggle={() => setActiveId(activeId === c.id ? null : c.id)}
-                onView={() => router.push({ pathname: '/(official)/complaint-details', params: { id: c.id } } as any)}
-                onNote={() => openModal(c.id, 'note')}
-                onEscalate={() => router.push({ pathname: '/(official)/escalate', params: { id: c.id } } as any)}
-                onArchive={() => openModal(c.id, 'remove')}
-                onRestrict={() => openModal(c.id, 'restrict')}
-                onBlock={() => openModal(c.id, 'block')}
-                onStatusChange={(st) => handleStatusChange(c.id, st)}
-              />
-            </Animated.View>
-          ))
-        )}
-      </ScrollView>
+        }
+        contentContainerStyle={[s.content, isDesktop && { maxWidth: 1000, alignSelf: 'center', width: '100%' }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
 
       <ActionModal t={t} visible={!!noteModal} type={noteModal?.type ?? 'note'}
         note={noteText} onChangeNote={setNoteText}
@@ -212,6 +244,16 @@ export default function AdminComplaints() {
     </SafeAreaView>
   );
 }
+
+const MemoizedPremiumCard = React.memo(PremiumCard, (prevProps, nextProps) => {
+  return (
+    prevProps.expanded === nextProps.expanded &&
+    prevProps.complaint.id === nextProps.complaint.id &&
+    prevProps.complaint.status === nextProps.complaint.status &&
+    prevProps.complaint.updatedAt === nextProps.complaint.updatedAt &&
+    prevProps.complaint.notes.length === nextProps.complaint.notes.length
+  );
+});
 
 function PremiumCard({ t, complaint: c, expanded, onToggle, onView, onNote, onEscalate, onArchive, onRestrict, onBlock, onStatusChange }: {
   t: (key: string) => string;
