@@ -164,7 +164,8 @@ export default function ComplaintDetailsScreen() {
             }
           />
           <InfoRow label="Ward" value={complaint.ward} />
-          <InfoRow label="Locality" value={complaint.location} isLast />
+          <InfoRow label="Complaint Location" value={complaint.manualLocation || complaint.title || 'N/A'} />
+          <InfoRow label="Locality" value={complaint.locality || complaint.location || 'N/A'} isLast />
         </Animated.View>
 
         {/* ── Section 3: Complaint Details ── */}

@@ -20,6 +20,8 @@ export function mapComplaint(item: ApiComplaint): Complaint {
     citizenName: String(item.citizen_name ?? ''), citizenPhone: String(item.citizen_phone_number ?? ''),
     ward: `Ward ${String(item.ward_number ?? '')}${item.ward_name ? ` - ${String(item.ward_name)}` : ''}`.trim(),
     location: String(item.manual_location ?? item.locality ?? ''),
+    manualLocation: item.manual_location ? String(item.manual_location) : undefined,
+    locality: item.locality ? String(item.locality) : undefined,
     images: Array.isArray(item.images) ? item.images.map(String) : item.image_url ? [String(item.image_url)] : [],
     notes: [], createdAt: String(item.created_at ?? new Date().toISOString()), updatedAt: String(item.updated_at ?? item.created_at ?? new Date().toISOString()),
     assignedDepartment: typeof item.assigned_department === 'string'

@@ -328,12 +328,15 @@ export const mr: Record<string, string> = {
   awaitingResolution: "अंतिम निराकरणाच्या प्रतीक्षेत",
   civicTaskCompleted: "नागरी काम पूर्ण म्हणून चिन्हांकित",
   categoryLabel: "श्रेणी",
-  titleLabel: "शीर्षक",
+  titleLabel: "तक्रार ठिकाण",
   descriptionLabel: "वर्णन",
   wardLabel: "वॉर्ड",
   localityLabel: "परिसर",
   submittedOn: "सादर केले",
   assignedDept: "नियुक्त विभाग",
+  complaintLocationLabel: "तक्रार ठिकाण",
+  progressUpdates: "प्रगती अद्यतने",
+  noUpdatesYet: "अधिकाऱ्यांकडून अद्याप कोणतेही अपडेट नाहीत.",
 
   // Ward Screen
   myWardInfo: "माझी वॉर्ड माहिती",

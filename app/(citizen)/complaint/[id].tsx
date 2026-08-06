@@ -1,7 +1,7 @@
 // app/(citizen)/complaint/[id].tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Image, ActivityIndicator } from 'react-native';
 import { STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
@@ -9,6 +9,8 @@ import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useState, useEffect } from 'react';
+import { getCitizenComplaintDetail } from '@/services/citizen-api';
 
 export default function ComplaintDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,6 +19,30 @@ export default function ComplaintDetail() {
   const { t } = useTranslation();
 
   const c = complaints.find((x) => x.id === id);
+
+  const [detailedComplaint, setDetailedComplaint] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!c) return;
+    let active = true;
+    getCitizenComplaintDetail(Number(c.id))
+      .then((data) => {
+        if (active) {
+          setDetailedComplaint(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch complaint details:', err);
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [c?.id]);
 
   if (!c) {
     router.replace('/(citizen)/my-complaints');
@@ -147,6 +173,36 @@ export default function ComplaintDetail() {
             })}
           </GlassCard>
         </Animated.View>
+
+        <Animated.View entering={FadeInDown.duration(400).delay(250)}>
+          <Text style={styles.sectionHeading}>{t('progressUpdates') || 'Progress Updates'}</Text>
+          <GlassCard style={styles.notesCard}>
+            {loading ? (
+              <ActivityIndicator color={COLORS.primary} style={{ padding: 20 }} />
+            ) : detailedComplaint?.notes && detailedComplaint.notes.length > 0 ? (
+              detailedComplaint.notes.map((note: any, idx: number) => {
+                const isLast = idx === detailedComplaint.notes.length - 1;
+                let displayRole = note.author_role;
+                if (note.author_role === 'Nagarsevak') {
+                  displayRole = t('roleNagarsevakLabel') || 'Ward Officer';
+                } else if (note.author_role === 'Department') {
+                  displayRole = t('roleDepartmentLabel') || 'Department Officer';
+                } else if (note.author_role === 'Admin') {
+                  displayRole = t('roleAdminLabel') || 'Main Admin';
+                }
+
+                return (
+                  <View key={idx} style={[styles.noteItem, !isLast && styles.noteItemBorder]}>
+                    <Text style={styles.noteAuthor}>{displayRole}</Text>
+                    <Text style={styles.noteText}>{note.note_text}</Text>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.noNotesText}>{t('noUpdatesYet') || 'No updates from officials yet.'}</Text>
+            )}
+          </GlassCard>
+        </Animated.View>
       </ScrollView>
     </CitizenScreen>
   );
@@ -254,4 +310,10 @@ const styles = StyleSheet.create({
   textActive: { color: COLORS.accent },
   textDone: { color: COLORS.primary },
   textUpcoming: { color: COLORS.textMuted },
+  notesCard: { padding: 16, marginBottom: 20 },
+  noteItem: { paddingVertical: 12 },
+  noteItemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  noteAuthor: { fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 4 },
+  noteText: { fontSize: 14, color: COLORS.text, lineHeight: 20 },
+  noNotesText: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', paddingVertical: 16 },
 });
