@@ -33,6 +33,8 @@ class MainAdminComplaintListItem(BaseModel):
     created_at: datetime
     images: list[str] = []
     is_escalated: bool = False
+    manual_location: Optional[str] = None
+    locality: Optional[str] = None
 
 
 class MainAdminComplaintEscalationInfo(BaseModel):

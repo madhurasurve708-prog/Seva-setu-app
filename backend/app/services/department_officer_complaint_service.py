@@ -104,6 +104,7 @@ class DepartmentOfficerComplaintService:
                 "created_at": c.created_at,
                 "image_url": c.image_url,
                 "assigned_department": context.department_name,
+                "manual_location": c.manual_location,
             }
             for c in complaints
         ]
