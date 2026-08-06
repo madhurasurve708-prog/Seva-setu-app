@@ -98,6 +98,8 @@ class MainAdminComplaintService:
                 created_at=complaint.created_at,
                 images=images,
                 is_escalated=complaint.id in escalated_ids,
+                manual_location=complaint.manual_location,
+                locality=complaint.citizen.locality,
             ))
         
         return {

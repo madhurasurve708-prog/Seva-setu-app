@@ -184,16 +184,16 @@ export default function ComplaintDetail() {
                 const isLast = idx === detailedComplaint.notes.length - 1;
                 let displayRole = note.author_role;
                 if (note.author_role === 'Nagarsevak') {
-                  displayRole = t('roleNagarsevakLabel') || 'Ward Officer';
+                  displayRole = 'Nagarsevak';
                 } else if (note.author_role === 'Department') {
-                  displayRole = t('roleDepartmentLabel') || 'Department Officer';
+                  displayRole = 'Department Officer';
                 } else if (note.author_role === 'Admin') {
-                  displayRole = t('roleAdminLabel') || 'Main Admin';
+                  displayRole = 'Main Admin';
                 }
 
                 return (
                   <View key={idx} style={[styles.noteItem, !isLast && styles.noteItemBorder]}>
-                    <Text style={styles.noteAuthor}>{displayRole}</Text>
+                    <Text style={styles.noteAuthor}>{note.author_name} ({displayRole})</Text>
                     <Text style={styles.noteText}>{note.note_text}</Text>
                   </View>
                 );

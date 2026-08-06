@@ -22,6 +22,7 @@ class NagarsevakComplaintListItem(BaseModel):
     status: str
     created_at: datetime
     image_url: Optional[str] = None
+    manual_location: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

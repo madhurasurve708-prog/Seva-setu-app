@@ -50,6 +50,7 @@ class NagarsevakComplaintService:
                 "status": c.status,
                 "created_at": c.created_at,
                 "image_url": c.image_url,
+                "manual_location": c.manual_location,
             }
             for c in complaints
         ]
