@@ -32,13 +32,22 @@ app = FastAPI(
 )
 
 # Configure CORS origins
-cors_origins = []
-if settings.CORS_ORIGINS:
-    cors_origins.extend([origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()])
+cors_origins = [
+    "http://localhost:8081",
+    "http://localhost:8082",
+    "http://localhost:19006",
+    "https://seva-setu-app.onrender.com",
+]
 
-# During development, allow localhost:8081 and 127.0.0.1:8081 for Expo Web
+if settings.CORS_ORIGINS:
+    for origin in settings.CORS_ORIGINS.split(","):
+        stripped = origin.strip()
+        if stripped and stripped not in cors_origins:
+            cors_origins.append(stripped)
+
+# During development, allow 127.0.0.1 equivalents for Expo Web
 if settings.ALLOW_DEV_MODE:
-    dev_origins = ["http://localhost:8081", "http://127.0.0.1:8081"]
+    dev_origins = ["http://127.0.0.1:8081", "http://127.0.0.1:8082"]
     for origin in dev_origins:
         if origin not in cors_origins:
             cors_origins.append(origin)
@@ -47,10 +56,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.exception_handler(SQLAlchemyError)
 async def database_exception_handler(_: Request, __: SQLAlchemyError) -> JSONResponse:
