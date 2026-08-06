@@ -1,3 +1,4 @@
+// app/(auth)/nagarsevak-login.tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,11 +13,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import LanguageToggle from '@/components/common/LanguageToggle';
+import { AuthHero } from '@/components/common/AuthScaffold';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
@@ -28,6 +31,8 @@ export default function NagarsevakLoginScreen() {
   const insets = useSafeAreaInsets();
   const { setAuthenticatedUser } = useOfficial();
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   const [officialId, setOfficialId] = useState('');
   const [ward, setWard] = useState('');
@@ -59,13 +64,22 @@ export default function NagarsevakLoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.safeArea, isDesktop && styles.safeAreaDesktop]} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
-        style={[styles.header, { paddingTop: insets.top + 14 }]}
-      >
-        <View style={styles.headerContent}>
+      {isDesktop ? (
+        <AuthHero
+          compact
+          title={t('nagarsevakLogin')}
+          subtitle="Malvan Municipal Council"
+          showLogo
+          onBack={() => router.back()}
+        />
+      ) : (
+        <LinearGradient
+          colors={[COLORS.primary, COLORS.secondary]}
+          style={[styles.header, { paddingTop: insets.top + 14 }]}
+        >
+          <View style={[styles.headerContent, isDesktop && styles.headerContentDesktop]}>
           <Pressable
             onPress={() => router.back()}
             style={styles.backBtn}
@@ -82,14 +96,15 @@ export default function NagarsevakLoginScreen() {
           </View>
           <LanguageToggle size={38} variant="dark" />
         </View>
-      </LinearGradient>
+        </LinearGradient>
+      )}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
+        style={[styles.container, isDesktop && styles.containerDesktop]}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.card}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]} keyboardShouldPersistTaps="handled">
+          <View style={[styles.card, isDesktop && styles.cardDesktop]}>
             <Text style={styles.cardTitle}>{t('signInToContinue')}</Text>
             <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
 
@@ -160,15 +175,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  safeAreaDesktop: { backgroundColor: '#F3F7FB' },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
   },
+  headerDesktop: { minHeight: 276, paddingBottom: 72 },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
+  headerContentDesktop: { width: '100%', maxWidth: 980, alignSelf: 'center' },
   backBtn: {
     width: 36,
     height: 36,
@@ -200,16 +218,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: -12,
   },
+  containerDesktop: { backgroundColor: '#F5F8FC', justifyContent: 'center', marginTop: 0 },
   scrollContent: {
     padding: 20,
     paddingTop: 8,
   },
+  scrollContentDesktop: { width: '100%', maxWidth: 580, alignSelf: 'center', paddingTop: 0, paddingBottom: 40, flexGrow: 1, justifyContent: 'center' },
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 24,
     padding: 20,
     ...SHADOWS.card,
   },
+  cardDesktop: { marginTop: 0, borderRadius: 24, padding: 32, borderWidth: 1, borderColor: 'rgba(226,232,240,0.95)', ...SHADOWS.xl },
   cardTitle: {
     ...TYPOGRAPHY.h3,
     color: COLORS.text,

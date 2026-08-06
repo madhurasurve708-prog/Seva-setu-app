@@ -1,14 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 
 import LanguageToggle from "@/components/common/LanguageToggle";
@@ -156,9 +149,9 @@ export default function DashboardScreen() {
       <View style={styles.headerBar}>
         <View style={styles.brandWrap}>
           <Image
-            source={require("@/assets/images/logo.jpeg")}
+            source={require("@/assets/images/logo.webp")}
             style={styles.logo}
-            resizeMode="contain"
+            contentFit="contain"
           />
           <View>
             <Text style={styles.headerTitle}>{t("sevaSetuTitle")}</Text>

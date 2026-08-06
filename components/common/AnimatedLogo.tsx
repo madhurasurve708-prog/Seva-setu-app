@@ -1,5 +1,6 @@
 import React from "react";
-import { Image, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import Animated, {
     FadeIn,
     ZoomIn,
@@ -35,9 +36,9 @@ export default function AnimatedLogo() {
         style={animatedStyle}
       >
         <Image
-          source={require("../../assets/images/logo.jpeg")}
+          source={require("../../assets/images/logo.webp")}
           style={styles.logo}
-          resizeMode="contain"
+          contentFit="contain"
         />
       </Animated.View>
     </Animated.View>

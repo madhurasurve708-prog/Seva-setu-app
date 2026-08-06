@@ -52,7 +52,7 @@ export default function HeroBanner({
       {/* Hero image — full bleed, no clipping */}
       <View style={styles.bannerCard}>
         <ImageBackground
-          source={require('@/assets/images/hero_banner.png')}
+          source={require('@/assets/images/hero_banner.webp')}
           style={styles.imageBackground}
           contentFit="cover"
           contentPosition="center"
