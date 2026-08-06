@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS, SHADOWS } from '@/constants/theme';
@@ -50,7 +51,13 @@ const tabStyles = StyleSheet.create({
 
 export default function AdminLayout() {
   const { t } = useTranslation();
-  const { ready, isAuthenticated, profile, complaints } = useOfficial();
+  const { ready, isAuthenticated, profile, complaints, loadComplaints } = useOfficial();
+
+  useEffect(() => {
+    if (isAuthenticated && ['nagaradhyaksha', 'main-admin'].includes(profile.role)) {
+      void loadComplaints().catch(() => {});
+    }
+  }, [isAuthenticated, profile.role, loadComplaints]);
 
   if (!ready) {
     return (
