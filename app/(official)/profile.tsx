@@ -46,6 +46,10 @@ export default function ProfileScreen() {
       Alert.alert('Validation', 'Phone number is required.');
       return;
     }
+    if (password.trim()) {
+      Alert.alert('Security', 'Please change your password from the Security Settings page to verify your identity.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -55,17 +59,17 @@ export default function ProfileScreen() {
         phone: phone.trim(),
         email: email.trim(),
         language: language.trim(),
-        ...(password.trim() ? { password: password.trim() } : {}),
         avatarInitial: name.trim().charAt(0).toUpperCase() || 'U',
       };
       await saveProfile(updated);
       Alert.alert('Success', 'Profile updated successfully.');
-    } catch {
-      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
   };
+
 
   const doLogout = async () => {
     setLoggingOut(true);

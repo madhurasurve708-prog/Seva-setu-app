@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -45,10 +46,15 @@ export default function DepartmentComplaintDetails() {
   }
 
   const change = async (status: 'Pending' | 'In Progress' | 'Resolved') => {
-    await updateStatus(complaint.id, status, note || undefined);
-    setNote('');
-    const freshNotes = await fetchNotes(complaint.id).catch(() => []);
-    setNotes(freshNotes);
+    try {
+      await updateStatus(complaint.id, status, note || undefined);
+      setNote('');
+      const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+      setNotes(freshNotes);
+      Alert.alert(t('updated') || 'Updated', `Status set to ${STATUS_LABEL(t, status)}.`);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update status.');
+    }
   };
 
   return (
@@ -73,6 +79,22 @@ export default function DepartmentComplaintDetails() {
         </GlassCard>
 
         <Text style={styles.heading}>{t('imagesLabel')}</Text>
+        {complaint.images && complaint.images.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.photoContainer}
+          >
+            {complaint.images.map((img, idx) => (
+              <Image
+                key={idx}
+                source={{ uri: img }}
+                style={styles.photo}
+                contentFit="cover"
+              />
+            ))}
+          </ScrollView>
+        )}
         <GlassCard style={styles.image}>
           <MaterialCommunityIcons name="image-plus" size={28} color={COLORS.primary} />
           <Text style={styles.sub}>{t('completionPhotoPlaceholder')}</Text>
@@ -98,10 +120,15 @@ export default function DepartmentComplaintDetails() {
           <Pressable
             onPress={async () => {
               if (note.trim()) {
-                await addNote(complaint.id, note);
-                setNote('');
-                const freshNotes = await fetchNotes(complaint.id).catch(() => []);
-                setNotes(freshNotes);
+                try {
+                  await addNote(complaint.id, note);
+                  setNote('');
+                  const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+                  setNotes(freshNotes);
+                  Alert.alert('Success', 'Note added successfully.');
+                } catch (err) {
+                  Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add note.');
+                }
               }
             }}
             style={styles.noteBtn}
@@ -156,6 +183,8 @@ const styles = StyleSheet.create({
   line: { fontSize: 13, fontWeight: '800', color: COLORS.text },
   sub: { fontSize: 12, color: COLORS.textMuted, lineHeight: 18 },
   image: { padding: 22, alignItems: 'center' },
+  photoContainer: { flexDirection: 'row', gap: 10, paddingVertical: 4 },
+  photo: { width: 120, height: 90, borderRadius: 12 },
   input: { borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, padding: 11, minHeight: 75, textAlignVertical: 'top', color: COLORS.text },
   buttons: { flexDirection: 'row', gap: 7 },
   action: { flex: 1, paddingVertical: 9, alignItems: 'center', backgroundColor: '#EAF3FF', borderRadius: 10 },
