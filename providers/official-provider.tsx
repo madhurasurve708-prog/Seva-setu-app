@@ -1,6 +1,6 @@
 import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail } from '@/services/official-api';
+import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail, updateNagarsevakProfileName, updateNagarsevakProfilePhone, changeNagarsevakPassword } from '@/services/official-api';
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -157,6 +157,7 @@ type OfficialContextValue = {
   restoreComplaint: (id: string) => Promise<void>;
   savePreferences: (preferences: OfficialPreferences) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (current: string, next: string) => Promise<void>;
 };
 
 const OfficialContext = createContext<OfficialContextValue | undefined>(undefined);
@@ -253,6 +254,18 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   }, [profile.role]);
 
   const saveProfile = async (next: OfficialProfile) => {
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired. Please sign in again.');
+
+    if (profile.role === 'nagarsevak') {
+      if (next.name !== profile.name) {
+        await updateNagarsevakProfileName(next.name, token);
+      }
+      if (next.phone !== profile.phone) {
+        await updateNagarsevakProfilePhone(next.phone, token);
+      }
+    }
+
     const updated = {
       ...next,
       avatarInitial: getAvatarInitial(next.name),
@@ -261,6 +274,17 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     };
     setProfile(updated);
     await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+  };
+
+  const changePassword = async (current: string, nextPassword: string) => {
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired. Please sign in again.');
+
+    if (profile.role === 'nagarsevak') {
+      await changeNagarsevakPassword(current, nextPassword, token);
+    } else {
+      throw new Error('Password changes are not supported for this role.');
+    }
   };
 
   const savePreferences = async (next: OfficialPreferences) => {
@@ -393,6 +417,7 @@ export function OfficialProvider({ children }: PropsWithChildren) {
       restoreComplaint,
       savePreferences,
       logout,
+      changePassword,
     }),
     [ready, isAuthenticated, profile, complaints, preferences, announcements, announcementsLoading, announcementsError, loadAnnouncements, complaintsLoading, complaintsError, loadComplaints, fetchNotes]
   );

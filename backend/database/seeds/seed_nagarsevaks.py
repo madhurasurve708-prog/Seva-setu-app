@@ -210,17 +210,7 @@ def _seed_nagarsevaks(db: Session) -> None:
     )
     db.execute(stmt)
 
-    # Correct phone numbers on existing rows so re-running the seed always
-    # brings the database in line with the master sheet.
-    phone_map = {(r["name"], r["ward_id"]): r["phone_number"] for r in rows}
-    phone_fixed = 0
-    for nag in db.query(Nagarsevak).all():
-        correct_phone = phone_map.get((nag.name, nag.ward_id))
-        if correct_phone and nag.phone_number != correct_phone:
-            nag.phone_number = correct_phone
-            phone_fixed += 1
-    if phone_fixed:
-        print(f"  Corrected {phone_fixed} phone number(s) to match master sheet.")
+
 
     print(f"  {len(rows)} nagarsevak rows processed (skipped if already exist).")
 
