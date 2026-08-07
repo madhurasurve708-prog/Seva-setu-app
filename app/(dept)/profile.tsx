@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlassCard } from '@/components/common/GlassCard';
@@ -41,15 +41,20 @@ export default function DepartmentProfile() {
     ]);
   };
 
-  const infoRows: { label: string; value: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }[] = [
+  const openContact = (value: string, kind: 'phone' | 'email') => {
+    if (!value || value === '—') return;
+    void Linking.openURL(kind === 'phone' ? `tel:${value.replace(/[^+\d]/g, '')}` : `mailto:${value}`);
+  };
+
+  const infoRows: { label: string; value: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; contact?: 'phone' | 'email' }[] = [
     {
       label: t('department'),
       value: profile?.department ?? '—',
       icon: (meta?.icon ?? 'office-building-outline') as any,
     },
     { label: t('roleLabel'),   value: t('deptOfficer'),      icon: 'shield-account-outline' },
-    { label: t('phoneLabel'), value: profile?.phone ?? '—', icon: 'phone-outline' },
-    { label: t('email'),       value: profile?.email ?? '—', icon: 'email-outline' },
+    { label: t('phoneLabel'), value: profile?.phone ?? '—', icon: 'phone-outline', contact: 'phone' },
+    { label: t('email'),       value: profile?.email ?? '—', icon: 'email-outline', contact: 'email' },
     { label: t('employeeId'), value: profile?.employeeId ?? '—', icon: 'card-account-details-outline' },
   ];
 
@@ -101,8 +106,10 @@ export default function DepartmentProfile() {
         <Animated.View entering={FadeInDown.duration(360).delay(60)}>
           <GlassCard style={styles.infoCard}>
             {infoRows.map((row, idx) => (
-              <View
+              <Pressable
                 key={row.icon}
+                disabled={!row.contact}
+                onPress={() => row.contact && openContact(row.value, row.contact)}
                 style={[
                   styles.infoRow,
                   idx === infoRows.length - 1 && { borderBottomWidth: 0 },
@@ -115,7 +122,7 @@ export default function DepartmentProfile() {
                   <Text style={styles.infoLabel}>{row.label}</Text>
                   <Text style={styles.infoValue} numberOfLines={1}>{row.value}</Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </GlassCard>
         </Animated.View>

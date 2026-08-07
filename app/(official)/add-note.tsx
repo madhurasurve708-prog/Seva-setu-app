@@ -14,11 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function AddNoteScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { complaints, addComplaintNote } = useOfficial();
+  const { t } = useTranslation();
 
   const [noteText, setNoteText] = useState('');
   const [saving, setSaving] = useState(false);
@@ -30,9 +32,9 @@ export default function AddNoteScreen() {
       <SafeAreaView style={styles.emptySafe} edges={['top']}>
         <View style={styles.emptyInner}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
-          <Text style={styles.emptyTitle}>Complaint Not Found</Text>
+          <Text style={styles.emptyTitle}>{t('complaintNotFound')}</Text>
           <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-            <Text style={styles.emptyBtnText}>Go Back</Text>
+            <Text style={styles.emptyBtnText}>{t('back')}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -43,15 +45,15 @@ export default function AddNoteScreen() {
 
   const handleSave = async () => {
     if (!noteText.trim()) {
-      Alert.alert('Empty Note', 'Please enter some text before saving.');
+      Alert.alert(t('emptyNote'), t('emptyNoteMessage'));
       return;
     }
     setSaving(true);
     try {
       await addComplaintNote(complaint.id, noteText.trim());
-      Alert.alert('Saved', 'Note added to complaint timeline.', [
+      Alert.alert(t('noteSaved'), t('noteSavedMessage'), [
         {
-          text: 'OK',
+          text: t('ok'),
           onPress: () =>
             router.replace({
               pathname: '/(official)/complaint-details',
@@ -60,7 +62,7 @@ export default function AddNoteScreen() {
         },
       ]);
     } catch {
-      Alert.alert('Error', 'Failed to save note. Please try again.');
+      Alert.alert(t('error'), t('saveNoteFailed'));
     } finally {
       setSaving(false);
     }
@@ -75,7 +77,7 @@ export default function AddNoteScreen() {
             <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
           </Pressable>
           <View>
-            <Text style={styles.headerTitle}>Add Progress Note</Text>
+            <Text style={styles.headerTitle}>{t('addProgressNote')}</Text>
             <Text style={styles.headerSub}>{complaint.id}</Text>
           </View>
         </View>
@@ -118,13 +120,13 @@ export default function AddNoteScreen() {
               size={16}
               color={COLORS.primary}
             />
-            <Text style={styles.noteLabel}>Progress Note</Text>
+            <Text style={styles.noteLabel}>{t('progressNote')}</Text>
           </View>
           <Text style={styles.noteHint}>
-            Write field observations, status updates or actions taken. This note will appear in the complaint timeline.
+            {t('progressNoteHint')}
           </Text>
           <TextInput
-            placeholder="Type your note here…"
+            placeholder={t('notePlaceholder')}
             placeholderTextColor={COLORS.textPlaceholder}
             multiline
             value={noteText}
@@ -133,7 +135,7 @@ export default function AddNoteScreen() {
             textAlignVertical="top"
             autoFocus
           />
-          <Text style={styles.charCount}>{noteText.length} characters</Text>
+          <Text style={styles.charCount}>{noteText.length} {t('characters')}</Text>
         </Animated.View>
 
         {/* ── Save button ── */}
@@ -149,7 +151,7 @@ export default function AddNoteScreen() {
               color={COLORS.white}
             />
             <Text style={styles.saveBtnText}>
-              {saving ? 'Saving…' : 'Save Note'}
+              {saving ? t('saving') : t('saveNote')}
             </Text>
           </Pressable>
         </Animated.View>

@@ -34,11 +34,12 @@ export function CitizenScreen({
         onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
         items={[
           { label: 'Dashboard', route: '/(citizen)/dashboard', icon: 'view-dashboard-outline' },
-          { label: 'Ward Wise', route: '/(citizen)/ward', icon: 'map-marker-outline' },
-          { label: 'Complaints', route: '/(citizen)/my-complaints', icon: 'clipboard-text-outline' },
+          { label: 'Report Complaint', route: '/(citizen)/report-complaint', icon: 'plus-circle-outline' },
+          { label: 'My Complaints', route: '/(citizen)/my-complaints', icon: 'clipboard-text-outline' },
+          { label: 'Ward Information', route: '/(citizen)/ward', icon: 'map-marker-outline' },
           { label: 'Announcements', route: '/(citizen)/announcements', icon: 'bullhorn-outline' },
-          { label: 'Settings', route: '/(citizen)/settings', icon: 'cog-outline' },
           { label: 'Profile', route: '/(citizen)/profile', icon: 'account-outline' },
+          { label: 'Settings', route: '/(citizen)/settings', icon: 'cog-outline' },
         ]}>
         {children}
       </DesktopPortal>

@@ -7,14 +7,16 @@ import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Image, ImageBackground } from 'expo-image';
@@ -36,6 +38,16 @@ export default function Dashboard() {
   const router = useRouter();
   const { complaints, profile } = useCitizen();
   const { t } = useTranslation();
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+
+  const [showHeavySections, setShowHeavySections] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowHeavySections(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const greeting = useMemo(() => getGreeting(t), [t]);
 
@@ -85,29 +97,31 @@ export default function Dashboard() {
   return (
     <CitizenScreen title="Seva Setu" hideHeader>
       {/* ---------------- BRANDED HEADER ---------------- */}
-      <SafeAreaView style={styles.safeHeader} edges={['top']}>
-        <View style={styles.brandedHeader}>
-          <View style={styles.headerLeft}>
-            <Image source={require('../../assets/images/logo.webp')} style={styles.headerLogo} contentFit="contain" />
-            <View>
-              <Text style={styles.headerTitle}>SEVA SETU</Text>
-              <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
+      {!isDesktop && (
+        <SafeAreaView style={styles.safeHeader} edges={['top']}>
+          <View style={styles.brandedHeader}>
+            <View style={styles.headerLeft}>
+              <Image source={require('../../assets/images/logo.webp')} style={styles.headerLogo} contentFit="contain" />
+              <View>
+                <Text style={styles.headerTitle}>SEVA SETU</Text>
+                <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
+              </View>
+            </View>
+            <View style={styles.headerRight}>
+              <LanguageToggle size={36} variant="light" />
+              <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
+                {profile?.avatar || profile?.profileImage ? (
+                  <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
+                ) : (
+                  <View style={styles.headerAvatar}>
+                    <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
+                  </View>
+                )}
+              </Pressable>
             </View>
           </View>
-          <View style={styles.headerRight}>
-            <LanguageToggle size={36} variant="light" />
-            <Pressable onPress={() => router.push('/(citizen)/profile')} style={styles.headerAvatarWrap}>
-              {profile?.avatar || profile?.profileImage ? (
-                <Image source={{ uri: profile.avatar || profile.profileImage }} style={styles.headerAvatarImg} />
-              ) : (
-                <View style={styles.headerAvatar}>
-                  <Text style={styles.headerAvatarTxt}>{avatarInitial}</Text>
-                </View>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -174,6 +188,14 @@ export default function Dashboard() {
           <View style={styles.statsGrid}>
             {[
               {
+                label: t('totalComplaints'),
+                sub: t('overallRecord'),
+                value: counts.total,
+                colors: ['#E3F2FD', '#BBDEFB'] as const,
+                iconColor: '#2E86DE',
+                icon: 'clipboard-text-outline' as const,
+              },
+              {
                 label: t('pending2'),
                 sub: t('awaitingAction'),
                 value: counts.pending,
@@ -185,8 +207,8 @@ export default function Dashboard() {
                 label: t('inProgress2'),
                 sub: t('beingResolved'),
                 value: counts.progress,
-                colors: ['#E3F2FD', '#BBDEFB'] as const,
-                iconColor: '#2E86DE',
+                colors: ['#E0F7FA', '#B2EBF2'] as const,
+                iconColor: '#00ACC1',
                 icon: 'progress-wrench' as const,
               },
               {
@@ -197,19 +219,11 @@ export default function Dashboard() {
                 iconColor: '#10B981',
                 icon: 'check-circle-outline' as const,
               },
-              {
-                label: t('successRate2'),
-                sub: t('overallRecord'),
-                value: `${resolvedPct}%`,
-                colors: ['#EDE7F6', '#D1C4E9'] as const,
-                iconColor: '#7C4DFF',
-                icon: 'chart-donut' as const,
-              },
             ].map((item, idx) => (
               <Animated.View
                 key={item.label}
                 entering={FadeInDown.duration(400).delay(80 + idx * 60)}
-                style={styles.statCardWrap}
+                style={[styles.statCardWrap, isDesktop && styles.statCardWrapDesktop]}
               >
                 <LinearGradient
                   colors={item.colors}
@@ -229,174 +243,178 @@ export default function Dashboard() {
           </View>
         </View>
 
-        {/* ---------------- RECENT COMPLAINTS ---------------- */}
-        <View style={styles.sectionBlock}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>{t('recentComplaints')}</Text>
-            {complaints.length > 0 && (
-              <Pressable onPress={() => router.push('/(citizen)/my-complaints')} hitSlop={8}>
-                <Text style={styles.viewMoreLink}>{t('viewAll2')}</Text>
-              </Pressable>
-            )}
-          </View>
-
-          {recentComplaints.length === 0 ? (
-            <View style={styles.emptyBox}>
-              <MaterialCommunityIcons name="clipboard-text-outline" size={26} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>{t('noComplaintsYet')}</Text>
-            </View>
-          ) : (
-            recentComplaints.map((c, idx) => {
-              const matched = CATEGORIES.find((cat) => cat.label === c.category);
-              const icon = matched ? matched.icon : 'alert-circle-outline';
-              const statusColor = STATUS_COLORS[c.status] || COLORS.textMuted;
-              const dateFmt = new Date(c.submittedAt).toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'short',
-              });
-              return (
-                <Animated.View key={c.id} entering={FadeInRight.duration(400).delay(120 + idx * 70)}>
-                  <Pressable
-                    onPress={() =>
-                      router.push({ pathname: '/(citizen)/complaint/[id]', params: { id: c.id } })
-                    }
-                    style={({ pressed }) => [styles.complaintCard, pressed && { opacity: 0.9 }]}
-                  >
-                    <View style={styles.complaintIconCircle}>
-                      <MaterialCommunityIcons name={icon} size={19} color={COLORS.primaryLight} />
-                    </View>
-                    <View style={styles.complaintBody}>
-                      <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
-                      <View style={styles.complaintMetaRow}>
-                        <Text style={styles.complaintCategory}>{c.category}</Text>
-                        <Text style={styles.complaintDot}>•</Text>
-                        <Text style={styles.complaintDate}>{dateFmt}</Text>
-                      </View>
-                    </View>
-                    <View
-                      style={[
-                        styles.statusChip,
-                        { backgroundColor: `${statusColor}16`, borderColor: statusColor },
-                      ]}
-                    >
-                      <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-                      <Text style={[styles.statusChipText, { color: statusColor }]}>{c.status}</Text>
-                    </View>
+        {showHeavySections && (
+          <>
+            {/* ---------------- RECENT COMPLAINTS ---------------- */}
+            <View style={styles.sectionBlock}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionHeading}>{t('recentComplaints')}</Text>
+                {complaints.length > 0 && (
+                  <Pressable onPress={() => router.push('/(citizen)/my-complaints')} hitSlop={8}>
+                    <Text style={styles.viewMoreLink}>{t('viewAll2')}</Text>
                   </Pressable>
-                </Animated.View>
-              );
-            })
-          )}
-        </View>
+                )}
+              </View>
 
-        {/* ---------------- WARD INFO ---------------- */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>{t('wardInformation')}</Text>
-          <LinearGradient
-            colors={['#0B4F8A', '#1A6BB5']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.wardCard}
-          >
-            <View style={styles.wardTopRow}>
-              <View style={styles.wardIconCircle}>
-                <MaterialCommunityIcons name="office-building-marker-outline" size={22} color={COLORS.white} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.wardName}>{profile?.ward || 'General Ward'}</Text>
-                <Text style={styles.wardLocality}>
-                  {profile?.locality || 'Malvan'}, Malvan Municipal Council
-                </Text>
-              </View>
+              {recentComplaints.length === 0 ? (
+                <View style={styles.emptyBox}>
+                  <MaterialCommunityIcons name="clipboard-text-outline" size={26} color={COLORS.textMuted} />
+                  <Text style={styles.emptyText}>{t('noComplaintsYet')}</Text>
+                </View>
+              ) : (
+                recentComplaints.map((c, idx) => {
+                  const matched = CATEGORIES.find((cat) => cat.label === c.category);
+                  const icon = matched ? matched.icon : 'alert-circle-outline';
+                  const statusColor = STATUS_COLORS[c.status] || COLORS.textMuted;
+                  const dateFmt = new Date(c.submittedAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                  });
+                  return (
+                    <Animated.View key={c.id} entering={FadeInRight.duration(400).delay(120 + idx * 70)}>
+                      <Pressable
+                        onPress={() =>
+                          router.push({ pathname: '/(citizen)/complaint/[id]', params: { id: c.id } })
+                        }
+                        style={({ pressed }) => [styles.complaintCard, pressed && { opacity: 0.9 }]}
+                      >
+                        <View style={styles.complaintIconCircle}>
+                          <MaterialCommunityIcons name={icon} size={19} color={COLORS.primaryLight} />
+                        </View>
+                        <View style={styles.complaintBody}>
+                          <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
+                          <View style={styles.complaintMetaRow}>
+                            <Text style={styles.complaintCategory}>{c.category}</Text>
+                            <Text style={styles.complaintDot}>•</Text>
+                            <Text style={styles.complaintDate}>{dateFmt}</Text>
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.statusChip,
+                            { backgroundColor: `${statusColor}16`, borderColor: statusColor },
+                          ]}
+                        >
+                          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                          <Text style={[styles.statusChipText, { color: statusColor }]}>{c.status}</Text>
+                        </View>
+                      </Pressable>
+                    </Animated.View>
+                  );
+                })
+              )}
             </View>
-            <View style={styles.wardStatsRow}>
-              <View style={styles.wardStatItem}>
-                <MaterialCommunityIcons name="account-tie-outline" size={14} color="rgba(255,255,255,0.85)" />
-                <Text style={styles.wardStatText}>{t('nagarsevakOffice')}</Text>
-              </View>
-              <View style={styles.wardStatDividerV} />
-              <View style={styles.wardStatItem}>
-                <MaterialCommunityIcons name="account-group-outline" size={14} color="rgba(255,255,255,0.85)" />
-                <Text style={styles.wardStatText}>{t('residents')}</Text>
-              </View>
-            </View>
-            <View style={styles.wardProgressTrack}>
-              <View style={[styles.wardProgressFill, { width: `${resolvedPct}%` }]} />
-            </View>
-            <Text style={styles.wardProgressLabel}>{resolvedPct}{t('issuesResolved')}</Text>
-          </LinearGradient>
-        </View>
 
-        {/* ---------------- ANNOUNCEMENTS ---------------- */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>{t('latestAnnouncementsTitle')}</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.announceScroll}
-          >
-            {ANNOUNCEMENTS.slice(0, 4).map((a, idx) => (
-              <Animated.View key={a.id} entering={FadeInRight.duration(400).delay(idx * 70)}>
-                <Pressable
-                  onPress={() => router.push('/(citizen)/announcements')}
-                  style={({ pressed }) => [styles.announceCard, pressed && { opacity: 0.92 }]}
-                >
-                  <LinearGradient
-                    colors={a.priority ? ['#FFF3E0', '#FFE0B2'] : ['#E3F2FD', '#BBDEFB']}
-                    style={styles.announceBadgeRow}
-                  >
-                    <MaterialCommunityIcons
-                      name={a.priority ? 'pin' : 'bullhorn-outline'}
-                      size={12}
-                      color={a.priority ? '#F59E0B' : '#2E86DE'}
-                    />
-                    <Text style={[styles.announceBadgeText, { color: a.priority ? '#F59E0B' : '#2E86DE' }]}>
-                      {a.priority || t('noticeLabel')}
-                    </Text>
-                  </LinearGradient>
-                  <Text style={styles.announceTitle} numberOfLines={2}>{a.title}</Text>
-                  <Text style={styles.announceBody} numberOfLines={3}>{a.body}</Text>
-                  <Text style={styles.announceDate}>{a.date}</Text>
-                </Pressable>
-              </Animated.View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* ---------------- EMERGENCY CONTACTS ---------------- */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionHeading}>{t('emergencyContacts')}</Text>
-          <View style={styles.emergencyGrid}>
-            {[
-              { label: 'Police', phone: '112', icon: 'shield-outline', colors: ['#E3F2FD', '#BBDEFB'], iconColor: '#2E86DE' },
-              { label: 'Fire', phone: '101', icon: 'fire', colors: ['#FFEBEE', '#FFCDD2'], iconColor: '#EF4444' },
-              { label: 'Hospital', phone: '108', icon: 'hospital-box-outline', colors: ['#E8F5E9', '#C8E6C9'], iconColor: '#10B981' },
-              { label: 'Municipality', phone: '02365-252018', icon: 'phone-classic', colors: ['#EDE7F6', '#D1C4E9'], iconColor: '#7C4DFF' },
-            ].map((item, idx) => (
-              <Animated.View
-                key={item.label}
-                entering={FadeInDown.duration(400).delay(80 + idx * 50)}
-                style={styles.emergencyCardWrap}
+            {/* ---------------- WARD INFO ---------------- */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionHeading}>{t('wardInformation')}</Text>
+              <LinearGradient
+                colors={['#0B4F8A', '#1A6BB5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.wardCard}
               >
-                <Pressable
-                  onPress={() => handleCall(item.phone)}
-                  style={({ pressed }) => [pressed && { transform: [{ scale: 0.96 }] }]}
-                >
-                  <LinearGradient
-                    colors={item.colors as any}
-                    style={styles.emergencyCard}
+                <View style={styles.wardTopRow}>
+                  <View style={styles.wardIconCircle}>
+                    <MaterialCommunityIcons name="office-building-marker-outline" size={22} color={COLORS.white} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.wardName}>{profile?.ward || 'General Ward'}</Text>
+                    <Text style={styles.wardLocality}>
+                      {profile?.locality || 'Malvan'}, Malvan Municipal Council
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.wardStatsRow}>
+                  <View style={styles.wardStatItem}>
+                    <MaterialCommunityIcons name="account-tie-outline" size={14} color="rgba(255,255,255,0.85)" />
+                    <Text style={styles.wardStatText}>{t('nagarsevakOffice')}</Text>
+                  </View>
+                  <View style={styles.wardStatDividerV} />
+                  <View style={styles.wardStatItem}>
+                    <MaterialCommunityIcons name="account-group-outline" size={14} color="rgba(255,255,255,0.85)" />
+                    <Text style={styles.wardStatText}>{t('residents')}</Text>
+                  </View>
+                </View>
+                <View style={styles.wardProgressTrack}>
+                  <View style={[styles.wardProgressFill, { width: `${resolvedPct}%` }]} />
+                </View>
+                <Text style={styles.wardProgressLabel}>{resolvedPct}{t('issuesResolved')}</Text>
+              </LinearGradient>
+            </View>
+
+            {/* ---------------- ANNOUNCEMENTS ---------------- */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionHeading}>{t('latestAnnouncementsTitle')}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.announceScroll}
+              >
+                {ANNOUNCEMENTS.slice(0, 4).map((a, idx) => (
+                  <Animated.View key={a.id} entering={FadeInRight.duration(400).delay(idx * 70)}>
+                    <Pressable
+                      onPress={() => router.push('/(citizen)/announcements')}
+                      style={({ pressed }) => [styles.announceCard, pressed && { opacity: 0.92 }]}
+                    >
+                      <LinearGradient
+                        colors={a.priority ? ['#FFF3E0', '#FFE0B2'] : ['#E3F2FD', '#BBDEFB']}
+                        style={styles.announceBadgeRow}
+                      >
+                        <MaterialCommunityIcons
+                          name={a.priority ? 'pin' : 'bullhorn-outline'}
+                          size={12}
+                          color={a.priority ? '#F59E0B' : '#2E86DE'}
+                        />
+                        <Text style={[styles.announceBadgeText, { color: a.priority ? '#F59E0B' : '#2E86DE' }]}>
+                          {a.priority || t('noticeLabel')}
+                        </Text>
+                      </LinearGradient>
+                      <Text style={styles.announceTitle} numberOfLines={2}>{a.title}</Text>
+                      <Text style={styles.announceBody} numberOfLines={3}>{a.body}</Text>
+                      <Text style={styles.announceDate}>{a.date}</Text>
+                    </Pressable>
+                  </Animated.View>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* ---------------- EMERGENCY CONTACTS ---------------- */}
+            <View style={styles.sectionBlock}>
+              <Text style={styles.sectionHeading}>{t('emergencyContacts')}</Text>
+              <View style={styles.emergencyGrid}>
+                {[
+                  { label: 'Police', phone: '112', icon: 'shield-outline', colors: ['#E3F2FD', '#BBDEFB'], iconColor: '#2E86DE' },
+                  { label: 'Fire', phone: '101', icon: 'fire', colors: ['#FFEBEE', '#FFCDD2'], iconColor: '#EF4444' },
+                  { label: 'Hospital', phone: '108', icon: 'hospital-box-outline', colors: ['#E8F5E9', '#C8E6C9'], iconColor: '#10B981' },
+                  { label: 'Municipality', phone: '02365-252018', icon: 'phone-classic', colors: ['#EDE7F6', '#D1C4E9'], iconColor: '#7C4DFF' },
+                ].map((item, idx) => (
+                  <Animated.View
+                    key={item.label}
+                    entering={FadeInDown.duration(400).delay(80 + idx * 50)}
+                    style={styles.emergencyCardWrap}
                   >
-                    <View style={styles.emergencyIconCircle}>
-                      <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor} />
-                    </View>
-                    <Text style={styles.emergencyLabel}>{item.label}</Text>
-                    <Text style={[styles.emergencyPhone, { color: item.iconColor }]}>{item.phone}</Text>
-                  </LinearGradient>
-                </Pressable>
-              </Animated.View>
-            ))}
-          </View>
-        </View>
+                    <Pressable
+                      onPress={() => handleCall(item.phone)}
+                      style={({ pressed }) => [pressed && { transform: [{ scale: 0.96 }] }]}
+                    >
+                      <LinearGradient
+                        colors={item.colors as any}
+                        style={styles.emergencyCard}
+                      >
+                        <View style={styles.emergencyIconCircle}>
+                          <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor} />
+                        </View>
+                        <Text style={styles.emergencyLabel}>{item.label}</Text>
+                        <Text style={[styles.emergencyPhone, { color: item.iconColor }]}>{item.phone}</Text>
+                      </LinearGradient>
+                    </Pressable>
+                  </Animated.View>
+                ))}
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </CitizenScreen>
   );
@@ -600,6 +618,9 @@ const styles = StyleSheet.create({
   },
   statCardWrap: {
     width: STAT_CARD_W,
+  },
+  statCardWrapDesktop: {
+    width: 'calc(50% - 6px)',
   },
   statCard: {
     borderRadius: 20,
