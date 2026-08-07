@@ -69,10 +69,20 @@ export default function ComplaintDetailsScreen() {
     status: 'Pending' | 'In Progress' | 'Resolved',
     note: string,
   ) => {
-    await updateComplaintStatus(complaint.id, status, note);
-    const freshNotes = await fetchNotes(complaint.id).catch(() => []);
-    setNotes(freshNotes);
-    Alert.alert('Updated', `Status set to ${status}.`);
+    try {
+      console.log("[DEBUG] handleStatus: updating status to", status);
+      await updateComplaintStatus(complaint.id, status, note);
+      console.log("[DEBUG] handleStatus: status updated successfully");
+      const freshNotes = await fetchNotes(complaint.id).catch((err) => {
+        console.log("[DEBUG] handleStatus: fetchNotes failed", err);
+        return [];
+      });
+      setNotes(freshNotes);
+      Alert.alert('Updated', `Status set to ${status}.`);
+    } catch (err) {
+      console.error("[DEBUG] handleStatus error:", err);
+      Alert.alert('Error', err instanceof Error ? err.message : String(err));
+    }
   };
 
   const timelineEvents = [
