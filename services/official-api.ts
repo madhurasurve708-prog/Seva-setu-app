@@ -142,3 +142,28 @@ export async function getDepartmentComplaintTimeline(id: string, token: string) 
 export async function getMainAdminComplaintDetail(id: string, token: string) {
   return apiRequest<Record<string, unknown>>(`/api/main-admin/complaints/${id}`, {}, token);
 }
+
+export async function updateNagarsevakProfileName(name: string, token: string) {
+  return apiRequest<Record<string, unknown>>('/api/nagarsevak/profile/name', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  }, token);
+}
+
+export async function updateNagarsevakProfilePhone(phone_number: string, token: string) {
+  return apiRequest<Record<string, unknown>>('/api/nagarsevak/profile/phone', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone_number }),
+  }, token);
+}
+
+export async function changeNagarsevakPassword(current: string, next: string, token: string) {
+  return apiRequest<Record<string, unknown>>('/api/nagarsevak/profile/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ current_password: current, new_password: next }),
+  }, token);
+}
+
