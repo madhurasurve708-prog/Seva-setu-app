@@ -9,7 +9,7 @@ import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 
 export default function SecurityScreen() {
-  const { profile, saveProfile } = useOfficial();
+  const { profile, changePassword } = useOfficial();
 
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -19,15 +19,11 @@ export default function SecurityScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const canSave = current.length > 0 && next.length >= 6 && confirm.length > 0 && !saving;
+  const canSave = current.length > 0 && next.length >= 8 && confirm.length > 0 && !saving;
 
   const handleSave = async () => {
-    if (current !== profile.password) {
-      Alert.alert('Incorrect Password', 'The current password you entered is wrong.');
-      return;
-    }
-    if (next.length < 6) {
-      Alert.alert('Weak Password', 'New password must be at least 6 characters.');
+    if (next.length < 8) {
+      Alert.alert('Weak Password', 'New password must be at least 8 characters.');
       return;
     }
     if (next !== confirm) {
@@ -36,17 +32,18 @@ export default function SecurityScreen() {
     }
     setSaving(true);
     try {
-      await saveProfile({ ...profile, password: next });
+      await changePassword(current, next);
       Alert.alert('Success', 'Password updated successfully.');
       setCurrent('');
       setNext('');
       setConfirm('');
-    } catch {
-      Alert.alert('Error', 'Failed to update password. Please try again.');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update password. Please try again.');
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <OfficialScreen title="Security" showBack>
@@ -82,7 +79,7 @@ export default function SecurityScreen() {
           />
           <PasswordField
             label="New Password"
-            placeholder="Minimum 6 characters"
+            placeholder="Minimum 8 characters"
             value={next}
             onChangeText={setNext}
             show={showNext}
@@ -102,7 +99,7 @@ export default function SecurityScreen() {
         {/* Strength hints */}
         {next.length > 0 && (
           <View style={styles.strengthRow}>
-            <StrengthDot active={next.length >= 6} color={COLORS.success} label="6+ chars" />
+            <StrengthDot active={next.length >= 8} color={COLORS.success} label="8+ chars" />
             <StrengthDot active={/[A-Z]/.test(next)} color="#7C3AED" label="Uppercase" />
             <StrengthDot active={/[0-9]/.test(next)} color="#EA580C" label="Number" />
             <StrengthDot active={/[^A-Za-z0-9]/.test(next)} color={COLORS.primary} label="Symbol" />
