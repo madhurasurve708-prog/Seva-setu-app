@@ -38,9 +38,6 @@ export interface NavRowConfig {
 }
 
 export interface SharedSettingsProps {
-  /** Theme preference — passed down from portal-level context */
-  theme: 'light' | 'dark' | 'system';
-  onThemeChange: (mode: 'light' | 'dark' | 'system') => void;
   /** Toggle rows (notifications etc.) — portal-specific */
   toggleRows?: ToggleRowConfig[];
   /** Extra nav rows before the standard support section */
@@ -62,8 +59,6 @@ export interface SharedSettingsProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SharedSettings({
-  theme,
-  onThemeChange,
   toggleRows = [],
   extraNavRows = [],
   helpRoute,
@@ -83,25 +78,6 @@ export default function SharedSettings({
       overScrollMode="never"
     >
       {/* ── Appearance ── */}
-      <Section title={t('appearance')} icon="eye-outline">
-        <View style={styles.segmentedControl}>
-          {(['light', 'dark', 'system'] as const).map((mode) => {
-            const active = theme === mode;
-            return (
-              <Pressable
-                key={mode}
-                onPress={() => onThemeChange(mode)}
-                style={[styles.segment, active && styles.segmentActive]}
-              >
-                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                  {t(`theme${mode[0].toUpperCase() + mode.slice(1)}`)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Section>
-
       {/* ── Language ── */}
       <Section title={t('language')} icon="translate">
         <View style={styles.langRow}>

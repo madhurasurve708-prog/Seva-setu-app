@@ -50,7 +50,7 @@ function DesktopRoleLanding({ roles, onSelect, heroHeight }: { roles: RoleOption
   return (
     <View style={desktop.root}>
       <View style={[desktop.hero, { height: heroHeight }]}>
-        <ImageBackground source={require('@/assets/images/shivaji.webp')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center">
+        <ImageBackground source={require('@/assets/images/hero_banner.webp')} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="center">
           <LinearGradient colors={['rgba(4,29,54,0.82)', 'rgba(10,75,140,0.74)', 'rgba(4,29,54,0.90)']} locations={[0, .52, 1]} style={StyleSheet.absoluteFill} />
         </ImageBackground>
         <View style={desktop.heroNav}><Text style={desktop.heroNavText}>MALVAN MUNICIPAL COUNCIL</Text><LanguageToggle size={40} variant="dark" /></View>

@@ -10,7 +10,7 @@ type Props = {
 export default function GradientOverlay({ children }: Props) {
   return (
     <ImageBackground
-      source={require("../../assets/images/shivaji.webp")}
+      source={require("../../assets/images/hero_banner.webp")}
       style={styles.background}
       contentFit="cover"
     >
