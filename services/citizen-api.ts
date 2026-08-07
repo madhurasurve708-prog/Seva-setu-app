@@ -117,7 +117,21 @@ export async function uploadCitizenComplaintImage(complaintId: number, imageUri:
   const filename = imageUri.split('/').pop() || 'complaint.jpg';
   const type = filename.endsWith('.png') ? 'image/png' : filename.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
   const form = new FormData();
-  form.append('image', { uri: imageUri, name: filename, type } as unknown as Blob);
+  
+  let fileData: any;
+  if (imageUri.startsWith('data:') || imageUri.startsWith('blob:') || imageUri.startsWith('http')) {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    // Validate size on frontend for web Blobs (5MB = 5,242,880 bytes)
+    if (blob.size > 5242880) {
+      throw new Error('Image size exceeds the maximum limit of 5 MB.');
+    }
+    fileData = blob;
+  } else {
+    fileData = { uri: imageUri, name: filename, type } as any;
+  }
+  
+  form.append('image', fileData, filename);
   return request<CitizenApiComplaint>(`/api/citizen/complaints/${complaintId}/image`, { method: 'PUT', body: form });
 }
 

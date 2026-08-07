@@ -77,6 +77,17 @@ export default function AdminComplaints() {
     return () => clearTimeout(handler);
   }, [searchVal]);
 
+  // Sync status state with params.status parameter
+  useEffect(() => {
+    setStatus(params.status ?? 'All');
+  }, [params.status]);
+
+  // Reset local filters when main parameter context changes
+  useEffect(() => {
+    setPriority('All');
+    setEscalatedOnly(false);
+  }, [params.ward, params.category, params.department]);
+
   const ctxLabel =
     params.ward       ? `${t('ctxWardLabel')} ${params.ward}` :
     params.category   ? `${t('ctxCategoryLabel')} ${params.category}` :
