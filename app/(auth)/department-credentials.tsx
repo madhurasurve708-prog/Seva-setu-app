@@ -74,6 +74,8 @@ export default function DepartmentCredentialsScreen() {
         'बांधकाम विभाग': 'DEPT_BANDHKAM', 'विद्युत विभाग': 'DEPT_VIDYUT',
         'आरोग्य विभाग': 'DEPT_AROGYA', 'उद्याने व बाग विभाग': 'DEPT_UDYAN',
       };
+
+
       const department = departmentKeys[deptName] ?? deptName;
       const { token, profile } = await loginDepartment(department, username.trim(), password);
       await saveOfficialAccessToken(token);
@@ -86,6 +88,138 @@ export default function DepartmentCredentialsScreen() {
       setLoading(false);
     }
   };
+
+  const formContent = (
+    <>
+      {/* Selected department banner */}
+      <Animated.View entering={FadeInDown.duration(360).delay(0)} style={[
+        styles.deptBanner,
+        { backgroundColor: meta?.bg ?? '#EFF6FF' },
+      ]}>
+        <View style={[styles.deptBannerIcon, { backgroundColor: `${meta?.color ?? COLORS.primary}18` }]}>
+          <MaterialCommunityIcons
+            name={(meta?.icon ?? 'office-building-outline') as any}
+            size={24}
+            color={meta?.color ?? COLORS.primary}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.deptBannerLabel}>{t('selectedDept')}</Text>
+          <Text style={[styles.deptBannerName, { color: meta?.color ?? COLORS.primary }]} numberOfLines={2}>
+            {deptName}
+          </Text>
+          {meta?.english ? (
+            <Text style={styles.deptBannerEnglish}>{meta.english}</Text>
+          ) : null}
+        </View>
+        <Pressable
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(auth)/department-login');
+            }
+          }}
+          style={styles.changeDeptBtn}
+          hitSlop={8}
+        >
+          <Text style={[styles.changeDeptText, { color: meta?.color ?? COLORS.primary }]}>
+            {t('change')}
+          </Text>
+        </Pressable>
+      </Animated.View>
+
+      {/* Demo Credentials Pill */}
+      {demoCred ? (
+        <Animated.View entering={FadeInDown.duration(320).delay(80)}>
+          <Pressable
+            onPress={() => {
+              setUsername(demoCred.username);
+              setPassword(demoCred.password);
+            }}
+            style={styles.demoPill}
+          >
+            <MaterialCommunityIcons name="information-outline" size={18} color="#A66A00" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.demoLabel}>Demo Credentials • Tap to fill</Text>
+              <Text style={styles.demoValue}>
+                ID: {demoCred.username}  |  Password: {demoCred.password}
+              </Text>
+            </View>
+          </Pressable>
+        </Animated.View>
+      ) : null}
+
+      {/* Username field */}
+      <Animated.View entering={FadeInDown.duration(320).delay(120)}>
+        <Text style={styles.fieldLabel}>{t('departmentId')}</Text>
+        <View style={[styles.inputRow, usernameError ? styles.inputError : null]}>
+          <MaterialCommunityIcons
+            name="account-circle-outline"
+            size={20}
+            color={usernameError ? COLORS.danger : COLORS.textMuted}
+            style={styles.inputIcon}
+          />
+          <TextInput
+            value={username}
+            onChangeText={(v) => { setUsername(v); setUsernameError(''); }}
+            placeholder={t('usernamePlaceholder')}
+            placeholderTextColor={COLORS.textPlaceholder}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            style={styles.inputText}
+          />
+        </View>
+        {usernameError ? (
+          <Text style={styles.errorText}>{usernameError}</Text>
+        ) : null}
+      </Animated.View>
+
+      {/* Password field */}
+      <Animated.View entering={FadeInDown.duration(320).delay(170)}>
+        <Text style={styles.fieldLabel}>{t('password')}</Text>
+        <View style={[styles.inputRow, passwordError ? styles.inputError : null]}>
+          <MaterialCommunityIcons
+            name="lock-outline"
+            size={20}
+            color={passwordError ? COLORS.danger : COLORS.textMuted}
+            style={styles.inputIcon}
+          />
+          <TextInput
+            value={password}
+            onChangeText={(v) => { setPassword(v); setPasswordError(''); }}
+            placeholder={t('enterPassword')}
+            placeholderTextColor={COLORS.textPlaceholder}
+            secureTextEntry={!showPassword}
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+            style={styles.inputText}
+          />
+          <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+            <MaterialCommunityIcons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color={COLORS.textMuted}
+            />
+          </Pressable>
+        </View>
+        {passwordError ? (
+          <Text style={styles.errorText}>{passwordError}</Text>
+        ) : null}
+      </Animated.View>
+
+      {/* Login button */}
+      <Animated.View entering={FadeInDown.duration(320).delay(220)} style={{ marginTop: 24 }}>
+        <PrimaryButton
+          label={loading ? t('signingIn') : t('login')}
+          loading={loading}
+          disabled={loading}
+          onPress={handleLogin}
+        />
+      </Animated.View>
+    </>
+  );
 
   return (
     <View style={[styles.root, isDesktop && styles.desktopPage]}>
@@ -105,150 +239,30 @@ export default function DepartmentCredentialsScreen() {
         }}
       />
 
-      <AuthSheet
-        style={isDesktop ? styles.desktopSheet : undefined}
-        contentStyle={isDesktop ? styles.desktopFormContent : undefined}
+      <KeyboardAvoidingView
+        style={[{ flex: 1 }, isDesktop && styles.desktopCenter]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <KeyboardAvoidingView
-          style={[{ flex: 1 }, isDesktop && styles.desktopCenter]}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <AuthSheet
+          style={isDesktop ? styles.desktopSheet : undefined}
+          contentStyle={isDesktop ? styles.desktopFormContent : undefined}
         >
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.content}
-            overScrollMode="never"
-          >
-            {/* Selected department banner */}
-            <Animated.View entering={FadeInDown.duration(360).delay(0)} style={[
-              styles.deptBanner,
-              { backgroundColor: meta?.bg ?? '#EFF6FF' },
-            ]}>
-              <View style={[styles.deptBannerIcon, { backgroundColor: `${meta?.color ?? COLORS.primary}18` }]}>
-                <MaterialCommunityIcons
-                  name={(meta?.icon ?? 'office-building-outline') as any}
-                  size={24}
-                  color={meta?.color ?? COLORS.primary}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.deptBannerLabel}>{t('selectedDept')}</Text>
-                <Text style={[styles.deptBannerName, { color: meta?.color ?? COLORS.primary }]} numberOfLines={2}>
-                  {deptName}
-                </Text>
-                {meta?.english ? (
-                  <Text style={styles.deptBannerEnglish}>{meta.english}</Text>
-                ) : null}
-              </View>
-              <Pressable
-                onPress={() => {
-                  if (router.canGoBack()) {
-                    router.back();
-                  } else {
-                    router.replace('/(auth)/department-login');
-                  }
-                }}
-                style={styles.changeDeptBtn}
-                hitSlop={8}
-              >
-                <Text style={[styles.changeDeptText, { color: meta?.color ?? COLORS.primary }]}>
-                  {t('change')}
-                </Text>
-              </Pressable>
-            </Animated.View>
-
-            {/* Demo Credentials Pill */}
-            {demoCred ? (
-              <Animated.View entering={FadeInDown.duration(320).delay(80)}>
-                <Pressable
-                  onPress={() => {
-                    setUsername(demoCred.username);
-                    setPassword(demoCred.password);
-                  }}
-                  style={styles.demoPill}
-                >
-                  <MaterialCommunityIcons name="information-outline" size={18} color="#A66A00" style={{ marginTop: 1 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.demoLabel}>Demo Credentials • Tap to fill</Text>
-                    <Text style={styles.demoValue}>
-                      ID: {demoCred.username}  |  Password: {demoCred.password}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            ) : null}
-
-            {/* Username field */}
-            <Animated.View entering={FadeInDown.duration(320).delay(120)}>
-              <Text style={styles.fieldLabel}>{t('departmentId')}</Text>
-              <View style={[styles.inputRow, usernameError ? styles.inputError : null]}>
-                <MaterialCommunityIcons
-                  name="account-circle-outline"
-                  size={20}
-                  color={usernameError ? COLORS.danger : COLORS.textMuted}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  value={username}
-                  onChangeText={(v) => { setUsername(v); setUsernameError(''); }}
-                  placeholder={t('usernamePlaceholder')}
-                  placeholderTextColor={COLORS.textPlaceholder}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  style={styles.inputText}
-                />
-              </View>
-              {usernameError ? (
-                <Text style={styles.errorText}>{usernameError}</Text>
-              ) : null}
-            </Animated.View>
-
-            {/* Password field */}
-            <Animated.View entering={FadeInDown.duration(320).delay(170)}>
-              <Text style={styles.fieldLabel}>{t('password')}</Text>
-              <View style={[styles.inputRow, passwordError ? styles.inputError : null]}>
-                <MaterialCommunityIcons
-                  name="lock-outline"
-                  size={20}
-                  color={passwordError ? COLORS.danger : COLORS.textMuted}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  value={password}
-                  onChangeText={(v) => { setPassword(v); setPasswordError(''); }}
-                  placeholder={t('enterPassword')}
-                  placeholderTextColor={COLORS.textPlaceholder}
-                  secureTextEntry={!showPassword}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                  style={styles.inputText}
-                />
-                <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={COLORS.textMuted}
-                  />
-                </Pressable>
-              </View>
-              {passwordError ? (
-                <Text style={styles.errorText}>{passwordError}</Text>
-              ) : null}
-            </Animated.View>
-
-            {/* Login button */}
-            <Animated.View entering={FadeInDown.duration(320).delay(220)} style={{ marginTop: 24 }}>
-              <PrimaryButton
-                label={loading ? t('signingIn') : t('login')}
-                loading={loading}
-                disabled={loading}
-                onPress={handleLogin}
-              />
-            </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </AuthSheet>
+          {isDesktop ? (
+            <View style={styles.content}>
+              {formContent}
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.content}
+              overScrollMode="never"
+            >
+              {formContent}
+            </ScrollView>
+          )}
+        </AuthSheet>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -262,10 +276,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 4,
   },
-  desktopPage: { backgroundColor: '#F3F7FB' },
-  desktopCenter: { justifyContent: 'flex-start' },
+  desktopPage: { backgroundColor: '#F3F7FB', paddingHorizontal: 24, paddingBottom: 24 },
+  desktopCenter: { justifyContent: 'flex-start', paddingTop: 16, paddingBottom: 24 },
   desktopFormContent: { width: '100%', maxWidth: 560, alignSelf: 'center' },
-  desktopSheet: { maxWidth: 640, alignSelf: 'center' },
+  desktopSheet: { maxWidth: 620, paddingHorizontal: 24 },
 
   /* Department banner */
   deptBanner: {
