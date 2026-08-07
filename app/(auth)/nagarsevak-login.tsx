@@ -63,6 +63,69 @@ export default function NagarsevakLoginScreen() {
     }
   };
 
+  const formCard = (
+    <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+      <Text style={styles.cardTitle}>{t('signInToContinue')}</Text>
+      <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
+
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>{t('officialId')}</Text>
+        <TextInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={officialId}
+          onChangeText={setOfficialId}
+          placeholder={t('officialIdPlaceholder')}
+          placeholderTextColor={COLORS.textPlaceholder}
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>{t('wardLabel2')}</Text>
+        <TextInput
+          autoCapitalize="words"
+          autoCorrect={false}
+          value={ward}
+          onChangeText={setWard}
+          placeholder={t('enterWard')}
+          placeholderTextColor={COLORS.textPlaceholder}
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>{t('passwordLabel')}</Text>
+        <View style={styles.passwordRow}>
+          <TextInput
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            placeholder={t('passwordPlaceholder')}
+            placeholderTextColor={COLORS.textPlaceholder}
+            style={[styles.input, styles.passwordInput]}
+          />
+          <Pressable onPress={() => setShowPassword((value) => !value)} style={styles.eyeButton}>
+            <MaterialCommunityIcons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color={COLORS.textMuted}
+            />
+          </Pressable>
+        </View>
+      </View>
+
+      <Pressable onPress={handleLogin} disabled={!canSubmit || loading} style={[styles.button, (!canSubmit || loading) && styles.buttonDisabled]}>
+        {loading ? (
+          <ActivityIndicator color={COLORS.white} />
+        ) : (
+          <Text style={styles.buttonText}>{t('login')}</Text>
+        )}
+      </Pressable>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.safeArea, isDesktop && styles.safeAreaDesktop]} edges={['left', 'right', 'bottom']}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -103,68 +166,15 @@ export default function NagarsevakLoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={[styles.container, isDesktop && styles.containerDesktop]}
       >
-        <ScrollView contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]} keyboardShouldPersistTaps="handled">
-          <View style={[styles.card, isDesktop && styles.cardDesktop]}>
-            <Text style={styles.cardTitle}>{t('signInToContinue')}</Text>
-            <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>{t('officialId')}</Text>
-              <TextInput
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={officialId}
-                onChangeText={setOfficialId}
-                placeholder={t('officialIdPlaceholder')}
-                placeholderTextColor={COLORS.textPlaceholder}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>{t('wardLabel2')}</Text>
-              <TextInput
-                autoCapitalize="words"
-                autoCorrect={false}
-                value={ward}
-                onChangeText={setWard}
-                placeholder={t('enterWard')}
-                placeholderTextColor={COLORS.textPlaceholder}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>{t('passwordLabel')}</Text>
-              <View style={styles.passwordRow}>
-                <TextInput
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder={t('passwordPlaceholder')}
-                  placeholderTextColor={COLORS.textPlaceholder}
-                  style={[styles.input, styles.passwordInput]}
-                />
-                <Pressable onPress={() => setShowPassword((value) => !value)} style={styles.eyeButton}>
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={COLORS.textMuted}
-                  />
-                </Pressable>
-              </View>
-            </View>
-
-            <Pressable onPress={handleLogin} disabled={!canSubmit || loading} style={[styles.button, (!canSubmit || loading) && styles.buttonDisabled]}>
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                <Text style={styles.buttonText}>{t('login')}</Text>
-              )}
-            </Pressable>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {isDesktop ? (
+          <View style={[styles.scrollContent, styles.scrollContentDesktop]}>
+            {formCard}
           </View>
-        </ScrollView>
+        ) : (
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            {formCard}
+          </ScrollView>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
