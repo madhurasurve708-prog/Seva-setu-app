@@ -43,8 +43,6 @@ export default function AdminSettings() {
       </View>
 
       <SharedSettings
-        theme={preferences.theme}
-        onThemeChange={(mode) => void savePreferences({ ...preferences, theme: mode })}
         toggleRows={[
           {
             key: 'complaintUpdates',

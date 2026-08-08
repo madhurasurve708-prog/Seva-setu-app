@@ -33,8 +33,6 @@ export default function CitizenSettingsScreen() {
   return (
     <CitizenScreen title={t('settings')} showBack hideNav>
       <SharedSettings
-        theme={preferences.theme}
-        onThemeChange={(mode) => savePreferences({ ...preferences, theme: mode })}
         toggleRows={[
           {
             key: 'complaintUpdates',

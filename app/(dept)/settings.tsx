@@ -35,8 +35,6 @@ export default function DepartmentSettings() {
   return (
     <DepartmentScreen title={t('settings')} back>
       <SharedSettings
-        theme="light"
-        onThemeChange={() => {}}
         helpRoute="/(dept)/help"
         privacyRoute="/(dept)/privacy-policy"
         termsRoute="/(dept)/terms"

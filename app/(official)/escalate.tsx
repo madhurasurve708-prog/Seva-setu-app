@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { getEscalationTargets, useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const DEPT_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   'public-works':  'road-variant',
@@ -38,6 +39,7 @@ export default function EscalateScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, complaints, escalateComplaint } = useOfficial();
+  const { t } = useTranslation();
 
   const targets = getEscalationTargets(profile.role);
   const [selected, setSelected] = useState('');
@@ -51,9 +53,9 @@ export default function EscalateScreen() {
       <SafeAreaView style={styles.emptySafe} edges={['top']}>
         <View style={styles.emptyInner}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
-          <Text style={styles.emptyTitle}>Complaint Not Found</Text>
+          <Text style={styles.emptyTitle}>{t('complaintNotFound')}</Text>
           <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-            <Text style={styles.emptyBtnText}>Go Back</Text>
+            <Text style={styles.emptyBtnText}>{t('back')}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -64,11 +66,11 @@ export default function EscalateScreen() {
 
   const handleEscalate = async () => {
     if (!selected) {
-      Alert.alert('Required', 'Please select an escalation target.');
+      Alert.alert(t('required'), t('escalationTargetRequired'));
       return;
     }
     if (!reason.trim()) {
-      Alert.alert('Required', 'Please provide a reason for escalation.');
+      Alert.alert(t('required'), t('escalationReasonRequired'));
       return;
     }
 
@@ -77,11 +79,11 @@ export default function EscalateScreen() {
       const target = targets.find((t) => t.id === selected);
       await escalateComplaint(complaint.id, target?.label ?? selected, reason.trim());
       Alert.alert(
-        'Escalated',
-        `Complaint escalated to ${target?.label ?? selected}.`,
+        t('escalatedTitle'),
+        t('complaintEscalatedTo').replace('{target}', target?.label ?? selected),
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () =>
               router.replace({
                 pathname: '/(official)/complaint-details',
@@ -91,7 +93,7 @@ export default function EscalateScreen() {
         ],
       );
     } catch {
-      Alert.alert('Error', 'Failed to escalate. Please try again.');
+      Alert.alert(t('error'), t('escalateFailed'));
     } finally {
       setSaving(false);
     }
@@ -106,7 +108,7 @@ export default function EscalateScreen() {
             <Ionicons name="arrow-back" size={22} color={COLORS.primary} />
           </Pressable>
           <View>
-            <Text style={styles.headerTitle}>Escalate Complaint</Text>
+            <Text style={styles.headerTitle}>{t('escalateComplaintTitle')}</Text>
             <Text style={styles.headerSub}>{complaint.id}</Text>
           </View>
         </View>
@@ -146,10 +148,10 @@ export default function EscalateScreen() {
               size={16}
               color={COLORS.danger}
             />
-            <Text style={styles.cardTitle}>Select Escalation Target</Text>
+            <Text style={styles.cardTitle}>{t('selectEscalationTarget')}</Text>
           </View>
           <Text style={styles.cardSubtext}>
-            Choose the department or authority to transfer this complaint to.
+            {t('escalationTargetHint')}
           </Text>
 
           <View style={styles.targetList}>
@@ -222,13 +224,12 @@ export default function EscalateScreen() {
               size={16}
               color={COLORS.primary}
             />
-            <Text style={styles.cardTitle}>Escalation Remarks</Text>
+            <Text style={styles.cardTitle}>{t('escalationRemarks')}</Text>
           </View>
           <Text style={styles.cardSubtext}>
-            Describe why this complaint needs escalation — jurisdiction, resources, urgency, etc.
-          </Text>
+            {t('escalationRemarksHint')}</Text>
           <TextInput
-            placeholder="Type reason for escalation here…"
+            placeholder={t('escalationReasonPlaceholder')}
             placeholderTextColor={COLORS.textPlaceholder}
             multiline
             numberOfLines={5}
@@ -237,7 +238,7 @@ export default function EscalateScreen() {
             style={styles.textArea}
             textAlignVertical="top"
           />
-          <Text style={styles.charCount}>{reason.length} characters</Text>
+          <Text style={styles.charCount}>{reason.length} {t('characters')}</Text>
         </Animated.View>
 
         {/* ── Submit button ── */}
@@ -253,7 +254,7 @@ export default function EscalateScreen() {
               color={COLORS.white}
             />
             <Text style={styles.submitBtnText}>
-              {saving ? 'Escalating…' : 'Escalate Complaint'}
+              {saving ? t('escalating') : t('escalateComplaintTitle')}
             </Text>
           </Pressable>
         </Animated.View>

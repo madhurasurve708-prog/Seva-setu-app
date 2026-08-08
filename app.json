@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./play-store/assets/app-icon-512x512.png",
     "scheme": "sevasetuapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },

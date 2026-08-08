@@ -1,4 +1,3 @@
-// components/common/GlassCard.tsx
 import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { COLORS, SHADOWS } from '../../constants/theme';
@@ -9,11 +8,7 @@ interface GlassCardProps {
 }
 
 function GlassCard({ children, style }: GlassCardProps) {
-  return (
-    <View style={[styles.card, style]}>
-      {children}
-    </View>
-  );
+  return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export { GlassCard };
