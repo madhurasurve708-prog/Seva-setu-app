@@ -167,3 +167,12 @@ export async function changeNagarsevakPassword(current: string, next: string, to
   }, token);
 }
 
+export async function changeOfficialPassword(next: string, token: string) {
+  return apiRequest<Record<string, unknown>>('/api/official/profile/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ new_password: next }),
+  }, token);
+}
+
+

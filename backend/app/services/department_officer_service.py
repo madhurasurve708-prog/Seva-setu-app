@@ -21,7 +21,7 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 class DepartmentOfficerService:
     @staticmethod
-    def login(login_data: DepartmentOfficerLogin) -> dict:
+    def login(db: Session, login_data: DepartmentOfficerLogin) -> dict:
         if len(settings.DEPT_TEMP_PASSWORD) < 8:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -35,15 +35,37 @@ class DepartmentOfficerService:
                 detail="Invalid department or password.",
             )
 
-        # 2. Validate temporary shared password (plain string comparison —
-        #    no DB row exists yet, so bcrypt is not used here)
-        if login_data.password != settings.DEPT_TEMP_PASSWORD:
+        # 2. Get or create DepartmentOfficer in DB dynamically
+        email = f"{login_data.department.lower()}@seva-setu.in"
+        officer = db.query(DepartmentOfficer).filter(DepartmentOfficer.email == email).first()
+        if not officer:
+            officer = DepartmentOfficer(
+                full_name="Department Officer",
+                phone_number="",
+                email=email,
+                department_name=department_name,
+                password_hash=get_password_hash(settings.DEPT_TEMP_PASSWORD),
+                is_active=True
+            )
+            db.add(officer)
+            db.commit()
+            db.refresh(officer)
+
+        # 3. Verify password against database record
+        if not verify_password(login_data.password, officer.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid department or password.",
             )
 
-        # 3. Issue JWT — subject is the department key; role claim isolates
+        # Check if the account is active
+        if not officer.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This officer account is inactive.",
+            )
+
+        # 4. Issue JWT — subject is the department key; role claim isolates
         #    these tokens from nagarsevak tokens.
         token = create_access_token(
             subject=login_data.department,

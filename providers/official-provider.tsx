@@ -1,6 +1,6 @@
 import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail, updateNagarsevakProfileName, updateNagarsevakProfilePhone, changeNagarsevakPassword } from '@/services/official-api';
+import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail, updateNagarsevakProfileName, updateNagarsevakProfilePhone, changeNagarsevakPassword, changeOfficialPassword } from '@/services/official-api';
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -157,7 +157,7 @@ type OfficialContextValue = {
   restoreComplaint: (id: string) => Promise<void>;
   savePreferences: (preferences: OfficialPreferences) => Promise<void>;
   logout: () => Promise<void>;
-  changePassword: (current: string, next: string) => Promise<void>;
+  changePassword: (next: string) => Promise<void>;
 };
 
 const OfficialContext = createContext<OfficialContextValue | undefined>(undefined);
@@ -257,7 +257,11 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired. Please sign in again.');
 
-    if (profile.role === 'nagarsevak') {
+    if (
+      profile.role === 'nagarsevak' &&
+      next.role === 'nagarsevak' &&
+      profile.name !== ''
+    ) {
       if (next.name !== profile.name) {
         await updateNagarsevakProfileName(next.name, token);
       }
