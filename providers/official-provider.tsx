@@ -280,12 +280,16 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
   };
 
-  const changePassword = async (current: string, nextPassword: string) => {
+  const changePassword = async (nextPassword: string) => {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired. Please sign in again.');
 
-    if (profile.role === 'nagarsevak') {
-      await changeNagarsevakPassword(current, nextPassword, token);
+    if (
+      profile.role === 'nagarsevak' ||
+      profile.role === 'main-admin' ||
+      profile.role === 'department-officer'
+    ) {
+      await changeOfficialPassword(nextPassword, token);
     } else {
       throw new Error('Password changes are not supported for this role.');
     }
