@@ -9,20 +9,20 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Animated,
+    Dimensions,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
@@ -226,9 +226,11 @@ export default function CitizenLoginScreen() {
 
       if (existingProfile) {
         const { firstName, lastName } = splitName(existingProfile.full_name);
+        // Use ward_number if available (actual ward number), otherwise fall back to ward_id (database primary key)
+        const actualWardNumber = existingProfile.ward_number !== null ? existingProfile.ward_number : existingProfile.ward_id;
         await saveProfile({
           id: String(existingProfile.id), firstName, lastName, fullName: existingProfile.full_name,
-          mobile, ward: `Ward ${existingProfile.ward_id}`, locality: existingProfile.locality,
+          mobile, ward: `Ward ${actualWardNumber}`, locality: existingProfile.locality,
           profileImage: existingProfile.profile_photo_url ?? '', name: existingProfile.full_name,
           phone: existingProfile.phone_number, avatar: existingProfile.profile_photo_url ?? '',
         });

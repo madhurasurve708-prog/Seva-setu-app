@@ -11,51 +11,48 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 type Nagarsevak = {
   name: string;
-  phone: string;
-  address: string;
-  party: string;
 };
 
 const WARD_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
   'Ward 1': [
-    { name: 'Shri. Rajesh Tendulkar', phone: '9422070001', address: 'Bazaar Road, Malvan', party: 'Independent' },
-    { name: 'Smt. Vaishali Parab', phone: '9422070011', address: 'Bazaar Road, Malvan', party: 'Independent' },
+    { name: 'Shri. Rajesh Tendulkar' },
+    { name: 'Smt. Vaishali Parab' },
   ],
   'Ward 2': [
-    { name: 'Smt. Snehal Naik', phone: '9422071112', address: 'Dandi Beach Area, Malvan', party: 'SHS' },
-    { name: 'Shri. Umesh Golekar', phone: '9422071122', address: 'Dandi Beach Area, Malvan', party: 'SHS' },
+    { name: 'Smt. Snehal Naik' },
+    { name: 'Shri. Umesh Golekar' },
   ],
   'Ward 3': [
-    { name: 'Shri. Sanjay Medhekar', phone: '9422072223', address: 'Medha, Near Datta Mandir, Malvan', party: 'BJP' },
-    { name: 'Smt. Kavita Rane', phone: '9422072233', address: 'Medha, Near Datta Mandir, Malvan', party: 'BJP' },
+    { name: 'Shri. Sanjay Medhekar' },
+    { name: 'Smt. Kavita Rane' },
   ],
   'Ward 4': [
-    { name: 'Smt. Prachi Kumbhar', phone: '9422073334', address: 'Kumbharmath Road, Malvan', party: 'SHS' },
-    { name: 'Shri. Dattatray Sawant', phone: '9422073344', address: 'Kumbharmath Road, Malvan', party: 'SHS' },
+    { name: 'Smt. Prachi Kumbhar' },
+    { name: 'Shri. Dattatray Sawant' },
   ],
   'Ward 5': [
-    { name: 'Shri. Vijay Wayarikar', phone: '9422074445', address: 'Wayari Bazaar, Malvan', party: 'BJP' },
-    { name: 'Smt. Neha Gawade', phone: '9422074455', address: 'Wayari Bazaar, Malvan', party: 'BJP' },
+    { name: 'Shri. Vijay Wayarikar' },
+    { name: 'Smt. Neha Gawade' },
   ],
   'Ward 6': [
-    { name: 'Shri. Nitin Acharekar', phone: '9422075556', address: 'Achara Road Junction, Malvan', party: 'INC' },
-    { name: 'Smt. Pooja Kadam', phone: '9422075566', address: 'Achara Road Junction, Malvan', party: 'INC' },
+    { name: 'Shri. Nitin Acharekar' },
+    { name: 'Smt. Pooja Kadam' },
   ],
   'Ward 7': [
-    { name: 'Smt. Rasika Devbagkar', phone: '9422076667', address: 'Devbag Beach Road, Malvan', party: 'Independent' },
-    { name: 'Shri. Suresh Bandekar', phone: '9422076677', address: 'Devbag Beach Road, Malvan', party: 'Independent' },
+    { name: 'Smt. Rasika Devbagkar' },
+    { name: 'Shri. Suresh Bandekar' },
   ],
   'Ward 8': [
-    { name: 'Shri. Mahesh Kaleshwarkar', phone: '9422077778', address: 'Kaleshwar Mandir Ward, Malvan', party: 'BJP' },
-    { name: 'Smt. Trupti Fondekar', phone: '9422077788', address: 'Kaleshwar Mandir Ward, Malvan', party: 'BJP' },
+    { name: 'Shri. Mahesh Kaleshwarkar' },
+    { name: 'Smt. Trupti Fondekar' },
   ],
   'Ward 9': [
-    { name: 'Smt. Anjali Dhuri', phone: '9422078889', address: 'Dhuriwada, Malvan', party: 'INC' },
-    { name: 'Shri. Prashant Katkar', phone: '9422078899', address: 'Dhuriwada, Malvan', party: 'INC' },
+    { name: 'Smt. Anjali Dhuri' },
+    { name: 'Shri. Prashant Katkar' },
   ],
   'Ward 10': [
-    { name: 'Shri. Ramesh Sarjekotkar', phone: '9422079990', address: 'Sarjekot Port Road, Malvan', party: 'BJP' },
-    { name: 'Smt. Deepali Malvankar', phone: '9422079900', address: 'Sarjekot Port Road, Malvan', party: 'BJP' },
+    { name: 'Shri. Ramesh Sarjekotkar' },
+    { name: 'Smt. Deepali Malvankar' },
   ],
 };
 
@@ -63,15 +60,16 @@ export default function WardScreen() {
   const { profile, complaints } = useCitizen();
   const { t } = useTranslation();
 
-  const currentWard = useMemo(() => profile?.ward || 'Ward 3', [profile]);
-  const reps = useMemo(() => WARD_REPS[currentWard] || WARD_REPS['Ward 3'], [currentWard]);
+  const currentWard = useMemo(() => profile?.ward, [profile]);
+  const reps = useMemo(() => currentWard ? WARD_REPS[currentWard] : [], [currentWard]);
 
   const wardComplaints = useMemo(
-    () => complaints.filter((c) => c.ward === currentWard),
+    () => currentWard ? complaints.filter((c) => c.ward === currentWard) : [],
     [complaints, currentWard],
   );
 
   const counts = useMemo(() => {
+    if (!currentWard) return { total: 0, resolved: 0, pct: 0 };
     const total = wardComplaints.length;
     const resolved = wardComplaints.filter((c) => c.status === 'Resolved').length;
     return {
@@ -79,7 +77,7 @@ export default function WardScreen() {
       resolved,
       pct: total > 0 ? Math.round((resolved / total) * 100) : 100,
     };
-  }, [wardComplaints]);
+  }, [wardComplaints, currentWard]);
 
   return (
     <CitizenScreen title={t('myWardInfo')}>
@@ -88,6 +86,14 @@ export default function WardScreen() {
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
+        {!currentWard ? (
+          <View style={styles.emptyState}>
+            <MaterialCommunityIcons name="account-alert-outline" size={48} color={COLORS.textMuted} />
+            <Text style={styles.emptyStateTitle}>Ward Information Unavailable</Text>
+            <Text style={styles.emptyStateText}>Please complete your profile to view ward information.</Text>
+          </View>
+        ) : (
+          <>
         {/* ── Hero card ── */}
         <LinearGradient
           colors={['#0B4F8A', '#2E86DE']}
@@ -99,7 +105,6 @@ export default function WardScreen() {
             <View style={styles.heroTextCol}>
               <Text style={styles.heroLabel}>{t('officialDemographicsLabel')}</Text>
               <Text style={styles.heroTitle}>{currentWard}</Text>
-              <Text style={styles.heroSub}>{profile?.locality || 'Malvan Municipal area'}</Text>
             </View>
             <View style={styles.heroIconBadge}>
               <MaterialCommunityIcons name="office-building-marker" size={40} color="rgba(255,255,255,0.22)" />
@@ -144,18 +149,12 @@ export default function WardScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.repName}>{rep.name}</Text>
-                <View style={styles.repPartyBadge}>
-                  <Text style={styles.repPartyText}>{rep.party}</Text>
-                </View>
               </View>
-            </View>
-
-            <View style={styles.repInfoRow}>
-              <MaterialCommunityIcons name="map-marker-outline" size={16} color={COLORS.textMuted} />
-              <Text style={styles.repInfoText}>{rep.address}</Text>
             </View>
           </GlassCard>
         ))}
+        </>
+        )}
       </ScrollView>
     </CitizenScreen>
   );
@@ -163,6 +162,26 @@ export default function WardScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 110 },
+  
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 
   /* Hero gradient card */
   heroCard: {
@@ -268,7 +287,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 10,
   },
   repAvatar: {
     width: 48,
@@ -282,29 +300,5 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     fontWeight: '800',
     color: COLORS.text,
-  },
-  repPartyBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 2,
-  },
-  repPartyText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: COLORS.textMuted,
-  },
-  repInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  repInfoText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    fontWeight: '500',
-    flex: 1,
   },
 });

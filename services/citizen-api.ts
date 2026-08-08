@@ -11,6 +11,7 @@ export type CitizenApiProfile = {
   full_name: string;
   phone_number: string;
   ward_id: number;
+  ward_number: number | null;
   locality: string;
   profile_photo_url?: string | null;
 };
