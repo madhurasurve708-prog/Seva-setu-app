@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, Tabs, usePathname, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { COLORS, SHADOWS } from '@/constants/theme';
@@ -17,7 +17,7 @@ const ADMIN_MENU = [
   { label: 'Settings', route: '/(admin)/settings', icon: 'cog-outline' as const },
 ];
 
-function AdminDesktopSidebar() {
+const AdminDesktopSidebar = memo(function AdminDesktopSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, profile } = useOfficial();
@@ -33,9 +33,9 @@ function AdminDesktopSidebar() {
       <Pressable onPress={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }} style={desktopStyles.logout}><MaterialCommunityIcons name="logout" size={19} color={COLORS.danger} /><Text style={desktopStyles.logoutText}>Logout</Text></Pressable>
     </View>
   );
-}
+});
 
-function TabIcon({
+const TabIcon = memo(function TabIcon({
   name,
   color,
   focused,
@@ -56,7 +56,7 @@ function TabIcon({
       ) : null}
     </View>
   );
-}
+});
 
 const tabStyles = StyleSheet.create({
   iconWrap: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
@@ -108,6 +108,9 @@ export default function AdminLayout() {
       tabBar={isDesktop ? () => <AdminDesktopSidebar /> : undefined}
       screenOptions={{
         headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
+        detachInactiveScreens: true,
         tabBarLabelPosition: isDesktop ? 'beside-icon' : 'below-icon',
         tabBarStyle: isDesktop ? {
           display: 'none',

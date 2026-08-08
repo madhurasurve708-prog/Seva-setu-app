@@ -83,7 +83,7 @@ export function AuthHero({
       ]}
     >
       <ImageBackground
-        source={require('../../assets/images/shivaji.webp')}
+        source={require('../../assets/images/hero_banner.webp')}
         style={[StyleSheet.absoluteFill, { opacity: 0.45 }]}
         contentFit="cover"
       >

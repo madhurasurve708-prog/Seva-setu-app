@@ -12,19 +12,6 @@ import { useTranslation } from '@/providers/localization-provider';
 
 const WARDS = Array.from({ length: 10 }, (_, i) => `Ward ${i + 1}`);
 
-const WARD_LABEL_KEYS: Record<string, string> = {
-  'Ward 1': 'wardNameMalvanTown',
-  'Ward 2': 'wardNameMalvanBazaar',
-  'Ward 3': 'wardNameMalvanBeach',
-  'Ward 4': 'wardNameDevbag',
-  'Ward 5': 'wardNameAchara',
-  'Ward 6': 'wardNameKumbharmath',
-  'Ward 7': 'wardNameDhuriwada',
-  'Ward 8': 'wardNameTondavali',
-  'Ward 9': 'wardNameSaraswatiNagar',
-  'Ward 10': 'wardNameBhagawati',
-};
-
 export default function WardWiseScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -39,9 +26,7 @@ export default function WardWiseScreen() {
       const resolved  = wc.filter((c) => c.status === 'Resolved').length;
       const pending   = wc.filter((c) => c.status === 'Pending').length;
       const emergency = wc.filter((c) => c.priority === 'Emergency').length;
-      const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;
-      const labelKey = WARD_LABEL_KEYS[ward];
-      return { ward, label: labelKey ? t(labelKey) : ward, total: wc.length, resolved, pending, emergency, rate };
+      const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;      return { ward, total: wc.length, resolved, pending, emergency, rate };
     }),
   [complaints, t]);
 
@@ -90,8 +75,7 @@ export default function WardWiseScreen() {
                     <Text style={styles.wardNum}>{item.ward.split(' ')[1]}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.wardName}>{item.ward}</Text>
-                    <Text style={styles.wardSub}>{item.label}</Text>
+                    <Text style={styles.wardName}>{item.ward}</Text>
                   </View>
                   {item.emergency > 0 && (
                     <View style={styles.emergBadge}>
