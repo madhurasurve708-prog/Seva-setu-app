@@ -4,7 +4,7 @@ import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
-import type { PropsWithChildren } from 'react';
+import { memo, useCallback, useEffect, useMemo, type PropsWithChildren } from 'react';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -25,7 +25,7 @@ const TAB_DEFS = [
 
 type TabRoute = typeof TAB_DEFS[number][0];
 
-function TabButton({
+const TabButton = memo(function TabButton({
   route,
   icon,
   iconActive,
@@ -48,14 +48,16 @@ function TabButton({
     transform: [{ scale: scale.value }, { translateY: lift.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.9, { damping: 14, stiffness: 300 });
-  };
-  const handlePressOut = () => {
+  }, [scale]);
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 14, stiffness: 300 });
-  };
+  }, [scale]);
 
-  lift.value = withTiming(active ? -3 : 0, { duration: 200 });
+  useEffect(() => {
+    lift.value = withTiming(active ? -3 : 0, { duration: 200 });
+  }, [active, lift]);
 
   return (
     <Pressable
@@ -80,7 +82,7 @@ function TabButton({
       </Animated.View>
     </Pressable>
   );
-}
+});
 
 export function DepartmentScreen({
   title,
@@ -96,9 +98,9 @@ export function DepartmentScreen({
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
 
-  const pendingCount = complaints.filter(
+  const pendingCount = useMemo(() => complaints.filter(
     (c) => c.assignedDepartment === profile?.department && c.status === 'Pending' && !c.is_deleted,
-  ).length;
+  ).length, [complaints, profile?.department]);
 
   if (isDesktop) {
     return (
