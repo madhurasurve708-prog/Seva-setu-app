@@ -15,15 +15,13 @@ export default function SecurityScreen() {
   const { profile, changePassword, logout } = useOfficial();
   const { t } = useTranslation();
 
-  const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [showCurrent, setShowCurrent] = useState(false);
   const [showNext, setShowNext] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const canSave = current.length > 0 && next.length >= 8 && confirm.length > 0 && !saving;
+  const canSave = next.length >= 8 && confirm.length > 0 && !saving;
 
   const handleSave = async () => {
     if (next.length < 8) {
@@ -36,13 +34,22 @@ export default function SecurityScreen() {
     }
     setSaving(true);
     try {
-      await changePassword(current, next);
+      await changePassword(next);
       
       // Clear fields immediately on success
-      setCurrent('');
       setNext('');
       setConfirm('');
       
+      // Determine redirection route based on official's role
+      let redirectRoute = '/(auth)/role-selection';
+      if (profile.role === 'nagarsevak') {
+        redirectRoute = '/(auth)/nagarsevak-login';
+      } else if (profile.role === 'main-admin') {
+        redirectRoute = '/(auth)/admin-login';
+      } else if (profile.role === 'department-officer') {
+        redirectRoute = '/(auth)/department-login';
+      }
+
       // Success handler must clear auth state and navigate to login ONLY after backend confirms success
       Alert.alert(
         t('success') || 'Success',
@@ -52,7 +59,7 @@ export default function SecurityScreen() {
             text: 'OK',
             onPress: async () => {
               await logout();
-              router.replace('/(auth)/nagarsevak-login' as any);
+              router.replace(redirectRoute as any);
             },
           },
         ],
@@ -90,14 +97,7 @@ export default function SecurityScreen() {
             <Text style={styles.cardTitle}>{t('changePassword') || 'Change Password'}</Text>
           </View>
 
-          <PasswordField
-            label="Current Password"
-            placeholder="Enter your current password"
-            value={current}
-            onChangeText={setCurrent}
-            show={showCurrent}
-            onToggleShow={() => setShowCurrent((v) => !v)}
-          />
+
           <PasswordField
             label="New Password"
             placeholder="Minimum 8 characters"
