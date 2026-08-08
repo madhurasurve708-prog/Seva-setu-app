@@ -2,6 +2,7 @@
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
+import { memo, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -29,7 +30,7 @@ const TABS: TabItem[] = [
   { key: 'profile',      labelKey: 'profileNav',     icon: 'account-outline',      iconActive: 'account',      route: '/(citizen)/profile' },
 ];
 
-function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; onPress: () => void }) {
+const TabButton = memo(function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; onPress: () => void }) {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
   const lift = useSharedValue(0);
@@ -38,14 +39,16 @@ function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; on
     transform: [{ scale: scale.value }, { translateY: lift.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     scale.value = withSpring(0.9, { damping: 14, stiffness: 300 });
-  };
-  const handlePressOut = () => {
+  }, [scale]);
+  const handlePressOut = useCallback(() => {
     scale.value = withSpring(1, { damping: 14, stiffness: 300 });
-  };
+  }, [scale]);
 
-  lift.value = withTiming(active ? -3 : 0, { duration: 200 });
+  useEffect(() => {
+    lift.value = withTiming(active ? -3 : 0, { duration: 200 });
+  }, [active, lift]);
 
   return (
     <Pressable
@@ -70,12 +73,13 @@ function TabButton({ tab, active, onPress }: { tab: TabItem; active: boolean; on
       </Animated.View>
     </Pressable>
   );
-}
+});
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const navigate = useCallback((route: string) => router.replace(route as any), [router]);
 
   return (
     <View pointerEvents="box-none" style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -87,9 +91,7 @@ export default function BottomNav() {
               key={tab.key}
               tab={tab}
               active={active}
-              onPress={() => {
-                if (!active) router.replace(tab.route as any);
-              }}
+              onPress={() => !active && navigate(tab.route)}
             />
           );
         })}
