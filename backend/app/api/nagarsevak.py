@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 from app.dependencies.db import get_db
-from app.dependencies.auth import get_current_nagarsevak
+from app.dependencies.auth import get_current_nagarsevak, get_current_official
 from app.models.nagarsevak import Nagarsevak
 from app.schemas.nagarsevak import (
     NagarsevakLogin,
@@ -10,9 +10,12 @@ from app.schemas.nagarsevak import (
     NagarsevakUpdateName,
     NagarsevakUpdatePhone,
     NagarsevakChangePassword,
+    OfficialChangePassword,
 )
 from app.services.nagarsevak_service import NagarsevakService
 from app.schemas.common import MessageResponse
+from app.core.security import get_password_hash
+from app.db.repository import NagarsevakRepository, MainAdminRepository, DepartmentOfficerRepository
 
 router = APIRouter(tags=["Nagarsevak Authentication & Profile"])
 
@@ -77,3 +80,30 @@ def change_password(
 ):
     NagarsevakService.change_password(db, current_nagarsevak, data)
     return {"message": "Password changed successfully."}
+
+
+@router.put(
+    "/api/official/profile/password",
+    response_model=MessageResponse,
+    status_code=status.HTTP_200_OK,
+)
+def change_official_password(
+    data: OfficialChangePassword,
+    current_official: dict = Depends(get_current_official),
+    db: Session = Depends(get_db),
+):
+    role = current_official["role"]
+    user = current_official["user"]
+    
+    # Hash and persist the new password
+    new_hash = get_password_hash(data.new_password)
+    
+    if role == "nagarsevak":
+        NagarsevakRepository.update_password_hash(db, user, new_hash)
+    elif role == "main_admin":
+        MainAdminRepository.update_password_hash(db, user, new_hash)
+    elif role == "department_officer":
+        DepartmentOfficerRepository.update_password_hash(db, user, new_hash)
+        
+    return {"message": "Password changed successfully."}
+

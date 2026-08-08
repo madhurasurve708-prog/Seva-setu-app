@@ -48,3 +48,8 @@ class NagarsevakUpdatePhone(BaseModel):
 class NagarsevakChangePassword(BaseModel):
     current_password: str = Field(..., min_length=1, max_length=100, description="Current password to verify identity")
     new_password: str = Field(..., min_length=8, max_length=100, description="New secure password")
+
+
+class OfficialChangePassword(BaseModel):
+    new_password: str = Field(..., min_length=8, max_length=100, description="New secure password")
+

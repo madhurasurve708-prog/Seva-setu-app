@@ -24,9 +24,8 @@ router = APIRouter(tags=["Department Officer Authentication & Profile"])
     response_model=DepartmentOfficerLoginResponse,
     status_code=status.HTTP_200_OK,
 )
-def login(login_data: DepartmentOfficerLogin):
-    # No DB session needed — temporary auth validates against config only
-    return DepartmentOfficerService.login(login_data)
+def login(login_data: DepartmentOfficerLogin, db: Session = Depends(get_db)):
+    return DepartmentOfficerService.login(db, login_data)
 
 
 @router.get(
