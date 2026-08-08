@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -6,10 +7,13 @@ import { GlassCard } from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 import { useOfficial } from '@/providers/official-provider';
 
 export default function SecurityScreen() {
-  const { profile, changePassword } = useOfficial();
+  const router = useRouter();
+  const { profile, changePassword, logout } = useOfficial();
+  const { t } = useTranslation();
 
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -33,10 +37,27 @@ export default function SecurityScreen() {
     setSaving(true);
     try {
       await changePassword(current, next);
-      Alert.alert('Success', 'Password updated successfully.');
+      
+      // Clear fields immediately on success
       setCurrent('');
       setNext('');
       setConfirm('');
+      
+      // Success handler must clear auth state and navigate to login ONLY after backend confirms success
+      Alert.alert(
+        t('success') || 'Success',
+        'Password updated successfully. Please log in again.',
+        [
+          {
+            text: 'OK',
+            onPress: async () => {
+              await logout();
+              router.replace('/(auth)/nagarsevak-login' as any);
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update password. Please try again.');
     } finally {
@@ -46,7 +67,7 @@ export default function SecurityScreen() {
 
 
   return (
-    <OfficialScreen title="Security" showBack>
+    <OfficialScreen title={t('security') || 'Security'} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -66,7 +87,7 @@ export default function SecurityScreen() {
         <GlassCard style={styles.card}>
           <View style={styles.cardTitleRow}>
             <MaterialCommunityIcons name="lock-reset" size={16} color={COLORS.primary} />
-            <Text style={styles.cardTitle}>Change Password</Text>
+            <Text style={styles.cardTitle}>{t('changePassword') || 'Change Password'}</Text>
           </View>
 
           <PasswordField
@@ -107,7 +128,7 @@ export default function SecurityScreen() {
         )}
 
         <PrimaryButton
-          label={saving ? 'Updating…' : 'Update Password'}
+          label={saving ? t('saving') || 'Saving…' : t('saveChangesBtn') || 'Save Changes'}
           loading={saving}
           onPress={handleSave}
           disabled={!canSave}
