@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View, StatusBar } from 'react-native';
-import { CITIZEN_COLORS as C } from '@/constants/citizen';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import Animated, { ZoomIn, FadeInUp } from 'react-native-reanimated';
 import PrimaryButton from '@/components/common/PrimaryButton';

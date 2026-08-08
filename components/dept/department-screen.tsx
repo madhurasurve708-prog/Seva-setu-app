@@ -23,7 +23,7 @@ const TAB_DEFS = [
   ['profile',       'account-outline',        'account',         'profile'],
 ] as const;
 
-type TabRoute = typeof TAB_DEFS[number][0];
+
 
 const TabButton = memo(function TabButton({
   route,
@@ -93,7 +93,6 @@ export function DepartmentScreen({
   const router = useRouter() as any;
   const pathname = usePathname();
   const { profile, complaints, logout } = useDepartment();
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;

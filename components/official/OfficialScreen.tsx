@@ -2,7 +2,7 @@
 // Shared screen wrapper for ALL official portal roles (Nagarsevak, Department Officer, Nagaradhyaksha).
 // Mirrors CitizenScreen exactly — same header height, same primary bar, same avatar style.
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter, usePathname } from "expo-router";
+import { useRouter } from "expo-router";
 import { PropsWithChildren } from "react";
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -109,7 +109,6 @@ export function OfficialScreen({
   hideNav = false,
 }: OfficialScreenProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { profile, logout } = useOfficial();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();

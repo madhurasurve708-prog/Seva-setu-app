@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
@@ -16,7 +16,6 @@ const wardDisplay = (t, ward) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
 export default function DepartmentComplaintDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints, updateStatus, addNote, fetchNotes, escalateComplaint } = useDepartment();
   const complaint = complaints.find(c => c.id === id && c.assignedDepartment === profile?.department);

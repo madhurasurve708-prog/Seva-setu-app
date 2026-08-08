@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -14,7 +14,7 @@ import {
 
 import ComplaintCard from '@/components/official/ComplaintCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
+import { COLORS, SHADOWS } from '@/constants/theme';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
 
@@ -321,5 +321,5 @@ const styles = StyleSheet.create({
   },
   complaintGrid: { width: '100%' },
   complaintGridDesktop: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
-  complaintCell: { width: 'calc(50% - 9px)' as any },
+  complaintCell: { width: '48%' },
 });

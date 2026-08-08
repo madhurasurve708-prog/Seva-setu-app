@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     return { total, pending, inProgress, resolved, escalated, successRate };
   }, [complaints]);
 
-  const { total, pending, inProgress, resolved, escalated, successRate } = stats;
+  const { total, pending, resolved, escalated, successRate } = stats;
 
   const STAT_CARDS = useMemo(() => [
     { key: 'Pending',     label: t('pending'),     value: stats.pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },

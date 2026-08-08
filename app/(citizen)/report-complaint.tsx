@@ -74,7 +74,7 @@ export default function ReportComplaint() {
         pathname: '/(citizen)/complaint-success',
         params: { id: complaint.id },
       });
-    } catch (e) {
+    } catch {
       setSubmitting(false);
       Alert.alert(t('submitError'), t('submitErrorMsg'));
     }

@@ -16,7 +16,6 @@ export default function ComplaintDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, complaints, updateComplaintStatus, uploadComplaintImage, fetchNotes } = useOfficial();
   const [notes, setNotes] = useState<any[]>([]);
-  const [loadingNotes, setLoadingNotes] = useState(true);
 
   const complaint = complaints.find((c) => c.id === id);
 
@@ -28,9 +27,6 @@ export default function ComplaintDetailsScreen() {
         })
         .catch((err) => {
           console.error("Failed to load timeline notes:", err);
-        })
-        .finally(() => {
-          setLoadingNotes(false);
         });
     }
   }, [complaint?.id, fetchNotes]);

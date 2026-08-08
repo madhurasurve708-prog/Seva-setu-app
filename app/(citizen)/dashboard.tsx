@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     width: STAT_CARD_W,
   },
   statCardWrapDesktop: {
-    width: 'calc(50% - 6px)',
+    width: '48.5%',
   },
   statCard: {
     borderRadius: 20,

@@ -28,7 +28,7 @@ export default function WardWiseScreen() {
       const emergency = wc.filter((c) => c.priority === 'Emergency').length;
       const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;      return { ward, total: wc.length, resolved, pending, emergency, rate };
     }),
-  [complaints, t]);
+  [complaints]);
 
   const totalAll    = complaints.length;
   const resolvedAll = complaints.filter((c) => c.status === 'Resolved').length;

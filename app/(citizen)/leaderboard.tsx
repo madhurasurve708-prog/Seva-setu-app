@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
-import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
+import { COLORS, SHADOWS } from '../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
 

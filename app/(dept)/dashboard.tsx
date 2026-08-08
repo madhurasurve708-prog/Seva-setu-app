@@ -14,7 +14,7 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import HeroBanner from '@/components/official/HeroBanner';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { DEPT_META } from '@/data/department-routing';
+
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
@@ -75,7 +75,6 @@ export default function DepartmentDashboard() {
     ['escalated',   t('escalated'),         escalated,      5],
   ] as const;
 
-  const meta = DEPT_META[profile?.department ?? ''];
   const resolutionRate = visible.length > 0 ? Math.round((resolved / visible.length) * 100) : 0;
 
   const recentComplaints = visible

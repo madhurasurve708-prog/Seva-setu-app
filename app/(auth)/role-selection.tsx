@@ -57,7 +57,7 @@ const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect, h
           alt="Hero banner for Seva Setu landing page"
           {...HERO_IMAGE_PROPS}
         />
-        <View style={desktop.heroOverlay} />
+        <View style={styles.heroOverlay} />
         <View style={desktop.heroNav}>
           <Text style={desktop.heroNavText}>MALVAN MUNICIPAL COUNCIL</Text>
           <View style={desktop.langToggle}>
@@ -134,7 +134,7 @@ const RoleCard = memo(function RoleCard({
 
       <View style={styles.arrowRow}>
         <View style={[styles.arrowCircle, { borderColor: `${role.iconColor}40` }]}>
-          <Text style={[styles.arrowSymbol, { color: role.iconColor }]}>→</Text>
+          <Text style={[styles.arrowText, { color: role.iconColor }]}>→</Text>
         </View>
       </View>
     </Pressable>
@@ -370,6 +370,10 @@ const styles = StyleSheet.create({
     ...SHADOWS.soft,
   },
   cardDesktop: { minHeight: 148, padding: 18, borderRadius: 18, ...SHADOWS.card },
+  cardPressed: {
+    opacity: 0.9,
+    backgroundColor: '#F8FAFC',
+  },
 
   // Icon rounded-square
   iconWrap: {
