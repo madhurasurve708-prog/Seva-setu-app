@@ -15,44 +15,44 @@ type Nagarsevak = {
 
 const WARD_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
   'Ward 1': [
-    { name: 'Shri. Rajesh Tendulkar' },
-    { name: 'Smt. Vaishali Parab' },
+    { name: 'Mamata Waradkar' },
+    { name: 'Mandar Keni' },
   ],
   'Ward 2': [
-    { name: 'Smt. Snehal Naik' },
-    { name: 'Shri. Umesh Golekar' },
+    { name: 'Lalit Chavan' },
+    { name: 'Anita Girkar' },
   ],
   'Ward 3': [
-    { name: 'Shri. Sanjay Medhekar' },
-    { name: 'Smt. Kavita Rane' },
+    { name: 'Deepak Patkar' },
+    { name: 'Neena Mumbarkar' },
   ],
   'Ward 4': [
-    { name: 'Smt. Prachi Kumbhar' },
-    { name: 'Shri. Dattatray Sawant' },
+    { name: 'Siddharth Jadhav' },
+    { name: 'Poonam Chavan' },
   ],
   'Ward 5': [
-    { name: 'Shri. Vijay Wayarikar' },
-    { name: 'Smt. Neha Gawade' },
+    { name: 'Mahendra Mhadgut' },
+    { name: 'Mahananda Khanolkar' },
   ],
   'Ward 6': [
-    { name: 'Shri. Nitin Acharekar' },
-    { name: 'Smt. Pooja Kadam' },
+    { name: 'Sahadev Bapardekar' },
+    { name: 'Ashwini Kandalkar' },
   ],
   'Ward 7': [
-    { name: 'Smt. Rasika Devbagkar' },
-    { name: 'Shri. Suresh Bandekar' },
+    { name: 'Sudesh Aacharekar' },
+    { name: 'Medha Gavkar' },
   ],
   'Ward 8': [
-    { name: 'Shri. Mahesh Kaleshwarkar' },
-    { name: 'Smt. Trupti Fondekar' },
+    { name: 'Mandar oroskar' },
+    { name: 'Sharvari Patkar' },
   ],
   'Ward 9': [
-    { name: 'Smt. Anjali Dhuri' },
-    { name: 'Shri. Prashant Katkar' },
+    { name: 'Mahesh Koyande' },
+    { name: 'Anvesha Aacharekar' },
   ],
   'Ward 10': [
-    { name: 'Shri. Ramesh Sarjekotkar' },
-    { name: 'Smt. Deepali Malvankar' },
+    { name: 'Tapaswi Mayekar' },
+    { name: 'Bhagyashree Mayekar' },
   ],
 };
 

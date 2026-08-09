@@ -227,7 +227,9 @@ export default function CitizenLoginScreen() {
       if (existingProfile) {
         const { firstName, lastName } = splitName(existingProfile.full_name);
         // Use ward_number if available (actual ward number), otherwise fall back to ward_id (database primary key)
-        const actualWardNumber = existingProfile.ward_number !== null ? existingProfile.ward_number : existingProfile.ward_id;
+        const actualWardNumber = (existingProfile.ward_number !== undefined && existingProfile.ward_number !== null)
+          ? existingProfile.ward_number
+          : existingProfile.ward_id;
         await saveProfile({
           id: String(existingProfile.id), firstName, lastName, fullName: existingProfile.full_name,
           mobile, ward: `Ward ${actualWardNumber}`, locality: existingProfile.locality,

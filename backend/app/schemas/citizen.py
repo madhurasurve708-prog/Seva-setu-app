@@ -17,6 +17,7 @@ class CitizenProfileResponse(BaseModel):
     full_name: str
     phone_number: str
     ward_id: int
+    ward_number: Optional[int] = None
     locality: str
     profile_photo_url: Optional[str] = None
     created_at: datetime

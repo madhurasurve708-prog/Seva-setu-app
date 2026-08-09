@@ -32,3 +32,15 @@ class Citizen(Base):
     complaints: Mapped[List[Complaint]] = relationship(
         "Complaint", back_populates="citizen", cascade="all, delete-orphan"
     )
+
+    @property
+    def ward_name(self) -> str:
+        return self.ward.ward_name
+
+    @property
+    def ward_number(self) -> int | None:
+        try:
+            return int(self.ward.ward_number) if self.ward else None
+        except ValueError:
+            return None
+
