@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const [name, setName] = useState(profile.name);
   const [phone, setPhone] = useState(profile.phone);
   const [email, setEmail] = useState(profile.email);
-  const [password, setPassword] = useState('');
+
   const [language, setLanguage] = useState(profile.language);
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -46,10 +46,7 @@ export default function ProfileScreen() {
       Alert.alert('Validation', 'Phone number is required.');
       return;
     }
-    if (password.trim()) {
-      Alert.alert('Security', 'Please change your password from the Security Settings page to verify your identity.');
-      return;
-    }
+
 
     setSaving(true);
     try {
@@ -164,14 +161,7 @@ export default function ProfileScreen() {
             onChangeText={setEmail}
           />
 
-          <CustomTextInput
-            icon="lock-outline"
-            label="Change Password (Optional)"
-            placeholder="Enter new password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+
         </GlassCard>
 
         {/* Read-only workspace information */}

@@ -89,4 +89,26 @@ def change_password(
     context: DepartmentOfficerContext = Depends(get_current_department_officer),
     db: Session = Depends(get_db),
 ):
-    return {"message": "Password changes are not available until real officer accounts are provisioned.", "success": False}
+    from app.core.config import settings
+    from app.core.security import get_password_hash
+
+    dept_key = context.department
+    email = f"{dept_key.lower()}@seva-setu.in"
+    officer = db.query(DepartmentOfficer).filter(DepartmentOfficer.email == email).first()
+    if not officer:
+        dept_name = context.department_name
+        officer = DepartmentOfficer(
+            full_name="Department Officer",
+            phone_number="",
+            email=email,
+            department_name=dept_name,
+            password_hash=get_password_hash(settings.DEPT_TEMP_PASSWORD),
+            is_active=True
+        )
+        db.add(officer)
+        db.commit()
+        db.refresh(officer)
+
+    DepartmentOfficerService.change_password(db, officer, data)
+    return {"message": "Password changed successfully.", "success": True}
+

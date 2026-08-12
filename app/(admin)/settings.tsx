@@ -66,6 +66,14 @@ export default function AdminSettings() {
             onChange: () => toggle('smsAlerts'),
           },
         ]}
+        extraNavRows={[
+          {
+            key: 'security',
+            label: t('security') || 'Security',
+            icon: 'shield-lock-outline',
+            route: '/(official)/settings/security',
+          },
+        ]}
         helpRoute="/(official)/settings/faqs"
         privacyRoute="/(official)/settings/privacy-policy"
         termsRoute="/(official)/settings/terms"

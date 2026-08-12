@@ -35,6 +35,14 @@ export default function DepartmentSettings() {
   return (
     <DepartmentScreen title={t('settings')} back>
       <SharedSettings
+        extraNavRows={[
+          {
+            key: 'security',
+            label: t('security') || 'Security',
+            icon: 'shield-lock-outline',
+            route: '/(dept)/settings/security',
+          },
+        ]}
         helpRoute="/(dept)/help"
         privacyRoute="/(dept)/privacy-policy"
         termsRoute="/(dept)/terms"

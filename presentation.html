@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEVA SETU - मालवण नगरपरिषदेसाठी डिजिटल उपक्रम</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Design Tokens */
+    :root {
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --primary-light: #EFF6FF;
+      --secondary: #16A34A;
+      --secondary-light: #F0FDF4;
+      --accent: #EAB308; /* Government gold */
+      --accent-light: #FEF9C3;
+      --background: #F8FAFC;
+      --card: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      
+      --danger: #DC2626;
+      --danger-light: #FEF2F2;
+      --warning: #F59E0B;
+      --warning-light: #FEF3C7;
+      
+      --font-devanagari: 'Noto Sans Devanagari', sans-serif;
+      --font-english: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-devanagari);
+      color: var(--text-main);
+      background-color: #0B0F19; /* Dark environment for the presentation frame */
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* Presentation Frame (16:9 Aspect Ratio) */
+    .presentation-container {
+      width: 1280px;
+      height: 720px;
+      background-color: var(--background);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transform-origin: center center;
+    }
+
+    /* Slides Container */
+    .slides-wrapper {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(50px);
+      transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s;
+      padding: 3.5rem 4rem 4rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      background-color: var(--background);
+      background-image: 
+        radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 0% 100%, rgba(22, 163, 74, 0.04) 0%, transparent 40%);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      z-index: 10;
+    }
+
+    .slide.prev {
+      transform: translateX(-50px);
+    }
+
+    /* Typography & Hierarchy */
+    h1, h2, h3, h4 {
+      font-weight: 700;
+    }
+
+    .slide-header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1rem;
+      position: relative;
+    }
+    
+    .slide-header::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 120px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .slide-title-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .slide-title {
+      font-size: 2.25rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .slide-subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-family: var(--font-english);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .gov-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--border);
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .eng-term {
+      font-family: var(--font-english);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SLIDE 1: मुखपृष्ठ (Cover Page)
+       ========================================================================== */
+    .slide-cover {
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      padding: 4.5rem;
+      position: relative;
+    }
+
+    .cover-border-decoration {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    
+    .cover-border-decoration::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      opacity: 0.45;
+    }
+
+    .cover-gov-header {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .cover-gov-header svg {
+      color: var(--accent);
+    }
+
+    .cover-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .cover-logo-container {
+      width: 140px;
+      height: 140px;
+      background: white;
+      border-radius: 50%;
+      padding: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      border: 3px solid var(--primary-light);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .cover-logo-container:hover {
+      transform: scale(1.05);
+    }
+
+    .cover-logo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .cover-title {
+      font-size: 4.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .cover-title span {
+      color: var(--secondary);
+    }
+
+    .cover-subtitle {
+      font-size: 2.1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 1rem;
+    }
+
+    .cover-tagline {
+      font-size: 1.35rem;
+      font-style: italic;
+      color: var(--text-muted);
+      font-weight: 500;
+      background-color: var(--primary-light);
+      padding: 0.5rem 2rem;
+      border-radius: 50px;
+      border: 1px dashed rgba(37, 99, 235, 0.3);
+      display: inline-block;
+    }
+
+    .cover-footer {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      color: var(--text-muted);
+      font-size: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    .presenter-info {
+      text-align: right;
+      font-weight: 500;
+    }
+    
+    .presenter-info strong {
+      color: var(--text-main);
+    }
+
+    .location-info {
+      text-align: left;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* ==========================================================================
+       SLIDE 2: समस्या — सध्याची परिस्थिती (The Problem)
+       ========================================================================== */
+    .problems-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .problem-card {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .problem-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: var(--danger);
+      opacity: 0.7;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+      border-color: rgba(220, 38, 38, 0.2);
+    }
+
+    .problem-icon-wrapper {
+      width: 45px;
+      height: 45px;
+      background-color: var(--danger-light);
+      color: var(--danger);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .problem-text {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       SLIDE 3: Seva Setu — उपाय (The Solution Workflow)
+       ========================================================================== */
+    .solution-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      flex: 1;
+    }
+
+    .workflow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 2.5rem 1rem;
+      position: relative;
+      margin-top: 2rem;
+    }
+
+    /* Connecting Line */
+    .workflow-line {
+      position: absolute;
+      top: 50%;
+      left: 5%;
+      right: 5%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      z-index: 1;
+      transform: translateY(-22px); /* Half-align with icons */
+      border-radius: 2px;
+      opacity: 0.3;
+    }
+
+    .workflow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      width: 16%;
+    }
+
+    .step-badge {
+      position: absolute;
+      top: -12px;
+      background-color: var(--accent);
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 10px;
+      border: 2px solid var(--background);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      font-family: var(--font-english);
+    }
+
+    .workflow-icon-circle {
+      width: 80px;
+      height: 80px;
+      background-color: var(--card);
+      border: 3px solid var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+      color: var(--primary);
+    }
+    
+    .workflow-step:nth-child(even) .workflow-icon-circle {
+      border-color: var(--secondary);
+      color: var(--secondary);
+    }
+
+    .workflow-step:hover .workflow-icon-circle {
+      transform: scale(1.1);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+    }
+    
+    .workflow-step:nth-child(even):hover .workflow-icon-circle {
+      box-shadow: 0 10px 20px rgba(22, 163, 74, 0.15);
+    }
+
+    .workflow-label {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text-main);
+    }
+
+    .workflow-sublabel {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      font-family: var(--font-english);
+    }
+
+    .workflow-arrow-divider {
+      color: var(--text-muted);
+      opacity: 0.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      margin-bottom: 2.5rem;
+    }
+
+    .solution-bottom-banner {
+      background-color: var(--primary-light);
+      border-left: 5px solid var(--primary);
+      border-radius: 0 8px 8px 0;
+      padding: 1.5rem 2rem;
+      margin-top: auto;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .solution-bottom-banner p {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary-hover);
+    }
+
+    /* ==========================================================================
+       SLIDE 4: Seva Setu — प्रत्यक्ष कार्यप्रवाह (Demo Video)
+       ========================================================================== */
+    .demo-container {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+      gap: 2rem;
+      flex: 1;
+      align-items: center;
+    }
+
+    .video-mockup-frame {
+      background: #1E293B;
+      border: 12px solid #334155;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      height: 100%;
+      max-height: 420px;
+      width: 100%;
+    }
+
+    .portal-video-section {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .portal-video-section video,
+    .portal-video-section iframe {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain;
+      background: black;
+    }
+
+    /* Screen gloss effect */
+    .video-mockup-frame::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 80%);
+      pointer-events: none;
+    }
+
+    .video-placeholder-content {
+      text-align: center;
+      color: var(--border);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .video-play-btn {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .video-play-btn:hover {
+      transform: scale(1.1);
+      background-color: var(--primary-hover);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.5);
+    }
+
+    .video-placeholder-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .video-placeholder-subtitle {
+      font-size: 0.95rem;
+      color: #94A3B8;
+      max-width: 320px;
+      line-height: 1.6;
+    }
+
+    .demo-info-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.25rem;
+    }
+
+    .demo-workflow-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .demo-workflow-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 1.25rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+      transition: all 0.25s ease;
+      border-left: 4px solid var(--border);
+      cursor: pointer;
+    }
+
+    .portal-card:hover {
+      transform: translateX(5px);
+      border-left-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    /* Active States with brand role colors */
+    .portal-card.active#portal-tab-0 {
+      border-left-color: var(--primary);
+      background-color: var(--primary-light);
+      transform: translateX(5px);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08);
+    }
+    .portal-card.active#portal-tab-1 {
+      border-left-color: var(--secondary);
+      background-color: var(--secondary-light);
+      transform: translateX(5px);
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.08);
+    }
+    .portal-card.active#portal-tab-2 {
+      border-left-color: #F97316;
+      background-color: #FFF7ED;
+      transform: translateX(5px);
+      box-shadow: 0 4px 10px rgba(249, 115, 22, 0.08);
+    }
+    .portal-card.active#portal-tab-3 {
+      border-left-color: #EAB308;
+      background-color: #FEF9C3;
+      transform: translateX(5px);
+      box-shadow: 0 4px 10px rgba(234, 179, 8, 0.08);
+    }
+
+    .demo-step-num {
+      font-family: var(--font-english);
+      width: 28px;
+      height: 28px;
+      background-color: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .demo-workflow-item:nth-child(even) .demo-step-num {
+      background-color: var(--secondary);
+    }
+
+    .demo-step-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       SLIDE 5: Seva Setu चे फायदे (Key Benefits)
+       ========================================================================== */
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .benefit-col {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      transition: all 0.3s ease;
+    }
+
+    .benefit-col.citizen-card {
+      border-top: 4px solid var(--primary);
+    }
+
+    .benefit-col.official-card {
+      border-top: 4px solid var(--secondary);
+    }
+
+    .benefit-col.admin-card {
+      border-top: 4px solid var(--accent);
+    }
+
+    .benefit-col:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .benefit-col-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .benefit-col-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    
+    .citizen-card .benefit-col-title { color: var(--primary); }
+    .official-card .benefit-col-title { color: var(--secondary); }
+    .admin-card .benefit-col-title { color: #D97706; } /* Dark gold */
+
+    .benefit-col-icon {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+    }
+    
+    .citizen-card .benefit-col-icon { background: var(--primary-light); color: var(--primary); }
+    .official-card .benefit-col-icon { background: var(--secondary-light); color: var(--secondary); }
+    .admin-card .benefit-col-icon { background: var(--accent-light); color: #B45309; }
+
+    .benefit-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      flex: 1;
+      justify-content: space-between; /* Space items evenly */
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .benefit-check-icon {
+      margin-top: 3px;
+      color: var(--secondary);
+      flex-shrink: 0;
+    }
+    
+    .citizen-card .benefit-check-icon { color: var(--primary); }
+    .admin-card .benefit-check-icon { color: #B45309; }
+
+    /* ==========================================================================
+       SLIDE 6: Live Demo & पुढील टप्पे (Next Steps & Live Link)
+       ========================================================================== */
+    .last-slide-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .live-demo-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02);
+      gap: 1.5rem;
+      position: relative;
+    }
+
+    .live-demo-badge {
+      background-color: var(--accent-light);
+      color: #B45309;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      font-family: var(--font-english);
+    }
+
+    .live-demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background-color: var(--primary);
+      color: white;
+      padding: 1.25rem 2.5rem;
+      font-size: 1.4rem;
+      font-weight: 700;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-english);
+    }
+
+    .live-demo-btn:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px rgba(37, 99, 235, 0.45);
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .qr-box {
+      width: 140px;
+      height: 140px;
+      border: 2px solid var(--border);
+      background-color: white;
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .qr-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: var(--font-english);
+    }
+
+    .roadmap-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .roadmap-section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      border-left: 4px solid var(--primary);
+      padding-left: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmap-flow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+    }
+
+    .roadmap-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 18%;
+      position: relative;
+    }
+
+    .roadmap-icon-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .roadmap-node:hover .roadmap-icon-circle {
+      transform: scale(1.1);
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .roadmap-label {
+      font-size: 1rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .roadmap-arrow {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .closing-statement {
+      background-color: var(--secondary-light);
+      border-left: 5px solid var(--secondary);
+      border-radius: 0 8px 8px 0;
+      padding: 1.25rem 1.5rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #065F46; /* Emerald dark */
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    /* ==========================================================================
+       FOOTER & NAVIGATION CONTROLS
+       ========================================================================== */
+    .presentation-footer {
+      height: 60px;
+      background-color: white;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      z-index: 100;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .footer-logo {
+      height: 25px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .footer-center-dots {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .nav-dot.active {
+      background-color: var(--primary);
+      transform: scale(1.3);
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .slide-number {
+      font-family: var(--font-english);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .nav-btn {
+      background-color: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .fullscreen-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .fullscreen-btn:hover {
+      color: var(--primary);
+    }
+
+    /* Helper styling for responsive container centering */
+    .outer-wrapper {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Fade-in Animation utility */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .active .animate-fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    .active .delay-1 { animation-delay: 0.1s; }
+    .active .delay-2 { animation-delay: 0.2s; }
+    .active .delay-3 { animation-delay: 0.3s; }
+    .active .delay-4 { animation-delay: 0.4s; }
+    .active .delay-5 { animation-delay: 0.5s; }
+    .active .delay-6 { animation-delay: 0.6s; }
+  </style>
+</head>
+<body>
+
+<div class="outer-wrapper">
+  <div class="presentation-container" id="presentation">
+    
+    <!-- Slides Wrapper -->
+    <div class="slides-wrapper">
+
+      <!-- ==========================================================
+           SLIDE 1: मुखपृष्ठ (Title Cover)
+           ========================================================== -->
+      <div class="slide slide-cover active" id="slide-1">
+        <div class="cover-border-decoration"></div>
+        
+        <div class="cover-gov-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          मालवण नगरपरिषद • डिजिटल उपक्रम
+        </div>
+
+        <div class="cover-main">
+          <div class="cover-logo-container">
+            <!-- Loading local logo -->
+            <img class="cover-logo" src="assets/images/logo.webp" alt="Seva Setu Logo" onerror="this.src='assets/images/logo.jpeg'">
+          </div>
+          <h1 class="cover-title">SEVA <span>SETU</span></h1>
+          <h2 class="cover-subtitle">डिजिटल नागरी तक्रार व्यवस्थापन प्रणाली</h2>
+          <div class="cover-tagline">मालवण नगरपरिषदेसाठी डिजिटल उपक्रम</div>
+        </div>
+
+        <div class="cover-footer">
+          <div class="location-info">मालवण नगरपरिषद, महाराष्ट्र</div>
+          <div class="presenter-info">Presented by: <strong>Madhura Surve & Apurva Sawant</strong></div>
+        </div>
+      </div>
+
+      <!-- ==========================================================
+           SLIDE 2: समस्या — सध्याची परिस्थिती
+           ========================================================== -->
+      <div class="slide" id="slide-2">
+        <div class="slide-header">
+          <div class="slide-title-group">
+            <h2 class="slide-title">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--danger);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              समस्या — सध्याची परिस्थिती
+            </h2>
+          </div>
+          <div class="gov-label">MALVAN MUNICIPAL COUNCIL</div>
+        </div>
+
+        <div class="problems-grid">
+          <!-- Problem 1 -->
+          <div class="problem-card animate-fade-in delay-1">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="problem-text">नागरिकांच्या तक्रारी विविध माध्यमातून (तोंडी, पत्र, फोन) प्राप्त होतात.</div>
+          </div>
+          <!-- Problem 2 -->
+          <div class="problem-card animate-fade-in delay-2">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div class="problem-text">तक्रारींची एकत्रित आणि सुरक्षित डिजिटल नोंद (Database) ठेवणे कठीण होते.</div>
+          </div>
+          <!-- Problem 3 -->
+          <div class="problem-card animate-fade-in delay-3">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+            <div class="problem-text">तक्रारीची सद्यस्थिती (Real-time Status) नागरिकांना सहज व स्वतःहून कळत नाही.</div>
+          </div>
+          <!-- Problem 4 -->
+          <div class="problem-card animate-fade-in delay-4">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="problem-text">योग्य विभागाकडे (Department) तक्रार वर्ग करण्यासाठी व पोहोचवण्यासाठी वेळ लागतो.</div>
+          </div>
+          <!-- Problem 5 -->
+          <div class="problem-card animate-fade-in delay-5">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+            </div>
+            <div class="problem-text">प्रलंबित व अतिमहत्त्वाच्या तक्रारींचे प्रभावी निरीक्षण (Monitoring) करणे कठीण होते.</div>
+          </div>
+          <!-- Problem 6 -->
+          <div class="problem-card animate-fade-in delay-6">
+            <div class="problem-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+            </div>
+            <div class="problem-text">मुख्य प्रशासनाला सर्व प्रभाग (Wards) व विभागांचा एकत्रित आढावा मिळत नाही.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================================
+           SLIDE 3: Seva Setu — उपाय (Workflow Diagram)
+           ========================================================== -->
+      <div class="slide" id="slide-3">
+        <div class="slide-header">
+          <div class="slide-title-group">
+            <h2 class="slide-title">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--secondary);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Seva Setu — उपाय
+            </h2>
+          </div>
+          <div class="gov-label">DIGITAL WORKFLOW</div>
+        </div>
+
+        <div class="solution-container">
+          <div class="workflow-diagram">
+            <div class="workflow-line"></div>
+            
+            <!-- Step 1: Citizen -->
+            <div class="workflow-step animate-fade-in delay-1">
+              <span class="step-badge">१</span>
+              <div class="workflow-icon-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div class="workflow-label">नागरिक</div>
+              <div class="workflow-sublabel">Citizen</div>
+            </div>
+
+            <div class="workflow-arrow-divider">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <!-- Step 2: Nagarsevak -->
+            <div class="workflow-step animate-fade-in delay-2">
+              <span class="step-badge">२</span>
+              <div class="workflow-icon-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="workflow-label">नगरसेवक</div>
+              <div class="workflow-sublabel">Representative</div>
+            </div>
+
+            <div class="workflow-arrow-divider">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <!-- Step 3: Department -->
+            <div class="workflow-step animate-fade-in delay-3">
+              <span class="step-badge">३</span>
+              <div class="workflow-icon-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="workflow-label">संबंधित विभाग</div>
+              <div class="workflow-sublabel">Department</div>
+            </div>
+
+            <div class="workflow-arrow-divider">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <!-- Step 4: Resolution -->
+            <div class="workflow-step animate-fade-in delay-4">
+              <span class="step-badge">४</span>
+              <div class="workflow-icon-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              </div>
+              <div class="workflow-label">कार्यवाही</div>
+              <div class="workflow-sublabel">Resolution</div>
+            </div>
+
+            <div class="workflow-arrow-divider">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <!-- Step 5: Update -->
+            <div class="workflow-step animate-fade-in delay-5">
+              <span class="step-badge">५</span>
+              <div class="workflow-icon-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <div class="workflow-label">नागरिकाला अपडेट</div>
+              <div class="workflow-sublabel">Notification</div>
+            </div>
+          </div>
+
+          <div class="solution-bottom-banner animate-fade-in delay-6">
+            <p>“तक्रार नोंदणीपासून निराकरणापर्यंत संपूर्ण प्रक्रियेचे डिजिटल व्यवस्थापन.”</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================================
+           SLIDE 4: Seva Setu — प्रत्यक्ष कार्यप्रवाह (Demo)
+           ========================================================== -->
+      <div class="slide" id="slide-4">
+        <div class="slide-header">
+          <div class="slide-title-group">
+            <h2 class="slide-title">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              Seva Setu — प्रत्यक्ष कार्यप्रवाह
+            </h2>
+          </div>
+          <div class="gov-label">LIVE DEMO VIDEO</div>
+        </div>
+
+        <div class="demo-container">
+          <!-- Video Mockup Frame -->
+          <div class="video-mockup-frame animate-fade-in delay-1" id="video-player-container">
+            
+            <!-- Video 1: Citizen App Video -->
+            <div class="portal-video-section active" id="portal-video-0" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <video controls width="100%" height="100%" style="object-fit: contain; background: black;">
+                <source src="./assets/images/citizen_portal_v1.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <!-- Video 2: Nagarsevak Dashboard Video -->
+            <div class="portal-video-section" id="portal-video-1" style="width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center;">
+              <div class="video-placeholder-content">
+                <div class="video-play-btn" style="background-color: var(--secondary);">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="video-placeholder-title"><span class="eng-term" style="color: var(--secondary-light);">NAGARSEVAK DASHBOARD DEMO</span></div>
+                <p class="video-placeholder-subtitle">नगरसेवक डॅशबोर्ड व्हिडिओ (प्रभाग स्तरावर देखरेख व वर्गीकरण)</p>
+              </div>
+            </div>
+
+            <!-- Video 3: Department Portal Video -->
+            <div class="portal-video-section" id="portal-video-2" style="width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center;">
+              <div class="video-placeholder-content">
+                <div class="video-play-btn" style="background-color: #F97316;">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="video-placeholder-title"><span class="eng-term" style="color: #FFEDD5;">DEPARTMENT PORTAL DEMO</span></div>
+                <p class="video-placeholder-subtitle">विभाग अधिकारी व्हिडिओ (प्रत्यक्ष कार्यवाही व निवारण)</p>
+              </div>
+            </div>
+
+            <!-- Video 4: Admin Dashboard Video -->
+            <div class="portal-video-section" id="portal-video-3" style="width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center;">
+              <div class="video-placeholder-content">
+                <div class="video-play-btn" style="background-color: #D97706;">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="video-placeholder-title"><span class="eng-term" style="color: #FEF3C7;">ADMIN DASHBOARD DEMO</span></div>
+                <p class="video-placeholder-subtitle">मुख्य प्रशासक डॅशबोर्ड व्हिडिओ (एकत्रित नियंत्रण व विश्लेषण)</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Side Info Panel with Portal Tabs -->
+          <div class="demo-info-panel">
+            <h3 style="font-size: 1.35rem; color: var(--primary); margin-bottom: 0.5rem;">पोर्टल निवडा (४ मुख्य विभाग):</h3>
+            <div class="demo-workflow-list">
+              <div class="demo-workflow-item portal-card active" onclick="switchPortalVideo(0)" id="portal-tab-0">
+                <span class="demo-step-num" style="background-color: var(--primary);">१</span>
+                <div>
+                  <span class="demo-step-text" style="color: var(--primary);">नागरिक ॲप (Citizen App)</span>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">तक्रार नोंदणी, फोटो पुरावा आणि थेट स्टेटस ट्रॅकिंग</p>
+                </div>
+              </div>
+              <div class="demo-workflow-item portal-card" onclick="switchPortalVideo(1)" id="portal-tab-1">
+                <span class="demo-step-num" style="background-color: var(--secondary);">२</span>
+                <div>
+                  <span class="demo-step-text" style="color: var(--text-main);">नगरसेवक डॅशबोर्ड (Nagarsevak)</span>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">प्रभागातील तक्रारींचे निरीक्षण, वर्गीकरण आणि फॉलो-अप</p>
+                </div>
+              </div>
+              <div class="demo-workflow-item portal-card" onclick="switchPortalVideo(2)" id="portal-tab-2">
+                <span class="demo-step-num" style="background-color: #F97316;">३</span>
+                <div>
+                  <span class="demo-step-text" style="color: var(--text-main);">विभाग अधिकारी पोर्टल (Official)</span>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">तक्रारींवर प्रत्यक्ष कार्यवाही, कामाचे फोटो आणि निवारण अपडेट्स</p>
+                </div>
+              </div>
+              <div class="demo-workflow-item portal-card" onclick="switchPortalVideo(3)" id="portal-tab-3">
+                <span class="demo-step-num" style="background-color: #D97706;">४</span>
+                <div>
+                  <span class="demo-step-text" style="color: var(--text-main);">मुख्य प्रशासक डॅशबोर्ड (Admin)</span>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">केंद्रीकृत नियंत्रण, प्रलंबित तक्रारींवर लक्ष आणि विश्लेषण</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================================
+           SLIDE 5: Seva Setu चे फायदे
+           ========================================================== -->
+      <div class="slide" id="slide-5">
+        <div class="slide-header">
+          <div class="slide-title-group">
+            <h2 class="slide-title">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--secondary);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Seva Setu चे फायदे
+            </h2>
+          </div>
+          <div class="gov-label">KEY BENEFITS</div>
+        </div>
+
+        <div class="benefits-grid">
+          <!-- Card 1: Citizens -->
+          <div class="benefit-col citizen-card animate-fade-in delay-1">
+            <div class="benefit-col-header">
+              <div class="benefit-col-icon">👤</div>
+              <h3 class="benefit-col-title">नागरिकांसाठी</h3>
+            </div>
+            <ul class="benefit-list">
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                घरबसल्या तक्रार नोंदवण्याची सुविधा
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                तक्रारीसोबत फोटो/पुरावा जोडण्याची सोय
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                तक्रारीची सद्यस्थिती थेट मोबाईलवर
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्रगतीचे वेळेवर नोटिफिकेशन्स व अपडेट्स
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                तक्रारीचा डिजिटल इतिहास उपलब्ध
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                नोंद व ट्रॅकिंगची पूर्ण खात्री
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                निवारणानंतर डिजिटल माहिती/अभिप्राय
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 2: Representatives -->
+          <div class="benefit-col official-card animate-fade-in delay-2">
+            <div class="benefit-col-header">
+              <div class="benefit-col-icon">🧑‍💼</div>
+              <h3 class="benefit-col-title">नगरसेवक / अधिकाऱ्यांसाठी</h3>
+            </div>
+            <ul class="benefit-list">
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्रभागातील तक्रारी एकाच जागी उपलब्ध
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्राधान्यक्रमानुसार तक्रारींचे वर्गीकरण
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                तक्रार फोटो व सविस्तर विवरणासह उपलब्ध
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                मोबाईलवरून थेट प्रगती नोंदवण्याची सोय
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                संबंधित विभागाकडे थेट फॉरवर्ड करण्याची सोय
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्रलंबित कामांचे सहज फॉलो-अप
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                आवश्यकतेनुसार तक्रार <span class="eng-term">Escalation</span>
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                संपूर्ण पारदर्शक डिजिटल इतिहास
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 3: Administration -->
+          <div class="benefit-col admin-card animate-fade-in delay-3">
+            <div class="benefit-col-header">
+              <div class="benefit-col-icon">🏛️</div>
+              <h3 class="benefit-col-title">मुख्य प्रशासनासाठी</h3>
+            </div>
+            <ul class="benefit-list">
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                सर्व प्रभागांचा एकत्रित डॅशबोर्ड आढावा
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                विभागनिहाय प्रगतीचे केंद्रीय स्तरावर नियंत्रण
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्रलंबित व निवारित तक्रारींवर देखरेख
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                उच्च-प्राधान्य तक्रारींची जलद ओळख
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                प्रलंबित तक्रारींवर (<span class="eng-term">Escalated</span>) विशेष लक्ष
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                अधिकार्‍यांच्या कार्यप्रवाहावर स्पष्ट नियंत्रण
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                केंद्रीकृत डिजिटल रेकॉर्ड्स
+              </li>
+              <li class="benefit-item">
+                <svg class="benefit-check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                भविष्यातील नियोजनासाठी उपयुक्त डेटा
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================================
+           SLIDE 6: Live Demo & पुढील टप्पे
+           ========================================================== -->
+      <div class="slide" id="slide-6">
+        <div class="slide-header">
+          <div class="slide-title-group">
+            <h2 class="slide-title">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Live Demo & पुढील टप्पे
+            </h2>
+          </div>
+          <div class="gov-label">NEXT STEPS</div>
+        </div>
+
+        <div class="last-slide-container">
+          <!-- Live App Box -->
+          <div class="live-demo-panel animate-fade-in delay-1">
+            <span class="live-demo-badge">SEVA SETU LIVE SYSTEM</span>
+            
+            <a href="https://civicstech.netlify.app" target="_blank" class="live-demo-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              LIVE SEVA SETU APP
+            </a>
+
+            <!-- QR Code Section -->
+            <div class="qr-container animate-fade-in delay-2">
+              <div class="qr-box">
+                <!-- A highly styled vector QR placeholder -->
+                <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+                  <!-- QR markers top left -->
+                  <rect x="5" y="5" width="25" height="25" rx="2" stroke="var(--primary)" stroke-width="3"/>
+                  <rect x="12" y="12" width="11" height="11" fill="var(--primary)" stroke="none"/>
+                  <!-- QR markers top right -->
+                  <rect x="70" y="5" width="25" height="25" rx="2" stroke="var(--primary)" stroke-width="3"/>
+                  <rect x="77" y="12" width="11" height="11" fill="var(--primary)" stroke="none"/>
+                  <!-- QR markers bottom left -->
+                  <rect x="5" y="70" width="25" height="25" rx="2" stroke="var(--primary)" stroke-width="3"/>
+                  <rect x="12" y="77" width="11" height="11" fill="var(--primary)" stroke="none"/>
+                  
+                  <!-- Dummy QR pixel paths -->
+                  <path d="M 40 10 h 5 v 5 h -5 z M 50 15 h 5 v 10 h -5 z M 45 30 h 15 v 5 h -15 z M 10 40 h 5 v 15 h -5 z M 20 50 h 10 v 5 h -10 z" fill="var(--text-main)" stroke="none"/>
+                  <path d="M 35 45 h 15 v 5 h -15 z M 60 45 h 5 v 5 h -5 z M 40 60 h 20 v 5 h -20 z M 55 50 h 5 v 10 h -5 z M 50 70 h 10 v 5 h -10 z" fill="var(--text-main)" stroke="none"/>
+                  <path d="M 70 40 h 15 v 5 h -15 z M 80 50 h 15 v 5 h -15 z M 75 60 h 10 v 15 h -10 z M 90 70 h 5 v 10 h -5 z" fill="var(--text-main)" stroke="none"/>
+                </svg>
+              </div>
+              <div class="qr-label">QR Code स्कैन करा</div>
+            </div>
+          </div>
+
+          <!-- Roadmap Box -->
+          <div class="roadmap-panel">
+            <div>
+              <h3 class="roadmap-section-title">पुढील टप्पे (Next Steps)</h3>
+              
+              <!-- Timeline flow -->
+              <div class="roadmap-flow animate-fade-in delay-3">
+                
+                <div class="roadmap-node">
+                  <div class="roadmap-icon-circle">१</div>
+                  <div class="roadmap-label">Pilot</div>
+                </div>
+                
+                <svg class="roadmap-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                
+                <div class="roadmap-node">
+                  <div class="roadmap-icon-circle">२</div>
+                  <div class="roadmap-label">Feedback</div>
+                </div>
+                
+                <svg class="roadmap-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                
+                <div class="roadmap-node">
+                  <div class="roadmap-icon-circle">३</div>
+                  <div class="roadmap-label">सुधारणा</div>
+                </div>
+                
+                <svg class="roadmap-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                
+                <div class="roadmap-node">
+                  <div class="roadmap-icon-circle">४</div>
+                  <div class="roadmap-label">प्रशिक्षण</div>
+                </div>
+                
+                <svg class="roadmap-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                
+                <div class="roadmap-node">
+                  <div class="roadmap-icon-circle">५</div>
+                  <div class="roadmap-label">विस्तार</div>
+                </div>
+                
+              </div>
+            </div>
+
+            <!-- Closing Slogan Statement -->
+            <div class="closing-statement animate-fade-in delay-4">
+              “नागरिकांच्या तक्रारींपासून त्यांच्या निराकरणापर्यंत — Seva Setu एक पारदर्शक आणि trackable workflow उपलब्ध करून देते.”
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Presentation Footer with Navigation Controls -->
+    <div class="presentation-footer">
+      <div class="footer-left">
+        <!-- Logo Icon in footer -->
+        <img class="footer-logo" src="assets/images/logo.webp" alt="" onerror="this.src='assets/images/logo.jpeg'">
+        <span style="font-weight: 700; color: var(--primary);">SEVA SETU</span>
+        <span style="color: var(--border);">|</span>
+        <span style="color: var(--text-muted); font-size: 0.85rem;">मालवण नगरपरिषद</span>
+      </div>
+
+      <!-- Navigation Progress Dots -->
+      <div class="footer-center-dots">
+        <div class="nav-dot active" onclick="goToSlide(0)"></div>
+        <div class="nav-dot" onclick="goToSlide(1)"></div>
+        <div class="nav-dot" onclick="goToSlide(2)"></div>
+        <div class="nav-dot" onclick="goToSlide(3)"></div>
+        <div class="nav-dot" onclick="goToSlide(4)"></div>
+        <div class="nav-dot" onclick="goToSlide(5)"></div>
+      </div>
+
+      <!-- Controls and slide numbering -->
+      <div class="footer-right">
+        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen मोड">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <span class="slide-number"><span id="current-slide-num">1</span> / 6</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="nav-btn" id="prev-btn" onclick="prevSlide()" disabled title="मागील स्लाईड">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="nav-btn" id="next-btn" onclick="nextSlide()" title="पुढील स्लाईड">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.nav-dot');
+  const currentSlideNum = document.getElementById('current-slide-num');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  function updateSlides() {
+    slides.forEach((slide, index) => {
+      slide.classList.remove('active', 'prev', 'next');
+      if (index === currentSlide) {
+        slide.classList.add('active');
+      } else if (index < currentSlide) {
+        slide.classList.add('prev');
+      } else {
+        slide.classList.add('next');
+      }
+    });
+
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === currentSlide);
+    });
+
+    currentSlideNum.textContent = currentSlide + 1;
+    
+    // Enable/disable navigation buttons
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === slides.length - 1;
+  }
+
+  function nextSlide() {
+    if (currentSlide < slides.length - 1) {
+      currentSlide++;
+      updateSlides();
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlides();
+    }
+  }
+
+  function goToSlide(index) {
+    if (index >= 0 && index < slides.length) {
+      currentSlide = index;
+      updateSlides();
+    }
+  }
+
+  // Keyboard navigation support
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === ' ') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prevSlide();
+    }
+  });
+
+  // Switch video and portal tab
+  function switchPortalVideo(index) {
+    // Hide all video sections
+    document.querySelectorAll('.portal-video-section').forEach(section => {
+      section.style.display = 'none';
+      section.classList.remove('active');
+    });
+    // Show selected video section
+    const activeSection = document.getElementById(`portal-video-${index}`);
+    if (activeSection) {
+      activeSection.style.display = 'flex';
+      activeSection.classList.add('active');
+    }
+
+    // Deactivate all tabs
+    document.querySelectorAll('.portal-card').forEach(card => {
+      card.classList.remove('active');
+      const textSpan = card.querySelector('.demo-step-text');
+      if (textSpan) textSpan.style.color = 'var(--text-main)';
+    });
+    // Activate selected tab and set its respective brand color
+    const activeCard = document.getElementById(`portal-tab-${index}`);
+    if (activeCard) {
+      activeCard.classList.add('active');
+      const textSpan = activeCard.querySelector('.demo-step-text');
+      if (textSpan) {
+        if (index === 0) textSpan.style.color = 'var(--primary)';
+        if (index === 1) textSpan.style.color = 'var(--secondary)';
+        if (index === 2) textSpan.style.color = '#F97316';
+        if (index === 3) textSpan.style.color = '#D97706';
+      }
+    }
+  }
+
+  // Fullscreen support
+  function toggleFullscreen() {
+    const element = document.getElementById('presentation');
+    if (!document.fullscreenElement) {
+      element.requestFullscreen().catch(err => {
+        alert(`Fullscreen एरर: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // Handle auto-scaling of presentation container to fit viewport
+  function adjustScale() {
+    const container = document.getElementById('presentation');
+    if (!container) return;
+    
+    const baseWidth = 1280;
+    const baseHeight = 720;
+    
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // In fullscreen mode, use the full screen width and height
+    const width = document.fullscreenElement ? screen.width : windowWidth;
+    const height = document.fullscreenElement ? screen.height : windowHeight;
+    
+    // Determine the scale factor (leave a margin of 0.96 if not in fullscreen)
+    const margin = document.fullscreenElement ? 1.0 : 0.96;
+    const scaleX = width / baseWidth;
+    const scaleY = height / baseHeight;
+    const scale = Math.min(scaleX, scaleY) * margin;
+    
+    // Apply scale transform
+    container.style.transform = `scale(${scale})`;
+    container.style.transformOrigin = 'center center';
+  }
+
+  // Bind scale adjuster events
+  window.addEventListener('resize', adjustScale);
+  window.addEventListener('load', adjustScale);
+  document.addEventListener('fullscreenchange', adjustScale);
+  
+  // Run immediately and after a short timeout to handle initial rendering
+  adjustScale();
+  setTimeout(adjustScale, 100);
+</script>
+</body>
+</html>
