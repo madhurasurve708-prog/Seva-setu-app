@@ -6,7 +6,7 @@ const SESSION_KEY = 'seva-setu.official-access-token';
 // const SESSION_KEY = '@seva-setu/official-access-token';
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
 const GET_CACHE_TTL_MS = 15_000;
-const REQUEST_TIMEOUT_MS = 12_000;
+const REQUEST_TIMEOUT_MS = 60_000;
 
 type CachedResponse = {
   expiresAt: number;
