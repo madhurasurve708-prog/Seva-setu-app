@@ -7,6 +7,9 @@ import { isDevOtpMode, requestDevOtp } from '@/services/dev-otp';
 import type { CitizenProfile } from '@/types/citizen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Image, ImageBackground } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import LanguageToggle from '../../components/common/LanguageToggle';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -326,6 +329,287 @@ export default function CitizenLoginScreen() {
       setOtp(Array(OTP_LENGTH).fill(''));
     }
   }, [step, router, animateToStep]);
+
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopContainer}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        
+        {/* Left Side: 45% Width */}
+        <View style={styles.desktopLeft}>
+          <ImageBackground
+            source={require('../../assets/images/hero_banner.webp')}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          >
+            {/* Cinematic dark-blue gradient overlay */}
+            <LinearGradient
+              colors={[
+                'rgba(5, 18, 35, 0.85)',
+                'rgba(8, 55, 110, 0.72)',
+                'rgba(5, 18, 35, 0.92)',
+              ]}
+              locations={[0, 0.5, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+
+            {/* Left Header - Back button & LanguageToggle */}
+            <View style={styles.desktopLeftHeader}>
+              <Pressable
+                onPress={goBackStep}
+                style={styles.desktopBackBtn}
+                hitSlop={12}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
+              </Pressable>
+              <LanguageToggle size={40} variant="dark" />
+            </View>
+
+            {/* Branding / Text overlay */}
+            <View style={styles.desktopLeftContent}>
+              <View style={styles.desktopLogoWrap}>
+                <Image
+                  source={require('../../assets/images/logo.webp')}
+                  style={styles.desktopLogo}
+                  contentFit="contain"
+                />
+              </View>
+              <Text style={styles.desktopLeftTitle}>{t('citizenLogin')}</Text>
+              <Text style={styles.desktopLeftSubtitle}>Seva Setu - Malvan</Text>
+              <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
+            </View>
+          </ImageBackground>
+        </View>
+
+        {/* Right Side: 55% Width */}
+        <View style={styles.desktopRight}>
+          <KeyboardAvoidingView
+            style={styles.desktopRightContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.desktopCardWrapper}>
+              {/* Progress dots */}
+              <View style={styles.dotsRow}>
+                {[1, 2, 3, 4].map((n) => (
+                  <View key={n} style={[styles.dot, n === step && styles.dotActive, n < step && styles.dotDone]} />
+                ))}
+              </View>
+
+              <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
+                {step === 1 && (
+                  <View style={styles.desktopCardInner}>
+                    <Text style={authStyles.screenTitle}>{t('enterMobile')}</Text>
+                    <Text style={authStyles.screenHint}>{t('mobileHint')}</Text>
+
+                    <View style={[styles.phoneInputContainer, mobileError ? { borderColor: COLORS.danger } : null]}>
+                      <MaterialCommunityIcons name="cellphone" size={20} color={mobileError ? COLORS.danger : COLORS.primaryLight} style={styles.phoneIcon} />
+                      <View style={styles.indiaWrap}>
+                        <Text style={styles.indiaCode}>+91</Text>
+                      </View>
+                      <View style={styles.divider} />
+                      <TextInput
+                        placeholder={t('mobilePlaceholder')}
+                        placeholderTextColor={COLORS.textPlaceholder}
+                        keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                        maxLength={10}
+                        value={mobile}
+                        onChangeText={(text) => {
+                          const value = text.replace(/[^0-9]/g, '').slice(0, 10);
+                          setMobile(value);
+                          if (/^[6-9]\d{9}$/.test(value)) setMobileError('');
+                        }}
+                        style={styles.phoneInput}
+                        returnKeyType="send"
+                        onSubmitEditing={handleSendOtp}
+                      />
+                    </View>
+                    {mobileError ? <Text style={authStyles.errorText}>{mobileError}</Text> : null}
+
+                    <View style={{ marginTop: 24 }}>
+                      <Pressable
+                        onPress={handleSendOtp}
+                        disabled={!isMobileValid || sendingOtp}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: !isMobileValid ? '#CBD5E1' : COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {sendingOtp ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('sendOtp')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+
+                {step === 2 && (
+                  <View style={styles.centerLoading}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <Text style={styles.loadingText}>{t('sendingOtp')} +91 {mobile}...</Text>
+                  </View>
+                )}
+
+                {step === 3 && (
+                  <View style={styles.desktopCardInner}>
+                    <Text style={authStyles.screenTitle}>{t('enterOtp')}</Text>
+                    <Text style={authStyles.screenHint}>
+                      {t('otpSentTo')}{mobile.slice(0, 5)}xxxxx. <Text style={styles.linkText} onPress={() => animateToStep(1)}>{t('change')}</Text>
+                    </Text>
+
+                    <View style={styles.otpRow}>
+                      {otp.map((d, i) => {
+                        const isFocused = focusedIndex === i;
+                        return (
+                          <TextInput
+                            key={i}
+                            ref={(ref) => {
+                              otpRefs.current[i] = ref;
+                            }}
+                            value={d}
+                            onChangeText={(v) => handleOtpChange(v, i)}
+                            onKeyPress={(e) => handleOtpKeyPress(e, i)}
+                            onFocus={() => setFocusedIndex(i)}
+                            onBlur={() => setFocusedIndex(null)}
+                            keyboardType="numeric"
+                            maxLength={1}
+                            style={[
+                              styles.otpBox,
+                              d ? styles.otpBoxFilled : null,
+                              isFocused && styles.otpBoxFocused,
+                            ]}
+                            textContentType="oneTimeCode"
+                          />
+                        );
+                      })}
+                    </View>
+                    {otpError ? <Text style={authStyles.errorText}>{otpError}</Text> : null}
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                      <Text style={styles.resendText}>{canResend ? t('canResendNow') : `${t('resendIn')}${countdown}s`}</Text>
+                      <Pressable onPress={handleResend} disabled={!canResend} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+                        <Text style={[styles.resendLink, !canResend ? { color: COLORS.textMuted } : null]}>{t('resendOtp')}</Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={{ marginTop: 24 }}>
+                      <Pressable
+                        onPress={handleVerifyOtp}
+                        disabled={!isOtpComplete || verifying}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: !isOtpComplete ? '#CBD5E1' : COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {verifying || checkingUser ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('verify')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+
+                {step === 4 && (
+                  <View style={styles.desktopCardInner}>
+                    <Text style={authStyles.screenTitle}>{t('createCitizenProfile')}</Text>
+                    <Text style={authStyles.screenHint}>{t('addressVerificationHint')}</Text>
+
+                    <View style={authStyles.formContainer}>
+                      <Text style={styles.formInputLabel}>{t('nameLabel')}</Text>
+                      <View style={[styles.formInputContainer, nameError ? { borderColor: COLORS.danger } : null]}>
+                        <MaterialCommunityIcons name="account-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <TextInput
+                          placeholder={t('namePlaceholder')}
+                          placeholderTextColor={COLORS.textPlaceholder}
+                          value={fullName}
+                          onChangeText={(t) => {
+                            setFullName(t);
+                            if (t.trim()) setNameError('');
+                          }}
+                          style={styles.fieldInput}
+                        />
+                      </View>
+                      {nameError ? <Text style={authStyles.errorText}>{nameError}</Text> : null}
+
+                      <Text style={styles.formInputLabel}>{t('selectWard')}</Text>
+                      <Pressable
+                        onPress={() => setShowWardModal(true)}
+                        style={[styles.formInputContainer, wardError ? { borderColor: COLORS.danger } : null]}
+                      >
+                        <MaterialCommunityIcons name="map-marker-radius-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <Text style={[styles.fieldInputText, ward ? { color: COLORS.text } : null]}>
+                          {ward || t('wardPickerHint')}
+                        </Text>
+                        <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.textMuted} />
+                      </Pressable>
+                      {wardError ? <Text style={authStyles.errorText}>{wardError}</Text> : null}
+
+                      <Text style={styles.formInputLabel}>{t('localityStreetLandmark')}</Text>
+                      <View style={[styles.formInputContainer, localityError ? { borderColor: COLORS.danger } : null]}>
+                        <MaterialCommunityIcons name="home-city-outline" size={20} color={COLORS.textMuted} style={styles.fieldIcon} />
+                        <TextInput
+                          placeholder={t('localityExample')}
+                          placeholderTextColor={COLORS.textPlaceholder}
+                          value={locality}
+                          onChangeText={(t) => {
+                            setLocality(t);
+                            if (t.trim()) setLocalityError('');
+                          }}
+                          style={styles.fieldInput}
+                        />
+                      </View>
+                      {localityError ? <Text style={authStyles.errorText}>{localityError}</Text> : null}
+                    </View>
+
+                    <View style={{ marginTop: 24 }}>
+                      <Pressable
+                        onPress={handleCompleteRegistration}
+                        disabled={registering}
+                        style={({ pressed }) => [
+                          styles.primaryBtnStyle,
+                          { backgroundColor: COLORS.primary },
+                          pressed && { opacity: 0.9 },
+                        ]}
+                      >
+                        {registering ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>{t('completeRegistration')}</Text>}
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+              </Animated.View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+
+        {/* Ward Dropdown Modal Bottom Sheet */}
+        <Modal visible={showWardModal} animationType="slide" transparent>
+          <Pressable style={styles.modalOverlay} onPress={() => setShowWardModal(false)}>
+            <View style={styles.modalSheet} onStartShouldSetResponder={() => true}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>{t('selectWard')}</Text>
+              <Text style={styles.modalSubtitle}>{t('selectResidenceWard')}</Text>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                {WARDS.map((w) => {
+                  const selected = ward === w;
+                  return (
+                    <Pressable
+                      key={w}
+                      onPress={() => {
+                        setWard(w);
+                        setWardError('');
+                        setShowWardModal(false);
+                      }}
+                      style={[styles.modalItem, selected && styles.modalItemSelected]}
+                    >
+                      <Text style={[styles.modalItemText, selected && styles.modalItemTextSelected]}>{`${t('ward2')} ${w.replace(/^Ward\s*/, '')}`}</Text>
+                      {selected && <MaterialCommunityIcons name="check-circle" size={20} color={COLORS.primary} />}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </Pressable>
+        </Modal>
+      </View>
+    );
+  }
 
   return (
     <View style={[authStyles.root, isDesktop && styles.desktopPage]}>
@@ -758,6 +1042,102 @@ export default function CitizenLoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    height: (Platform.OS === 'web' ? '100vh' : '100%') as any,
+    backgroundColor: '#F8FAFC',
+  },
+  desktopLeft: {
+    width: '45%',
+    height: '100%',
+    position: 'relative',
+  },
+  desktopLeftHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    zIndex: 10,
+  },
+  desktopBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  desktopLeftContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingBottom: 64,
+  },
+  desktopLogoWrap: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 18,
+    borderRadius: 28,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  desktopLogo: {
+    width: 80,
+    height: 80,
+  },
+  desktopLeftTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  desktopLeftSubtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.88)',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  desktopLeftSlogan: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: 'rgba(255, 255, 255, 0.72)',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  desktopRight: {
+    width: '55%',
+    height: '100%',
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  desktopRightContainer: {
+    width: '100%',
+    maxWidth: 480,
+    justifyContent: 'center',
+  },
+  desktopCardWrapper: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 40,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  desktopCardInner: {
+    width: '100%',
+  },
   desktopPage: { backgroundColor: '#F3F7FB', paddingHorizontal: 24, paddingBottom: 24 },
   desktopCenter: { justifyContent: 'flex-start', paddingTop: 16, paddingBottom: 24 },
   desktopSheet: { maxWidth: 620, paddingHorizontal: 26 },

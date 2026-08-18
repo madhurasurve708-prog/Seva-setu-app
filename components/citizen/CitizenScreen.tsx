@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../../constants/theme';
 import BottomNav from './BottomNav';
 import DesktopPortal from '@/components/common/DesktopPortal';
+import { useTranslation } from '@/providers/localization-provider';
 
 type CitizenScreenProps = PropsWithChildren<{
   title: string;
@@ -27,19 +28,20 @@ export function CitizenScreen({
   const { profile, logout } = useCitizen();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const { t } = useTranslation();
 
   if (isDesktop) {
     return (
       <DesktopPortal title={title} initial={(profile?.firstName || profile?.fullName || profile?.name || 'C').charAt(0).toUpperCase()}
         onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
         items={[
-          { label: 'Dashboard', route: '/(citizen)/dashboard', icon: 'view-dashboard-outline' },
-          { label: 'Report Complaint', route: '/(citizen)/report-complaint', icon: 'plus-circle-outline' },
-          { label: 'My Complaints', route: '/(citizen)/my-complaints', icon: 'clipboard-text-outline' },
-          { label: 'Ward Information', route: '/(citizen)/ward', icon: 'map-marker-outline' },
-          { label: 'Announcements', route: '/(citizen)/announcements', icon: 'bullhorn-outline' },
-          { label: 'Profile', route: '/(citizen)/profile', icon: 'account-outline' },
-          { label: 'Settings', route: '/(citizen)/settings', icon: 'cog-outline' },
+          { label: t('dashboard'), route: '/(citizen)/dashboard', icon: 'view-dashboard-outline' },
+          { label: t('reportComplaint'), route: '/(citizen)/report-complaint', icon: 'plus-circle-outline' },
+          { label: t('myComplaints'), route: '/(citizen)/my-complaints', icon: 'clipboard-text-outline' },
+          { label: t('wardInformation'), route: '/(citizen)/ward', icon: 'map-marker-outline' },
+          { label: t('announcements'), route: '/(citizen)/announcements', icon: 'bullhorn-outline' },
+          { label: t('profile'), route: '/(citizen)/profile', icon: 'account-outline' },
+          { label: t('settings'), route: '/(citizen)/settings', icon: 'cog-outline' },
         ]}>
         {children}
       </DesktopPortal>

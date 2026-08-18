@@ -5,7 +5,7 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
@@ -59,12 +59,59 @@ const WARD_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
   ],
 };
 
-export default function WardScreen() {
+const TRANSLATED_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
+  'Ward 1': [
+    { name: 'श्री. राजेश तेंडुलकर', phone: '9422070001', address: 'बाजार रोड, मालवण', party: 'अपक्ष' },
+    { name: 'श्रीमती. वैशाली परब', phone: '9422070011', address: 'बाजार रोड, मालवण', party: 'अपक्ष' },
+  ],
+  'Ward 2': [
+    { name: 'श्रीमती. स्नेहल नाईक', phone: '9422071112', address: 'दांडी बीच परिसर, मालवण', party: 'शिवसेना' },
+    { name: 'श्री. उमेश गोळेकर', phone: '9422071122', address: 'दांडी बीच परिसर, मालवण', party: 'शिवसेना' },
+  ],
+  'Ward 3': [
+    { name: 'श्री. संजय मेढेकर', phone: '9422072223', address: 'मेढा, दत्त मंदिराजवळ, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. कविता राणे', phone: '9422072233', address: 'मेढा, दत्त मंदिराजवळ, मालवण', party: 'भाजप' },
+  ],
+  'Ward 4': [
+    { name: 'श्रीमती. प्राची कुंभार', phone: '9422073334', address: 'कुंभारमाठ रोड, मालवण', party: 'शिवसेना' },
+    { name: 'श्री. दत्तात्रय सावंत', phone: '9422073344', address: 'कुंभारमाठ रोड, मालवण', party: 'शिवसेना' },
+  ],
+  'Ward 5': [
+    { name: 'श्री. विजय वायरीकर', phone: '9422074445', address: 'वायरी बाजार, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. नेहा गावडे', phone: '9422074455', address: 'वायरी बाजार, मालवण', party: 'भाजप' },
+  ],
+  'Ward 6': [
+    { name: 'श्री. नितीन आचरेकर', phone: '9422075556', address: 'आचरा रोड जंक्शन, मालवण', party: 'काँग्रेस' },
+    { name: 'श्रीमती. पूजा कदम', phone: '9422075566', address: 'आचरा रोड जंक्शन, मालवण', party: 'काँग्रेस' },
+  ],
+  'Ward 7': [
+    { name: 'श्रीमती. रसिका देवबागकर', phone: '9422076667', address: 'देवबाग बीच रोड, मालवण', party: 'अपक्ष' },
+    { name: 'श्री. सुरेश बांदेकर', phone: '9422076677', address: 'देवबाग बीच रोड, मालवण', party: 'अपक्ष' },
+  ],
+  'Ward 8': [
+    { name: 'श्री. महेश काळेश्वरकर', phone: '9422077778', address: 'काळेश्वर मंदिर वॉर्ड, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. तृप्ती फोंडेकर', phone: '9422077788', address: 'काळेश्वर मंदिर वॉर्ड, मालवण', party: 'भाजप' },
+  ],
+  'Ward 9': [
+    { name: 'श्रीमती. अंजली धुरी', phone: '9422078889', address: 'धुरीवाडा, मालवण', party: 'काँग्रेस' },
+    { name: 'श्री. प्रशांत काटकर', phone: '9422078899', address: 'धुरीवाडा, मालवण', party: 'काँग्रेस' },
+  ],
+  'Ward 10': [
+    { name: 'श्री. रमेश सर्जेकोटकर', phone: '9422079990', address: 'सर्जेकोट बंदर रोड, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. दिपाली मालवणकर', phone: '9422079900', address: 'सर्जेकोट बंदर रोड, मालवण', party: 'भाजप' },
+  ],
+};
+
+const WardScreen = memo(function WardScreen() {
   const { profile, complaints } = useCitizen();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const currentWard = useMemo(() => profile?.ward || 'Ward 3', [profile]);
-  const reps = useMemo(() => WARD_REPS[currentWard] || WARD_REPS['Ward 3'], [currentWard]);
+  const reps = useMemo(() => {
+    const isMr = language === 'Marathi';
+    const list = isMr ? TRANSLATED_REPS[currentWard] : WARD_REPS[currentWard];
+    return list || WARD_REPS['Ward 3'];
+  }, [currentWard, language]);
 
   const wardComplaints = useMemo(
     () => complaints.filter((c) => c.ward === currentWard),
@@ -98,8 +145,8 @@ export default function WardScreen() {
           <View style={styles.heroRow}>
             <View style={styles.heroTextCol}>
               <Text style={styles.heroLabel}>{t('officialDemographicsLabel')}</Text>
-              <Text style={styles.heroTitle}>{currentWard}</Text>
-              <Text style={styles.heroSub}>{profile?.locality || 'Malvan Municipal area'}</Text>
+              <Text style={styles.heroTitle}>{language === 'Marathi' ? currentWard.replace('Ward', 'वॉर्ड') : currentWard}</Text>
+              <Text style={styles.heroSub}>{profile?.locality || (language === 'Marathi' ? 'मालवण पालिका क्षेत्र' : 'Malvan Municipal area')}</Text>
             </View>
             <View style={styles.heroIconBadge}>
               <MaterialCommunityIcons name="office-building-marker" size={40} color="rgba(255,255,255,0.22)" />
@@ -159,7 +206,9 @@ export default function WardScreen() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default WardScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 110 },

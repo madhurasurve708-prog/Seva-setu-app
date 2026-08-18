@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
@@ -28,7 +28,7 @@ const WARD_RANKS: WardRank[] = [
   { rank: 10, ward: 'Ward 6', repName: 'Shri. Nitin Acharekar', points: 710, rate: '77.8%', status: 'Average' },
 ];
 
-function RankBadge({ rank }: { rank: number }) {
+const RankBadge = memo(function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) {
     return (
       <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.medalCircle}>
@@ -55,9 +55,9 @@ function RankBadge({ rank }: { rank: number }) {
       <Text style={styles.normalRankText}>{rank}</Text>
     </View>
   );
-}
+});
 
-export default function LeaderboardScreen() {
+const LeaderboardScreen = memo(function LeaderboardScreen() {
   return (
     <CitizenScreen title="Ward Leaderboard">
       <ScrollView
@@ -119,7 +119,9 @@ export default function LeaderboardScreen() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default LeaderboardScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 110 },

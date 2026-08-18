@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Platform, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from '@/providers/localization-provider';
 
 type FAQItem = {
   question: string;
   answer: string;
 };
 
-const FAQS: FAQItem[] = [
+const FAQS_EN: FAQItem[] = [
   {
     question: 'How do I file a new complaint?',
     answer: 'Go to the report tab in bottom navigation, select the relevant category, type the manual location/landmark details, upload a photo of the issue (optional), and tap "Submit". It will immediately be assigned to the respective department.',
@@ -34,7 +35,30 @@ const FAQS: FAQItem[] = [
   },
 ];
 
-function FAQAccordion({ item }: { item: FAQItem }) {
+const FAQS_MR: FAQItem[] = [
+  {
+    question: 'मी नवीन तक्रार कशी नोंदवू?',
+    answer: 'खालील नेव्हिगेशनमधील रिपोर्ट टॅबवर जा, संबंधित श्रेणी निवडा, ठिकाण/खूण किंवा तपशील टाइप करा, समस्येचा फोटो अपलोड करा (पर्यायी), आणि "सबमिट करा" वर टॅप करा. ती लगेचच संबंधित विभागाकडे पाठवली जाईल.',
+  },
+  {
+    question: 'तक्रार सोडवण्यासाठी किती वेळ लागतो?',
+    answer: 'निराकरणाचा वेळ विभाग आणि समस्येच्या तीव्रतेनुसार बदलतो. स्वच्छता आणि कचरा उचलण्यासाठी साधारण २४-४८ तास लागतात. पथदिवे आणि पाणी पुरवठा समस्या २-३ व्यावसायिक दिवसांत सुटतात. तांत्रिक व्याप्तीनुसार रस्ते आणि सांडपाणी समस्यांना जास्त वेळ लागू शकतो.',
+  },
+  {
+    question: 'मी माझ्या तक्रारीच्या स्थितीचा मागोवा (ट्रॅक) घेऊ शकतो का?',
+    answer: 'होय! दाखल केलेल्या सर्व तक्रारी पाहण्यासाठी खालील बारमधील "तक्रारी" टॅबवर जा. तक्रार कार्डवर टॅप केल्यास रिअल-टाइम ट्रॅकिंग टाइमलाइन (प्रलंबित → प्रगतीपथावर → निकाली) दिसते.',
+  },
+  {
+    question: 'माझी तक्रार न सुटता बंद झाली तर काय करावे?',
+    answer: 'आपण समाधानी नसल्यास, आपण थेट हेल्पलाईनवर संपर्क करू शकता किंवा पुन्हा तक्रार करू शकता. चुकीच्या पद्धतीने बंद केलेल्या तक्रारींबद्दल दरमहा नगरपरिषदेच्या सभागृहात आयोजित होणाऱ्या नागरी तक्रार शिबिरात चर्चा केली जाऊ शकते.',
+  },
+  {
+    question: 'माझी वैयक्तिक माहिती जाहीरपणे सामायिक केली जाते का?',
+    answer: 'नाही, तुमचा डेटा सुरक्षितपणे साठवला जातो. आवश्यकतेनुसार ठिकाणाच्या तपशीलाची पडताळणी करण्यासाठी तुमचे नाव आणि फोन नंबर केवळ निराकरण अधिकारी आणि वॉर्ड प्रशासकांनाच दृश्यमान असतो.',
+  },
+];
+
+const FAQAccordion = memo(function FAQAccordion({ item }: { item: FAQItem }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -46,7 +70,7 @@ function FAQAccordion({ item }: { item: FAQItem }) {
         <Text style={styles.faqQuestion}>{item.question}</Text>
         <MaterialCommunityIcons
           name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={18}
+          size={20}
           color={COLORS.primary}
         />
       </View>
@@ -57,81 +81,87 @@ function FAQAccordion({ item }: { item: FAQItem }) {
       )}
     </Pressable>
   );
-}
+});
 
-export default function HelpScreen() {
-  const handleCall = () => {
+const HelpScreen = memo(function HelpScreen() {
+  const { t, language } = useTranslation();
+  
+  const faqs = useMemo(() => (language === 'Marathi' ? FAQS_MR : FAQS_EN), [language]);
+
+  const handleCall = useCallback(() => {
     Linking.openURL('tel:02365-252018').catch(() => {});
-  };
+  }, []);
 
-  const handleEmail = () => {
+  const handleEmail = useCallback(() => {
     Linking.openURL('mailto:support@malvanmunicipal.in').catch(() => {});
-  };
+  }, []);
 
   return (
-    <CitizenScreen title="Help & Support" showBack hideNav>
+    <CitizenScreen title={t('helpSupport')} showBack hideNav>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        <Text style={styles.sectionTitle}>{t('frequentlyAsked')}</Text>
         <GlassCard style={styles.faqCard}>
-          {FAQS.map((faq, idx) => (
+          {faqs.map((faq, idx) => (
             <View key={faq.question}>
               <FAQAccordion item={faq} />
-              {idx < FAQS.length - 1 && <View style={styles.divider} />}
+              {idx < faqs.length - 1 && <View style={styles.divider} />}
             </View>
           ))}
         </GlassCard>
 
-        <Text style={styles.sectionTitle}>How to Report & Track</Text>
+        <Text style={styles.sectionTitle}>{t('howToReportTrack')}</Text>
         <GlassCard style={styles.guideCard}>
           <View style={styles.guideStep}>
             <View style={styles.stepNum}><Text style={styles.stepNumText}>1</Text></View>
             <View style={styles.stepCopy}>
-              <Text style={styles.stepTitle}>Select Category</Text>
-              <Text style={styles.stepBody}>Choose between Water, Drainage, Lights, Garbage, etc.</Text>
+              <Text style={styles.stepTitle}>{language === 'Marathi' ? 'श्रेणी निवडा' : 'Select Category'}</Text>
+              <Text style={styles.stepBody}>{language === 'Marathi' ? 'पाणी, सांडपाणी, पथदिवे, कचरा इत्यादींपैकी निवडा.' : 'Choose between Water, Drainage, Lights, Garbage, etc.'}</Text>
             </View>
           </View>
           <View style={styles.guideStep}>
             <View style={styles.stepNum}><Text style={styles.stepNumText}>2</Text></View>
             <View style={styles.stepCopy}>
-              <Text style={styles.stepTitle}>Provide Location & Description</Text>
-              <Text style={styles.stepBody}>Mention landmark or flat number, and write clear details.</Text>
+              <Text style={styles.stepTitle}>{language === 'Marathi' ? 'ठिकाण आणि वर्णन द्या' : 'Provide Location & Description'}</Text>
+              <Text style={styles.stepBody}>{language === 'Marathi' ? 'जवळची खूण जोडा आणि विशिष्ट समस्येचे वर्णन करा.' : 'Mention landmark or flat number, and write clear details.'}</Text>
             </View>
           </View>
           <View style={styles.guideStep}>
             <View style={styles.stepNum}><Text style={styles.stepNumText}>3</Text></View>
             <View style={styles.stepCopy}>
-              <Text style={styles.stepTitle}>Monitor Updates</Text>
-              <Text style={styles.stepBody}>Receive notification alerts as officers updates resolve the issue.</Text>
+              <Text style={styles.stepTitle}>{language === 'Marathi' ? 'रिअल-टाइम प्रगती ट्रॅक करा' : 'Track Real-Time Progress'}</Text>
+              <Text style={styles.stepBody}>{language === 'Marathi' ? 'माझ्या तक्रारी अंतर्गत नगर अधिकाऱ्यांकडून मिळणारे अद्यतन पहा.' : 'Receive notification alerts as officers updates resolve the issue.'}</Text>
             </View>
           </View>
         </GlassCard>
 
-        <Text style={styles.sectionTitle}>Contact Municipal Council</Text>
+        <Text style={styles.sectionTitle}>{t('contactMunicipalCouncil')}</Text>
         <GlassCard style={styles.contactCard}>
           <Text style={styles.contactIntro}>
-            If you need direct assistance regarding ward issues or general municipal services, please reach out below.
+            {t('contactIntro')}
           </Text>
 
           <Pressable onPress={handleCall} style={({ pressed }) => [styles.contactButton, pressed && { opacity: 0.9 }]}>
             <MaterialCommunityIcons name="phone" size={20} color={COLORS.white} />
-            <Text style={styles.contactBtnText}>Call Support: 02365-252018</Text>
+            <Text style={styles.contactBtnText}>{t('callSupport')}</Text>
           </Pressable>
 
           <Pressable onPress={handleEmail} style={({ pressed }) => [styles.contactButton, styles.emailBtn, pressed && { opacity: 0.9 }]}>
             <MaterialCommunityIcons name="email-outline" size={20} color={COLORS.primary} />
-            <Text style={[styles.contactBtnText, { color: COLORS.primary }]}>Email: support@malvanmunicipal.in</Text>
+            <Text style={[styles.contactBtnText, { color: COLORS.primary }]}>{t('emailSupport')}</Text>
           </Pressable>
         </GlassCard>
 
-        <Text style={styles.footerNote}>Malvan Municipal Council Seva Setu Portal v1.0.0</Text>
+        <Text style={styles.footerNote}>{t('portalFooter')}</Text>
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default HelpScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 40 },

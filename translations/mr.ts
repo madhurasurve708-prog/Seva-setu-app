@@ -77,6 +77,10 @@ export const mr: Record<string, string> = {
   drainage: "सांडपाणी समस्या",
   tree: "झाड पडणे",
   other: "इतर तक्रारी",
+  police: "पोलीस",
+  fire: "अग्निशामक दल",
+  hospital: "रुग्णालय",
+  publicToilet: "सार्वजनिक शौचालय",
 
   // Complaint Details & Forms
   complaintDetails: "तक्रार तपशील",

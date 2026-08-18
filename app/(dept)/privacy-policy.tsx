@@ -1,7 +1,4 @@
-// app/(dept)/privacy-policy.tsx
-// Privacy Policy for the Department portal.
-// Uses DepartmentScreen so it stays inside (dept) route group
-// and does NOT trigger the OfficialProvider auth guard.
+import React, { memo, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -39,17 +36,20 @@ const SECTION_DEFS = [
   },
 ];
 
-export default function DeptPrivacyPolicyScreen() {
+const DeptPrivacyPolicyScreen = memo(function DeptPrivacyPolicyScreen() {
   const { t } = useTranslation();
-  const SECTIONS = SECTION_DEFS.map((s) => ({
-    number: s.number,
-    title: t(s.titleKey),
-    icon: s.icon,
-    color: s.color,
-    bg: s.bg,
-    paragraphs: s.paraKeys.map((k) => t(k)),
-    contact: s.contact,
-  }));
+
+  const SECTIONS = useMemo(() => {
+    return SECTION_DEFS.map((s) => ({
+      number: s.number,
+      title: t(s.titleKey),
+      icon: s.icon,
+      color: s.color,
+      bg: s.bg,
+      paragraphs: s.paraKeys.map((k) => t(k)),
+      contact: s.contact,
+    }));
+  }, [t]);
 
   return (
     <DepartmentScreen title={t('privacyPolicy')} back>
@@ -92,7 +92,9 @@ export default function DeptPrivacyPolicyScreen() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DeptPrivacyPolicyScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 44, gap: 14 },

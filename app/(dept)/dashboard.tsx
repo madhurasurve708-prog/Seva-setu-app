@@ -41,12 +41,22 @@ function wardDisplay(t: (key: string) => string, ward: string): string {
   return ward.replace(/^Ward\b/, t('ward2'));
 }
 
-export default function DepartmentDashboard() {
+import React, { memo, useCallback, useEffect } from 'react';
+
+const DepartmentDashboard = memo(function DepartmentDashboard() {
   const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints } = useDepartment();
 
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
+  const [showHeavyContent, setShowHeavyContent] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowHeavyContent(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   // All complaints assigned to this department
   const mine = useMemo(
@@ -66,21 +76,25 @@ export default function DepartmentDashboard() {
   const highPrio   = visible.filter((c) => c.priority === 'High' || c.priority === 'Emergency').length;
   const escalated  = visible.filter((c) => c.is_escalated).length;
 
-  const stats = [
+  const stats = useMemo(() => [
     ['total',       t('totalLabel'),        visible.length, 0],
     ['pending',     t('pending'),           pending,        1],
     ['inProgress',  t('inProgress'),        active,         2],
     ['resolved',    t('resolved'),          resolved,       3],
     ['highPrio',    t('highPriorityLabel'), highPrio,       4],
     ['escalated',   t('escalated'),         escalated,      5],
-  ] as const;
+  ] as const, [t, visible.length, pending, active, resolved, highPrio, escalated]);
 
   const meta = DEPT_META[profile?.department ?? ''];
   const resolutionRate = visible.length > 0 ? Math.round((resolved / visible.length) * 100) : 0;
 
-  const recentComplaints = visible
+  const recentComplaints = useMemo(() => visible
     .filter((c) => c.status !== 'Resolved')
-    .slice(0, 4);
+    .slice(0, 4), [visible]);
+
+  const handleViewComplaints = useCallback(() => {
+    router.push('/(dept)/complaints');
+  }, [router]);
 
   return (
     <DepartmentScreen title={t('dashboard')} tab="dashboard">
@@ -99,12 +113,13 @@ export default function DepartmentDashboard() {
             filedCount={visible.length}
             resolvedCount={resolved}
             successRate={`${resolutionRate}%`}
-            onViewComplaints={() => router.push('/(dept)/complaints')}
+            onViewComplaints={handleViewComplaints}
           />
         </Animated.View>
 
         {/* ── Main content grid with horizontal padding ── */}
-        <View style={styles.mainContainer}>
+        {showHeavyContent ? (
+          <View style={styles.mainContainer}>
           {/* ── Stats grid ── */}
           <View style={styles.statsGrid}>
             {stats.map(([key, label, value, colorIdx], i) => {
@@ -276,10 +291,17 @@ export default function DepartmentDashboard() {
             </Pressable>
           </Animated.View>
         </View>
+        ) : (
+          <View style={{ flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: COLORS.textMuted }}>Loading...</Text>
+          </View>
+        )}
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentDashboard;
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 32 },
