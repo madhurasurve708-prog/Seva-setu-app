@@ -110,7 +110,6 @@ export default function AdminLayout() {
         headerShown: false,
         lazy: true,
         freezeOnBlur: true,
-        detachInactiveScreens: true,
         tabBarLabelPosition: isDesktop ? 'beside-icon' : 'below-icon',
         tabBarStyle: isDesktop ? {
           display: 'none',

@@ -392,7 +392,7 @@ export default function Dashboard() {
                   <Animated.View
                     key={item.label}
                     entering={FadeInDown.duration(400).delay(80 + idx * 50)}
-                    style={styles.emergencyCardWrap}
+                    style={styles.emergencyCardWrap as any}
                   >
                     <Pressable
                       onPress={() => handleCall(item.phone)}
@@ -400,13 +400,13 @@ export default function Dashboard() {
                     >
                       <LinearGradient
                         colors={item.colors as any}
-                        style={styles.emergencyCard}
+                        style={styles.emergencyCard as any}
                       >
-                        <View style={styles.emergencyIconCircle}>
+                        <View style={styles.emergencyIconCircle as any}>
                           <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor} />
                         </View>
-                        <Text style={styles.emergencyLabel}>{item.label}</Text>
-                        <Text style={[styles.emergencyPhone, { color: item.iconColor }]}>{item.phone}</Text>
+                        <Text style={styles.emergencyLabel as any}>{item.label}</Text>
+                        <Text style={[styles.emergencyPhone, { color: item.iconColor }] as any}>{item.phone}</Text>
                       </LinearGradient>
                     </Pressable>
                   </Animated.View>
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     width: STAT_CARD_W,
   },
   statCardWrapDesktop: {
-    width: 'calc(50% - 6px)',
+    width: 'calc(50% - 6px)' as any,
   },
   statCard: {
     borderRadius: 20,

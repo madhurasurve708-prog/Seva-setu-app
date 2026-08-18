@@ -57,7 +57,7 @@ const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect, h
           alt="Hero banner for Seva Setu landing page"
           {...HERO_IMAGE_PROPS}
         />
-        <View style={desktop.heroOverlay} />
+        <View style={styles.heroOverlay} />
         <View style={desktop.heroNav}>
           <Text style={desktop.heroNavText}>MALVAN MUNICIPAL COUNCIL</Text>
           <View style={desktop.langToggle}>
@@ -118,7 +118,7 @@ const RoleCard = memo(function RoleCard({
     <Pressable
       onPress={() => onSelect(role.route)}
       android_ripple={{ color: 'rgba(15,23,42,0.06)', borderless: false }}
-      style={({ pressed }) => [styles.card, { width }, isDesktop && styles.cardDesktop, pressed && styles.cardPressed]}
+      style={({ pressed }) => [styles.card, { width }, isDesktop && styles.cardDesktop, pressed && desktop.cardPressed]}
     >
       <View style={[styles.iconWrap, { backgroundColor: role.iconBg }]}> 
         <Text style={[styles.iconEmoji, { color: role.iconColor }]}>{ROLE_ICONS[role.iconKey]}</Text>
@@ -420,6 +420,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15,23,42,0.03)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  arrowSymbol: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
 

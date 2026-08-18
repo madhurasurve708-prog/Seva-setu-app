@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { type Complaint, type ComplaintStatus } from '@/data/complaints';
 import type { OfficialProfile } from '@/providers/official-provider';
-import { addDepartmentComplaintNote, getDepartmentComplaints, updateDepartmentComplaintStatus, getDepartmentComplaintTimeline, escalateOfficialComplaint } from '@/services/official-api';
+import { addDepartmentComplaintNote, getDepartmentComplaints, updateDepartmentComplaintStatus, getDepartmentComplaintTimeline, escalateOfficialComplaint, changeOfficialPassword } from '@/services/official-api';
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,6 +19,7 @@ type DepartmentContextValue = {
   addNote: (id: string, note: string) => Promise<void>;
   fetchNotes: (id: string) => Promise<any[]>;
   escalateComplaint: (id: string, reason: string) => Promise<void>;
+  changePassword: (nextPassword: string) => Promise<void>;
 };
 
 const PROFILE_KEY = '@seva-setu/department-profile';
@@ -53,7 +54,13 @@ export function DepartmentProvider({ children }: PropsWithChildren) {
     await loadComplaints(true);
   };
 
-  const value = useMemo(() => ({ ready, isAuthenticated: Boolean(profile), profile, complaints, complaintsLoading, complaintsError, loadComplaints, login: async (next: OfficialProfile) => { setProfile(next); await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(next)); }, logout: async () => { setProfile(null); setComplaints([]); await Promise.all([AsyncStorage.removeItem(PROFILE_KEY), clearOfficialAccessToken()]); }, updateStatus, addNote, fetchNotes, escalateComplaint }), [ready, profile, complaints, complaintsLoading, complaintsError, loadComplaints, fetchNotes]);
+  const changePassword = async (nextPassword: string) => {
+    const token = await getOfficialAccessToken();
+    if (!token) throw new Error('Your session has expired.');
+    await changeOfficialPassword(nextPassword, token);
+  };
+
+  const value = useMemo(() => ({ ready, isAuthenticated: Boolean(profile), profile, complaints, complaintsLoading, complaintsError, loadComplaints, login: async (next: OfficialProfile) => { setProfile(next); await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(next)); }, logout: async () => { setProfile(null); setComplaints([]); await Promise.all([AsyncStorage.removeItem(PROFILE_KEY), clearOfficialAccessToken()]); }, updateStatus, addNote, fetchNotes, escalateComplaint, changePassword }), [ready, profile, complaints, complaintsLoading, complaintsError, loadComplaints, fetchNotes]);
   return <DepartmentContext.Provider value={value}>{children}</DepartmentContext.Provider>;
 }
 export function useDepartment() { const context = useContext(DepartmentContext); if (!context) throw new Error('useDepartment must be used inside DepartmentProvider.'); return context; }
