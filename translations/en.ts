@@ -76,6 +76,10 @@ export const en = {
   drainage: 'Drainage Issues',
   tree: 'Fallen Tree',
   other: 'Other Grievances',
+  police: 'Police',
+  fire: 'Fire',
+  hospital: 'Hospital',
+  publicToilet: 'Public Toilet',
 
   // Complaint Details & Forms
   complaintDetails: 'Complaint Details',

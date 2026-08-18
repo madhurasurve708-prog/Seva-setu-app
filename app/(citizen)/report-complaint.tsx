@@ -29,7 +29,9 @@ const CATEGORIES: Category[] = [
   { label: 'Other', icon: 'map-marker-outline', bg: '#EDE7F6', iconColor: '#5E35B1' },
 ];
 
-export default function ReportComplaint() {
+import React, { memo, useCallback } from 'react';
+
+const ReportComplaint = memo(function ReportComplaint() {
   const router = useRouter();
   const { submitComplaint } = useCitizen();
   const { t } = useTranslation();
@@ -39,7 +41,7 @@ export default function ReportComplaint() {
   const [photoUri, setPhotoUri] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
 
-  const pick = async () => {
+  const pick = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(t('permDenied'), t('permDeniedMsg'));
@@ -58,9 +60,9 @@ export default function ReportComplaint() {
       }
       setPhotoUri(selectedAsset.uri);
     }
-  };
+  }, [t]);
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     if (!category || !location.trim() || !description.trim()) return;
     setSubmitting(true);
     try {
@@ -78,7 +80,7 @@ export default function ReportComplaint() {
       setSubmitting(false);
       Alert.alert(t('submitError'), t('submitErrorMsg'));
     }
-  };
+  }, [category, location, description, photoUri, submitComplaint, router, t]);
 
   const canSubmit = category && location.trim().length > 0 && description.trim().length > 0 && !submitting;
 
@@ -180,7 +182,9 @@ export default function ReportComplaint() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default ReportComplaint;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 130 },

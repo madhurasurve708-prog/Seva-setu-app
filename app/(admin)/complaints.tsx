@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
     Alert, Modal, Pressable, ScrollView,
@@ -51,12 +51,20 @@ const STAT_S: Record<string, { bg: string; text: string; icon: React.ComponentPr
   'Resolved':    { bg: '#ECFDF5', text: '#10B981', icon: 'check-circle-outline' },
 };
 
-export default function AdminComplaints() {
+const AdminComplaints = memo(function AdminComplaints() {
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ ward?: string; category?: string; department?: string; status?: string }>();
   const { complaints, updateComplaintStatus, softDeleteComplaint } = useOfficial();
   const { width } = useWindowDimensions();
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const isDesktop = Platform.OS === 'web' && width > 768;
 
@@ -157,104 +165,112 @@ export default function AdminComplaints() {
         <View style={s.countBubble}><Text style={s.countBubbleText}>{filtered.length}</Text></View>
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index * 20, 200))}>
-            <MemoizedPremiumCard
-              t={t}
-              complaint={item}
-              expanded={activeId === item.id}
-              onToggle={() => handleToggle(item.id)}
-              onView={() => handleView(item.id)}
-              onNote={() => openModal(item.id, 'note')}
-              onEscalate={() => handleEscalate(item.id)}
-              onArchive={() => openModal(item.id, 'remove')}
-              onRestrict={() => openModal(item.id, 'restrict')}
-              onBlock={() => openModal(item.id, 'block')}
-              onStatusChange={(st) => handleStatusChange(item.id, st)}
-            />
-          </Animated.View>
-        )}
-        ListHeaderComponent={
-          <>
-            <View style={s.searchBar}>
-              <MaterialCommunityIcons name="magnify" size={18} color={COLORS.textMuted} />
-              <TextInput value={searchVal} onChangeText={setSearchVal}
-                placeholder={t('searchComplaintsAdmin')}
-                placeholderTextColor={COLORS.textPlaceholder} style={s.searchInput} />
-              {searchVal.length > 0 && (
-                <Pressable onPress={() => setSearchVal('')} hitSlop={8}>
-                  <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
-                </Pressable>
-              )}
-            </View>
+      {showList ? (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index * 20, 200))}>
+              <MemoizedPremiumCard
+                t={t}
+                complaint={item}
+                expanded={activeId === item.id}
+                onToggle={() => handleToggle(item.id)}
+                onView={() => handleView(item.id)}
+                onNote={() => openModal(item.id, 'note')}
+                onEscalate={() => handleEscalate(item.id)}
+                onArchive={() => openModal(item.id, 'remove')}
+                onRestrict={() => openModal(item.id, 'restrict')}
+                onBlock={() => openModal(item.id, 'block')}
+                onStatusChange={(st) => handleStatusChange(item.id, st)}
+              />
+            </Animated.View>
+          )}
+          ListHeaderComponent={
+            <>
+              <View style={s.searchBar}>
+                <MaterialCommunityIcons name="magnify" size={18} color={COLORS.textMuted} />
+                <TextInput value={searchVal} onChangeText={setSearchVal}
+                  placeholder={t('searchComplaintsAdmin')}
+                  placeholderTextColor={COLORS.textPlaceholder} style={s.searchInput} />
+                {searchVal.length > 0 && (
+                  <Pressable onPress={() => setSearchVal('')} hitSlop={8}>
+                    <MaterialCommunityIcons name="close-circle" size={16} color={COLORS.textMuted} />
+                  </Pressable>
+                )}
+              </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.chipRow} style={s.chipScroll}>
-              <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
-              {categories.filter((c) => c.id !== 'all').map((c) => (
-                <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
-                  onPress={() => router.setParams({ category: c.id })} />
-              ))}
-            </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.chipRow} style={s.chipScroll}>
+                <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
+                {categories.filter((c) => c.id !== 'all').map((c) => (
+                  <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
+                    onPress={() => router.setParams({ category: c.id })} />
+                ))}
+              </ScrollView>
 
-            <View style={s.filterRow}>
-              {STATUSES.map((st) => (
-                <Pressable key={st} onPress={() => setStatus(st)}
-                  style={[s.filterChip, status === st && s.filterChipActive]}>
-                  <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{statusLabel(t, st)}</Text>
+              <View style={s.filterRow}>
+                {STATUSES.map((st) => (
+                  <Pressable key={st} onPress={() => setStatus(st)}
+                    style={[s.filterChip, status === st && s.filterChipActive]}>
+                    <Text style={[s.filterChipText, status === st && s.filterChipTextActive]}>{statusLabel(t, st)}</Text>
+                  </Pressable>
+                ))}
+                {/* Escalated toggle */}
+                <Pressable
+                  onPress={() => setEscalatedOnly((v) => !v)}
+                  style={[s.filterChip, escalatedOnly && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}
+                >
+                  <MaterialCommunityIcons
+                    name="arrow-up-bold-circle-outline"
+                    size={12}
+                    color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
+                  />
+                  <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
+                    {t('escalated')}
+                  </Text>
                 </Pressable>
-              ))}
-              {/* Escalated toggle */}
-              <Pressable
-                onPress={() => setEscalatedOnly((v) => !v)}
-                style={[s.filterChip, escalatedOnly && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}
-              >
-                <MaterialCommunityIcons
-                  name="arrow-up-bold-circle-outline"
-                  size={12}
-                  color={escalatedOnly ? '#DC2626' : COLORS.textMuted}
-                />
-                <Text style={[s.filterChipText, escalatedOnly && { color: '#DC2626', fontWeight: '800' }]}>
-                  {t('escalated')}
-                </Text>
-              </Pressable>
-            </View>
+              </View>
 
-            <View style={[s.filterRow, { marginBottom: 14 }]}>
-              {PRIORITIES.map((p) => (
-                <Pressable key={p} onPress={() => setPriority(p)}
-                  style={[s.filterChip, priority === p && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-                  <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{priorityLabel(t, p)}</Text>
-                </Pressable>
-              ))}
+              <View style={[s.filterRow, { marginBottom: 14 }]}>
+                {PRIORITIES.map((p) => (
+                  <Pressable key={p} onPress={() => setPriority(p)}
+                    style={[s.filterChip, priority === p && { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+                    <Text style={[s.filterChipText, priority === p && { color: '#DC2626', fontWeight: '800' }]}>{priorityLabel(t, p)}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            <View style={s.emptyCard}>
+              <MaterialCommunityIcons name="clipboard-search-outline" size={32} color={COLORS.textMuted} />
+              <Text style={s.emptyTitle}>{t('noMatchingComplaintsAdmin')}</Text>
+              <Text style={s.emptyText}>{t('adjustFiltersAdmin')}</Text>
             </View>
-          </>
-        }
-        ListEmptyComponent={
-          <View style={s.emptyCard}>
-            <MaterialCommunityIcons name="clipboard-search-outline" size={32} color={COLORS.textMuted} />
-            <Text style={s.emptyTitle}>{t('noMatchingComplaintsAdmin')}</Text>
-            <Text style={s.emptyText}>{t('adjustFiltersAdmin')}</Text>
-          </View>
-        }
-        contentContainerStyle={[s.content, isDesktop && { maxWidth: 1000, alignSelf: 'center', width: '100%' }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        overScrollMode="never"
-        initialNumToRender={8}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-      />
+          }
+          contentContainerStyle={[s.content, isDesktop && { maxWidth: 1000, alignSelf: 'center', width: '100%' }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          overScrollMode="never"
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
+      ) : (
+        <View style={{ flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={s.emptyText}>Loading complaints...</Text>
+        </View>
+      )}
 
       <ActionModal t={t} visible={!!noteModal} type={noteModal?.type ?? 'note'}
         note={noteText} onChangeNote={setNoteText}
         onClose={() => setNoteModal(null)} onSubmit={submitModal} />
     </SafeAreaView>
   );
-}
+});
+
+export default AdminComplaints;
 
 const MemoizedPremiumCard = React.memo(PremiumCard, (prevProps, nextProps) => {
   return (

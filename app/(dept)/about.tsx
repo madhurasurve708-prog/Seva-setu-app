@@ -1,9 +1,6 @@
-// app/(dept)/about.tsx
-// About Us page for the Department portal.
-// Same content and layout as the official/citizen about pages.
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
@@ -37,7 +34,7 @@ const TEAM: TeamMember[] = [
   { name: 'Apurva Sawant',  titleKey: 'coFounderTitle', bioKey: 'coFounderBio', photo: require('../../assets/images/apurva.webp')   },
 ];
 
-export default function DeptAboutScreen() {
+const DeptAboutScreen = memo(function DeptAboutScreen() {
   const { t, language } = useTranslation();
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => { setHydrated(true); }, []);
@@ -108,7 +105,9 @@ export default function DeptAboutScreen() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DeptAboutScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 24, alignItems: 'center', paddingBottom: 44 },

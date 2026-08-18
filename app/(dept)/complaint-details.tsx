@@ -14,7 +14,9 @@ const STATUS_LABEL = (t, status) => ({ Pending: t('pending'), 'In Progress': t('
 const PRIORITY_LABEL = (t, p) => ({ Emergency: t('priorityEmergency'), High: t('priorityHigh'), Medium: t('priorityMedium'), Low: t('priorityLow') }[p] ?? p);
 const wardDisplay = (t, ward) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
-export default function DepartmentComplaintDetails() {
+import React, { memo, useCallback } from 'react';
+
+const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
@@ -35,17 +37,8 @@ export default function DepartmentComplaintDetails() {
     }
   }, [complaint?.id, fetchNotes]);
 
-  if (!complaint) {
-    return (
-      <DepartmentScreen title={t('complaintDetails')} back>
-        <View style={styles.missing}>
-          <Text>{t('complaintUnavailableDept')}</Text>
-        </View>
-      </DepartmentScreen>
-    );
-  }
-
-  const change = async (status: 'Pending' | 'In Progress' | 'Resolved') => {
+  const change = useCallback(async (status: 'Pending' | 'In Progress' | 'Resolved') => {
+    if (!complaint) return;
     try {
       await updateStatus(complaint.id, status, note || undefined);
       setNote('');
@@ -55,7 +48,49 @@ export default function DepartmentComplaintDetails() {
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update status.');
     }
-  };
+  }, [complaint, updateStatus, note, fetchNotes, t]);
+
+  const handleAddNote = useCallback(async () => {
+    if (!complaint) return;
+    if (note.trim()) {
+      try {
+        await addNote(complaint.id, note);
+        setNote('');
+        const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+        setNotes(freshNotes);
+        Alert.alert('Success', 'Note added successfully.');
+      } catch (err) {
+        Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add note.');
+      }
+    }
+  }, [complaint, addNote, note, fetchNotes]);
+
+  const handleEscalate = useCallback(async () => {
+    if (!complaint) return;
+    if (!note.trim()) {
+      Alert.alert(t('required') || 'Required', t('enterNoteEscalate') || 'Please enter the escalation reason in the note box first.');
+      return;
+    }
+    try {
+      await escalateComplaint(complaint.id, note.trim());
+      setNote('');
+      Alert.alert(t('escalatedTitle') || 'Escalated', t('escalatedMsg') || 'Grievance escalated successfully.');
+      const freshNotes = await fetchNotes(complaint.id).catch(() => []);
+      setNotes(freshNotes);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to escalate.');
+    }
+  }, [complaint, escalateComplaint, note, fetchNotes, t]);
+
+  if (!complaint) {
+    return (
+      <DepartmentScreen title={t('complaintDetails')} back>
+        <View style={styles.missing}>
+          <Text>{t('complaintUnavailableDept')}</Text>
+        </View>
+      </DepartmentScreen>
+    );
+  }
 
   return (
     <DepartmentScreen title={t('complaintDetails')} back>
@@ -118,39 +153,13 @@ export default function DepartmentComplaintDetails() {
             ))}
           </View>
           <Pressable
-            onPress={async () => {
-              if (note.trim()) {
-                try {
-                  await addNote(complaint.id, note);
-                  setNote('');
-                  const freshNotes = await fetchNotes(complaint.id).catch(() => []);
-                  setNotes(freshNotes);
-                  Alert.alert('Success', 'Note added successfully.');
-                } catch (err) {
-                  Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add note.');
-                }
-              }
-            }}
+            onPress={handleAddNote}
             style={styles.noteBtn}
           >
             <Text style={styles.noteText}>{t('addNoteBtn')}</Text>
           </Pressable>
           <Pressable
-            onPress={async () => {
-              if (!note.trim()) {
-                Alert.alert(t('required') || 'Required', t('enterNoteEscalate') || 'Please enter the escalation reason in the note box first.');
-                return;
-              }
-              try {
-                await escalateComplaint(complaint.id, note.trim());
-                setNote('');
-                Alert.alert(t('escalatedTitle') || 'Escalated', t('escalatedMsg') || 'Grievance escalated successfully.');
-                const freshNotes = await fetchNotes(complaint.id).catch(() => []);
-                setNotes(freshNotes);
-              } catch (err) {
-                Alert.alert('Error', err instanceof Error ? err.message : 'Failed to escalate.');
-              }
-            }}
+            onPress={handleEscalate}
             style={styles.escalate}
           >
             <Text style={styles.escalateText}>{t('escalateToNagaradhyaksha')}</Text>
@@ -169,7 +178,9 @@ export default function DepartmentComplaintDetails() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentComplaintDetails;
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 25, gap: 11 },

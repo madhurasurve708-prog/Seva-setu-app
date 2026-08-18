@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,11 +12,19 @@ import { useTranslation } from '@/providers/localization-provider';
 
 const WARDS = Array.from({ length: 10 }, (_, i) => `Ward ${i + 1}`);
 
-export default function WardWiseScreen() {
+const WardWiseScreen = memo(function WardWiseScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { complaints } = useOfficial();
   const { width } = useWindowDimensions();
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const isDesktop = Platform.OS === 'web' && width > 768;
 
@@ -30,10 +38,14 @@ export default function WardWiseScreen() {
     }),
   [complaints, t]);
 
-  const totalAll    = complaints.length;
-  const resolvedAll = complaints.filter((c) => c.status === 'Resolved').length;
-  const pendingAll  = complaints.filter((c) => c.status === 'Pending').length;
-  const rateAll     = totalAll > 0 ? Math.round((resolvedAll / totalAll) * 100) : 0;
+  const totalAll    = useMemo(() => complaints.length, [complaints]);
+  const resolvedAll = useMemo(() => complaints.filter((c) => c.status === 'Resolved').length, [complaints]);
+  const pendingAll  = useMemo(() => complaints.filter((c) => c.status === 'Pending').length, [complaints]);
+  const rateAll     = useMemo(() => totalAll > 0 ? Math.round((resolvedAll / totalAll) * 100) : 0, [totalAll, resolvedAll]);
+
+  const handleWardPress = useCallback((ward: string) => {
+    router.push({ pathname: '/(admin)/complaints', params: { ward } } as any);
+  }, [router]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -115,7 +127,9 @@ export default function WardWiseScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-}
+});
+
+export default WardWiseScreen;
 
 function SummaryItem({ label, value, light }: { label: string; value: number | string; light?: boolean }) {
   return (

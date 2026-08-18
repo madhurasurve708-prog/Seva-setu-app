@@ -17,7 +17,9 @@ const splitName = (fullName: string) => {
   return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
 };
 
-export default function Profile() {
+import React, { memo, useCallback } from 'react';
+
+const Profile = memo(function Profile() {
   const router = useRouter();
   const { profile, saveProfile, logout } = useCitizen();
   const { t } = useTranslation();
@@ -42,7 +44,7 @@ export default function Profile() {
     return 'Citizen';
   }, [profile, fullName]);
 
-  const pickPhoto = async () => {
+  const pickPhoto = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -52,9 +54,9 @@ export default function Profile() {
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);
     }
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!profile) return;
     if (!fullName.trim()) {
       Alert.alert(t('error'), t('nameError'));
@@ -90,9 +92,9 @@ export default function Profile() {
       setSaving(false);
       Alert.alert(t('error'), t('profileUpdateFailed'));
     }
-  };
+  }, [profile, fullName, mobile, locality, photoUri, saveProfile, t]);
 
-  const doLogout = async () => {
+  const doLogout = useCallback(async () => {
     setLoggingOut(true);
     try {
       await logout();
@@ -108,9 +110,9 @@ export default function Profile() {
     }
     router.replace('/(auth)/role-selection');
     setLoggingOut(false);
-  };
+  }, [logout, router]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (Platform.OS === 'web') {
       const confirmed = typeof window !== 'undefined' ? window.confirm(t('logoutConfirmation')) : true;
       if (confirmed) {
@@ -129,21 +131,16 @@ export default function Profile() {
         },
       },
     ]);
-  };
+  }, [doLogout, t]);
 
-  const menuItems: {
-    label: string;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
-    onPress: () => void;
-    value?: string;
-  }[] = [
-    { label: t('settingsMenu'),   icon: 'cog-outline',           onPress: () => router.push('/(citizen)/settings') },
-    { label: t('helpFaqs'),       icon: 'help-circle-outline',   onPress: () => router.push('/(citizen)/help') },
-    { label: t('privacyPol'),     icon: 'file-document-outline', onPress: () => router.push('/(citizen)/privacy-policy') },
-    { label: t('termsCond'),      icon: 'handshake-outline',     onPress: () => router.push('/(citizen)/terms-conditions') },
-    { label: t('aboutApp'),       icon: 'information-outline',   onPress: () => router.push('/(citizen)/about') },
-    { label: t('appVer'),         icon: 'cellphone',             onPress: () => {},                                value: '1.0.0' },
-  ];
+  const menuItems = useMemo(() => [
+    { label: t('settingsMenu'),   icon: 'cog-outline' as const,           onPress: () => router.push('/(citizen)/settings') },
+    { label: t('helpFaqs'),       icon: 'help-circle-outline' as const,   onPress: () => router.push('/(citizen)/help') },
+    { label: t('privacyPol'),     icon: 'file-document-outline' as const, onPress: () => router.push('/(citizen)/privacy-policy') },
+    { label: t('termsCond'),      icon: 'handshake-outline' as const,     onPress: () => router.push('/(citizen)/terms-conditions') },
+    { label: t('aboutApp'),       icon: 'information-outline' as const,   onPress: () => router.push('/(citizen)/about') },
+    { label: t('appVer'),         icon: 'cellphone' as const,             onPress: () => {},                                value: '1.0.0' },
+  ], [t, router]);
 
   return (
     <CitizenScreen title={t('myProfile')}>
@@ -273,7 +270,9 @@ export default function Profile() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default Profile;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 120 },

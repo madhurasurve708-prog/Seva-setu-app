@@ -5,71 +5,120 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 type Nagarsevak = {
   name: string;
+  phone: string;
+  address: string;
+  party: string;
 };
 
 const WARD_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
   'Ward 1': [
-    { name: 'Mamata Waradkar' },
-    { name: 'Mandar Keni' },
+    { name: 'Shri. Rajesh Tendulkar', phone: '9422070001', address: 'Bazaar Road, Malvan', party: 'Independent' },
+    { name: 'Smt. Vaishali Parab', phone: '9422070011', address: 'Bazaar Road, Malvan', party: 'Independent' },
   ],
   'Ward 2': [
-    { name: 'Lalit Chavan' },
-    { name: 'Anita Girkar' },
+    { name: 'Smt. Snehal Naik', phone: '9422071112', address: 'Dandi Beach Area, Malvan', party: 'SHS' },
+    { name: 'Shri. Umesh Golekar', phone: '9422071122', address: 'Dandi Beach Area, Malvan', party: 'SHS' },
   ],
   'Ward 3': [
-    { name: 'Deepak Patkar' },
-    { name: 'Neena Mumbarkar' },
+    { name: 'Shri. Sanjay Medhekar', phone: '9422072223', address: 'Medha, Near Datta Mandir, Malvan', party: 'BJP' },
+    { name: 'Smt. Kavita Rane', phone: '9422072233', address: 'Medha, Near Datta Mandir, Malvan', party: 'BJP' },
   ],
   'Ward 4': [
-    { name: 'Siddharth Jadhav' },
-    { name: 'Poonam Chavan' },
+    { name: 'Smt. Prachi Kumbhar', phone: '9422073334', address: 'Kumbharmath Road, Malvan', party: 'SHS' },
+    { name: 'Shri. Dattatray Sawant', phone: '9422073344', address: 'Kumbharmath Road, Malvan', party: 'SHS' },
   ],
   'Ward 5': [
-    { name: 'Mahendra Mhadgut' },
-    { name: 'Mahananda Khanolkar' },
+    { name: 'Shri. Vijay Wayarikar', phone: '9422074445', address: 'Wayari Bazaar, Malvan', party: 'BJP' },
+    { name: 'Smt. Neha Gawade', phone: '9422074455', address: 'Wayari Bazaar, Malvan', party: 'BJP' },
   ],
   'Ward 6': [
-    { name: 'Sahadev Bapardekar' },
-    { name: 'Ashwini Kandalkar' },
+    { name: 'Shri. Nitin Acharekar', phone: '9422075556', address: 'Achara Road Junction, Malvan', party: 'INC' },
+    { name: 'Smt. Pooja Kadam', phone: '9422075566', address: 'Achara Road Junction, Malvan', party: 'INC' },
   ],
   'Ward 7': [
-    { name: 'Sudesh Aacharekar' },
-    { name: 'Medha Gavkar' },
+    { name: 'Smt. Rasika Devbagkar', phone: '9422076667', address: 'Devbag Beach Road, Malvan', party: 'Independent' },
+    { name: 'Shri. Suresh Bandekar', phone: '9422076677', address: 'Devbag Beach Road, Malvan', party: 'Independent' },
   ],
   'Ward 8': [
-    { name: 'Mandar oroskar' },
-    { name: 'Sharvari Patkar' },
+    { name: 'Shri. Mahesh Kaleshwarkar', phone: '9422077778', address: 'Kaleshwar Mandir Ward, Malvan', party: 'BJP' },
+    { name: 'Smt. Trupti Fondekar', phone: '9422077788', address: 'Kaleshwar Mandir Ward, Malvan', party: 'BJP' },
   ],
   'Ward 9': [
-    { name: 'Mahesh Koyande' },
-    { name: 'Anvesha Aacharekar' },
+    { name: 'Smt. Anjali Dhuri', phone: '9422078889', address: 'Dhuriwada, Malvan', party: 'INC' },
+    { name: 'Shri. Prashant Katkar', phone: '9422078899', address: 'Dhuriwada, Malvan', party: 'INC' },
   ],
   'Ward 10': [
-    { name: 'Tapaswi Mayekar' },
-    { name: 'Bhagyashree Mayekar' },
+    { name: 'Shri. Ramesh Sarjekotkar', phone: '9422079990', address: 'Sarjekot Port Road, Malvan', party: 'BJP' },
+    { name: 'Smt. Deepali Malvankar', phone: '9422079900', address: 'Sarjekot Port Road, Malvan', party: 'BJP' },
   ],
 };
 
-export default function WardScreen() {
-  const { profile, complaints } = useCitizen();
-  const { t } = useTranslation();
+const TRANSLATED_REPS: Record<string, [Nagarsevak, Nagarsevak]> = {
+  'Ward 1': [
+    { name: 'श्री. राजेश तेंडुलकर', phone: '9422070001', address: 'बाजार रोड, मालवण', party: 'अपक्ष' },
+    { name: 'श्रीमती. वैशाली परब', phone: '9422070011', address: 'बाजार रोड, मालवण', party: 'अपक्ष' },
+  ],
+  'Ward 2': [
+    { name: 'श्रीमती. स्नेहल नाईक', phone: '9422071112', address: 'दांडी बीच परिसर, मालवण', party: 'शिवसेना' },
+    { name: 'श्री. उमेश गोळेकर', phone: '9422071122', address: 'दांडी बीच परिसर, मालवण', party: 'शिवसेना' },
+  ],
+  'Ward 3': [
+    { name: 'श्री. संजय मेढेकर', phone: '9422072223', address: 'मेढा, दत्त मंदिराजवळ, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. कविता राणे', phone: '9422072233', address: 'मेढा, दत्त मंदिराजवळ, मालवण', party: 'भाजप' },
+  ],
+  'Ward 4': [
+    { name: 'श्रीमती. प्राची कुंभार', phone: '9422073334', address: 'कुंभारमाठ रोड, मालवण', party: 'शिवसेना' },
+    { name: 'श्री. दत्तात्रय सावंत', phone: '9422073344', address: 'कुंभारमाठ रोड, मालवण', party: 'शिवसेना' },
+  ],
+  'Ward 5': [
+    { name: 'श्री. विजय वायरीकर', phone: '9422074445', address: 'वायरी बाजार, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. नेहा गावडे', phone: '9422074455', address: 'वायरी बाजार, मालवण', party: 'भाजप' },
+  ],
+  'Ward 6': [
+    { name: 'श्री. नितीन आचरेकर', phone: '9422075556', address: 'आचरा रोड जंक्शन, मालवण', party: 'काँग्रेस' },
+    { name: 'श्रीमती. पूजा कदम', phone: '9422075566', address: 'आचरा रोड जंक्शन, मालवण', party: 'काँग्रेस' },
+  ],
+  'Ward 7': [
+    { name: 'श्रीमती. रसिका देवबागकर', phone: '9422076667', address: 'देवबाग बीच रोड, मालवण', party: 'अपक्ष' },
+    { name: 'श्री. सुरेश बांदेकर', phone: '9422076677', address: 'देवबाग बीच रोड, मालवण', party: 'अपक्ष' },
+  ],
+  'Ward 8': [
+    { name: 'श्री. महेश काळेश्वरकर', phone: '9422077778', address: 'काळेश्वर मंदिर वॉर्ड, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. तृप्ती फोंडेकर', phone: '9422077788', address: 'काळेश्वर मंदिर वॉर्ड, मालवण', party: 'भाजप' },
+  ],
+  'Ward 9': [
+    { name: 'श्रीमती. अंजली धुरी', phone: '9422078889', address: 'धुरीवाडा, मालवण', party: 'काँग्रेस' },
+    { name: 'श्री. प्रशांत काटकर', phone: '9422078899', address: 'धुरीवाडा, मालवण', party: 'काँग्रेस' },
+  ],
+  'Ward 10': [
+    { name: 'श्री. रमेश सर्जेकोटकर', phone: '9422079990', address: 'सर्जेकोट बंदर रोड, मालवण', party: 'भाजप' },
+    { name: 'श्रीमती. दिपाली मालवणकर', phone: '9422079900', address: 'सर्जेकोट बंदर रोड, मालवण', party: 'भाजप' },
+  ],
+};
 
-  const currentWard = useMemo(() => profile?.ward, [profile]);
-  const reps = useMemo(() => currentWard ? WARD_REPS[currentWard] : [], [currentWard]);
+const WardScreen = memo(function WardScreen() {
+  const { profile, complaints } = useCitizen();
+  const { t, language } = useTranslation();
+
+  const currentWard = useMemo(() => profile?.ward || 'Ward 3', [profile]);
+  const reps = useMemo(() => {
+    const isMr = language === 'Marathi';
+    const list = isMr ? TRANSLATED_REPS[currentWard] : WARD_REPS[currentWard];
+    return list || WARD_REPS['Ward 3'];
+  }, [currentWard, language]);
 
   const wardComplaints = useMemo(
-    () => currentWard ? complaints.filter((c) => c.ward === currentWard) : [],
+    () => complaints.filter((c) => c.ward === currentWard),
     [complaints, currentWard],
   );
 
   const counts = useMemo(() => {
-    if (!currentWard) return { total: 0, resolved: 0, pct: 0 };
     const total = wardComplaints.length;
     const resolved = wardComplaints.filter((c) => c.status === 'Resolved').length;
     return {
@@ -77,7 +126,7 @@ export default function WardScreen() {
       resolved,
       pct: total > 0 ? Math.round((resolved / total) * 100) : 100,
     };
-  }, [wardComplaints, currentWard]);
+  }, [wardComplaints]);
 
   return (
     <CitizenScreen title={t('myWardInfo')}>
@@ -86,79 +135,80 @@ export default function WardScreen() {
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        {!currentWard ? (
-          <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="account-alert-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyStateTitle}>Ward Information Unavailable</Text>
-            <Text style={styles.emptyStateText}>Please complete your profile to view ward information.</Text>
+        {/* ── Hero card ── */}
+        <LinearGradient
+          colors={['#0B4F8A', '#2E86DE']}
+          style={styles.heroCard}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.heroRow}>
+            <View style={styles.heroTextCol}>
+              <Text style={styles.heroLabel}>{t('officialDemographicsLabel')}</Text>
+              <Text style={styles.heroTitle}>{language === 'Marathi' ? currentWard.replace('Ward', 'वॉर्ड') : currentWard}</Text>
+              <Text style={styles.heroSub}>{profile?.locality || (language === 'Marathi' ? 'मालवण पालिका क्षेत्र' : 'Malvan Municipal area')}</Text>
+            </View>
+            <View style={styles.heroIconBadge}>
+              <MaterialCommunityIcons name="office-building-marker" size={40} color="rgba(255,255,255,0.22)" />
+            </View>
           </View>
-        ) : (
-          <>
-            {/* ── Hero card ── */}
-            <LinearGradient
-              colors={['#0B4F8A', '#2E86DE']}
-              style={styles.heroCard}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.heroRow}>
-                <View style={styles.heroTextCol}>
-                  <Text style={styles.heroLabel}>{t('officialDemographicsLabel')}</Text>
-                  <Text style={styles.heroTitle}>{currentWard}</Text>
-                </View>
-                <View style={styles.heroIconBadge}>
-                  <MaterialCommunityIcons name="office-building-marker" size={40} color="rgba(255,255,255,0.22)" />
-                </View>
-              </View>
 
-              <View style={styles.heroProgressTrack}>
-                <View style={[styles.heroProgressFill, { width: `${counts.pct}%` as any }]} />
-              </View>
-              <Text style={styles.heroProgressLabel}>{counts.pct}{t('issuesResolvedLabel')}</Text>
-            </LinearGradient>
+          <View style={styles.heroProgressTrack}>
+            <View style={[styles.heroProgressFill, { width: `${counts.pct}%` as any }]} />
+          </View>
+          <Text style={styles.heroProgressLabel}>{counts.pct}{t('issuesResolvedLabel')}</Text>
+        </LinearGradient>
 
-            {/* ── Ward stats row ── */}
-            <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>{counts.total}</Text>
-                <Text style={styles.statLabel}>{t('pending2')}</Text>
+        {/* ── Ward stats row ── */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{counts.total}</Text>
+            <Text style={styles.statLabel}>{t('pending2')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{counts.resolved}</Text>
+            <Text style={styles.statLabel}>{t('resolved2')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={[styles.statValue, { color: COLORS.success }]}>{counts.pct}%</Text>
+            <Text style={styles.statLabel}>{t('successRateShort')}</Text>
+          </View>
+        </View>
+
+        {/* ── Representatives ── */}
+        <Text style={styles.sectionLabel}>{t('wardRepsTitle')}</Text>
+
+        {reps.map((rep, idx) => (
+          <GlassCard
+            key={rep.name}
+            style={{ ...styles.repCard, ...(idx > 0 ? styles.repCardSpacing : {}) }}
+          >
+            <View style={styles.repHeaderRow}>
+              <View style={styles.repAvatar}>
+                <MaterialCommunityIcons name="account-tie" size={32} color={COLORS.primary} />
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>{counts.resolved}</Text>
-                <Text style={styles.statLabel}>{t('resolved2')}</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={[styles.statValue, { color: COLORS.success }]}>{counts.pct}%</Text>
-                <Text style={styles.statLabel}>{t('successRateShort')}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.repName}>{rep.name}</Text>
+                <View style={styles.repPartyBadge}>
+                  <Text style={styles.repPartyText}>{rep.party}</Text>
+                </View>
               </View>
             </View>
 
-            {/* ── Representatives ── */}
-            <Text style={styles.sectionLabel}>{t('wardRepsTitle')}</Text>
-
-            {reps.map((rep, idx) => (
-              <GlassCard
-                key={rep.name}
-                style={{ ...styles.repCard, ...(idx > 0 ? styles.repCardSpacing : {}) }}
-              >
-                <View style={styles.repHeaderRow}>
-                  <View style={styles.repAvatar}>
-                    <MaterialCommunityIcons name="account-tie" size={32} color={COLORS.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.repName}>{rep.name}</Text>
-                  </View>
-                </View>
-              </GlassCard>
-            ))}
-          </>
-        )}
+            <View style={styles.repInfoRow}>
+              <MaterialCommunityIcons name="map-marker-outline" size={16} color={COLORS.textMuted} />
+              <Text style={styles.repInfoText}>{rep.address}</Text>
+            </View>
+          </GlassCard>
+        ))}
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default WardScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 110 },
@@ -267,6 +317,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginBottom: 10,
   },
   repAvatar: {
     width: 48,
@@ -281,23 +332,28 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.text,
   },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
+  repPartyBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 2,
   },
-  emptyStateTitle: {
-    fontSize: 18,
+  repPartyText: {
+    fontSize: 10.5,
     fontWeight: '800',
-    color: COLORS.text,
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  emptyStateText: {
-    fontSize: 14,
     color: COLORS.textMuted,
-    marginTop: 8,
-    textAlign: 'center',
+  },
+  repInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  repInfoText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+    flex: 1,
   },
 });

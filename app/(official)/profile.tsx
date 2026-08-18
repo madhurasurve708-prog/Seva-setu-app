@@ -30,12 +30,34 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  // Inline editing state for phone/email
+  const [isPhoneEditing, setIsPhoneEditing] = useState(false);
+  const [isEmailEditing, setIsEmailEditing] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
   useEffect(() => {
     setName(profile.name);
     setPhone(profile.phone);
     setEmail(profile.email);
     setLanguage(profile.language);
   }, [profile]);
+
+  const handleSaveField = async (field: 'phone' | 'email', value: string) => {
+    setSaving(true);
+    try {
+      const updated: OfficialProfile = {
+        ...profile,
+        [field]: value.trim(),
+      };
+      await saveProfile(updated);
+      Alert.alert('Success', `${field === 'phone' ? 'Phone number' : 'Email address'} updated successfully.`);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update field.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -145,24 +167,118 @@ export default function ProfileScreen() {
             onChangeText={setName}
           />
 
-          <CustomTextInput
-            icon="phone-outline"
-            label="Phone Number"
-            placeholder="Enter phone number"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
+          {isPhoneEditing ? (
+            <View style={styles.editInputContainer}>
+              <CustomTextInput
+                icon="phone-outline"
+                label="Phone Number"
+                placeholder="Enter phone number"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={(txt) => {
+                  setPhone(txt);
+                  setPhoneError('');
+                }}
+                error={phoneError}
+              />
+              <View style={styles.editActionsRow}>
+                <Pressable
+                  onPress={() => {
+                    if (!/^[6-9]\d{9}$/.test(phone)) {
+                      setPhoneError('Please enter a valid 10-digit phone number.');
+                      return;
+                    }
+                    setPhoneError('');
+                    setIsPhoneEditing(false);
+                    handleSaveField('phone', phone);
+                  }}
+                  style={[styles.miniBtn, styles.miniBtnSave]}
+                >
+                  <Text style={styles.miniBtnText}>Save</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setPhone(profile.phone);
+                    setPhoneError('');
+                    setIsPhoneEditing(false);
+                  }}
+                  style={[styles.miniBtn, styles.miniBtnCancel]}
+                >
+                  <Text style={styles.miniBtnTextCancel}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.fieldViewRow}>
+              <View style={styles.fieldViewLeft}>
+                <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.textMuted} />
+                <View style={styles.fieldViewTextCol}>
+                  <Text style={styles.fieldViewLabel}>Phone Number</Text>
+                  <Text style={styles.fieldViewValue}>{phone || 'Not registered'}</Text>
+                </View>
+              </View>
+              <Pressable onPress={() => setIsPhoneEditing(true)} style={styles.editIconBtn}>
+                <MaterialCommunityIcons name="pencil-outline" size={18} color={COLORS.primary} />
+              </Pressable>
+            </View>
+          )}
 
-          <CustomTextInput
-            icon="email-outline"
-            label="Email Address (Optional)"
-            placeholder="Enter email address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
+          {isEmailEditing ? (
+            <View style={styles.editInputContainer}>
+              <CustomTextInput
+                icon="email-outline"
+                label="Email Address (Optional)"
+                placeholder="Enter email address"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(txt) => {
+                  setEmail(txt);
+                  setEmailError('');
+                }}
+                error={emailError}
+              />
+              <View style={styles.editActionsRow}>
+                <Pressable
+                  onPress={() => {
+                    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                      setEmailError('Please enter a valid email address.');
+                      return;
+                    }
+                    setEmailError('');
+                    setIsEmailEditing(false);
+                    handleSaveField('email', email);
+                  }}
+                  style={[styles.miniBtn, styles.miniBtnSave]}
+                >
+                  <Text style={styles.miniBtnText}>Save</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setEmail(profile.email);
+                    setEmailError('');
+                    setIsEmailEditing(false);
+                  }}
+                  style={[styles.miniBtn, styles.miniBtnCancel]}
+                >
+                  <Text style={styles.miniBtnTextCancel}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.fieldViewRow}>
+              <View style={styles.fieldViewLeft}>
+                <MaterialCommunityIcons name="email-outline" size={20} color={COLORS.textMuted} />
+                <View style={styles.fieldViewTextCol}>
+                  <Text style={styles.fieldViewLabel}>Email Address (Optional)</Text>
+                  <Text style={styles.fieldViewValue}>{email || 'Not registered'}</Text>
+                </View>
+              </View>
+              <Pressable onPress={() => setIsEmailEditing(true)} style={styles.editIconBtn}>
+                <MaterialCommunityIcons name="pencil-outline" size={18} color={COLORS.primary} />
+              </Pressable>
+            </View>
+          )}
 
           <CustomTextInput
             icon="lock-outline"
@@ -429,5 +545,76 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: COLORS.danger,
+  },
+  fieldViewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  fieldViewLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  fieldViewTextCol: {
+    flex: 1,
+  },
+  fieldViewLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    marginBottom: 2,
+  },
+  fieldViewValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  editIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editInputContainer: {
+    paddingVertical: 8,
+    gap: 8,
+  },
+  editActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+  },
+  miniBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniBtnSave: {
+    backgroundColor: COLORS.primary,
+  },
+  miniBtnCancel: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  miniBtnText: {
+    color: COLORS.white,
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  miniBtnTextCancel: {
+    color: COLORS.primary,
+    fontWeight: '800',
+    fontSize: 12,
   },
 });

@@ -1,7 +1,8 @@
 // app/(citizen)/complaint/[id].tsx
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Image, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
@@ -9,10 +10,10 @@ import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { getCitizenComplaintDetail } from '@/services/citizen-api';
 
-export default function ComplaintDetail() {
+const ComplaintDetail = memo(function ComplaintDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { complaints } = useCitizen();
@@ -113,7 +114,7 @@ export default function ComplaintDetail() {
         <Animated.View entering={FadeInDown.duration(400).delay(150)}>
           <Text style={styles.sectionHeading}>{t('complaintInformation')}</Text>
           <GlassCard style={styles.detailsCard}>
-            <DetailRow label={t('categoryLabel')} value={c.category} icon="tag-outline" />
+            <DetailRow label={t('categoryLabel')} value={t(({ Water: 'catWater', Garbage: 'catGarbage', 'Street Light': 'catStreetLight', Road: 'catRoad', Drainage: 'catDrainage', 'Stray Animals': 'catStrayAnimals', Tree: 'catTree', Other: 'catOther' } as Record<string, string>)[c.category] || c.category)} icon="tag-outline" />
             <DetailRow label={t('titleLabel')} value={c.title} icon="format-title" />
             <DetailRow label={t('descriptionLabel')} value={c.description} icon="text-box-outline" isLongText />
             <View style={styles.row}>
@@ -122,7 +123,19 @@ export default function ComplaintDetail() {
             </View>
             <DetailRow label={t('submittedOn')} value={submittedDate} icon="calendar-clock" />
             {c.assignedDepartment && (
-              <DetailRow label={t('assignedDept')} value={c.assignedDepartment} icon="office-building" />
+              <DetailRow label={t('assignedDept')} value={(() => {
+                const dept = c.assignedDepartment;
+                const d = dept.toLowerCase();
+                if (d.includes('water')) return t('deptWaterSupplyTitle');
+                if (d.includes('waste') || d.includes('garbage') || d.includes('solid')) return t('deptSolidWasteTitle');
+                if (d.includes('sanitation') || d.includes('health') || d.includes('swachhta')) return t('deptSanitationHealthTitle');
+                if (d.includes('drainage') || d.includes('sewer') || d.includes('gutter')) return t('deptDrainageSewerageTitle');
+                if (d.includes('construction') || d.includes('public work') || d.includes('road') || d.includes('building')) return t('deptPublicWorksTitle');
+                if (d.includes('electrical') || d.includes('light') || d.includes('vidyut')) return t('deptElectricalDept');
+                if (d.includes('garden') || d.includes('udyan')) return t('deptGardenDept');
+                if (d.includes('admin')) return t('deptAdministration');
+                return dept;
+              })()} icon="office-building" />
             )}
           </GlassCard>
         </Animated.View>
@@ -206,7 +219,9 @@ export default function ComplaintDetail() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default ComplaintDetail;
 
 function DetailRow({ label, value, icon, isLongText }: { label: string; value: string; icon: string; isLongText?: boolean }) {
   return (

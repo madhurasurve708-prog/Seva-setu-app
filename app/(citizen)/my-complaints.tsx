@@ -2,7 +2,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
@@ -12,11 +12,19 @@ import Animated, { FadeInRight, FadeInUp } from 'react-native-reanimated';
 import { GlassCard } from '@/components/common/GlassCard';
 import PrimaryButton from '@/components/common/PrimaryButton';
 
-export default function MyComplaints() {
+const MyComplaints = memo(function MyComplaints() {
   const router = useRouter();
   const { complaints, complaintsError, complaintsLoading, loadComplaints } = useCitizen();
   const { t } = useTranslation();
-  useEffect(() => { void loadComplaints().catch(() => {}); }, [loadComplaints]);
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    void loadComplaints().catch(() => {});
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [loadComplaints]);
 
   return (
     <CitizenScreen title={t('myComplaints')}>
@@ -27,7 +35,9 @@ export default function MyComplaints() {
       >
         {complaintsLoading && <Text style={styles.listHeading}>Loading complaints…</Text>}
         {complaintsError && <Text style={styles.emptyText}>{complaintsError}</Text>}
-        {complaints.length === 0 ? (
+        {!showList ? (
+          <Text style={styles.listHeading}>Loading...</Text>
+        ) : complaints.length === 0 ? (
           <Animated.View entering={FadeInUp.duration(600)} style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
               <MaterialCommunityIcons name="folder-open-outline" size={48} color={COLORS.accent} />
@@ -117,7 +127,9 @@ export default function MyComplaints() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default MyComplaints;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 40 },

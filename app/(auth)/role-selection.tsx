@@ -17,6 +17,8 @@ import {
     View,
 } from 'react-native';
 import { COLORS, SHADOWS } from '../../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import LanguageToggle from '@/components/common/LanguageToggle';
 
 // ── Dimensions ────────────────────────────────────────────────────────────────
 const SIDE_PAD = 20; // horizontal padding on each side of the sheet
@@ -43,10 +45,14 @@ type RoleOption = {
   iconColor: string;
 };
 
-const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect, heroHeight }: { roles: RoleOption[]; onSelect: (route: string) => void; heroHeight: number }) {
+const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect }: { roles: RoleOption[]; onSelect: (route: string) => void }) {
+  const { t, language } = useTranslation();
+  const isMr = language === 'Marathi';
+
   return (
-    <View style={desktop.root}>
-      <View style={[desktop.hero, { height: heroHeight }]}> 
+    <View style={desktop.desktopContainer}>
+      {/* Left side column */}
+      <View style={desktop.desktopLeft}>
         <Image
           source={HERO_IMAGE}
           style={StyleSheet.absoluteFill}
@@ -57,45 +63,48 @@ const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect, h
           alt="Hero banner for Seva Setu landing page"
           {...HERO_IMAGE_PROPS}
         />
-        <View style={styles.heroOverlay} />
-        <View style={desktop.heroNav}>
-          <Text style={desktop.heroNavText}>MALVAN MUNICIPAL COUNCIL</Text>
-          <View style={desktop.langToggle}>
-            <Text style={desktop.langToggleText}>EN • मराठी</Text>
-          </View>
+        <LinearGradient
+          colors={['rgba(8, 27, 43, 0.9)', 'rgba(11, 79, 138, 0.72)']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={desktop.desktopLeftHeader}>
+          <LanguageToggle size={38} variant="light" />
         </View>
 
-        <View style={desktop.heroContent}>
-          <View style={desktop.logoRing}>
-            <Image source={LOGO_IMAGE} style={desktop.logo} contentFit="contain" accessibilityLabel="Seva Setu logo" alt="Seva Setu logo" priority="high" />
+        <View style={desktop.desktopLeftContent}>
+          <View style={desktop.desktopLogoWrap}>
+            <Image source={LOGO_IMAGE} style={desktop.desktopLogo} contentFit="contain" accessibilityLabel="Seva Setu logo" alt="Seva Setu logo" priority="high" />
           </View>
-          <Text style={desktop.title}>Seva Setu</Text>
-          <Text style={desktop.subtitle}>Malvan Municipal Council</Text>
-          <Text style={desktop.tagline}>Digital civic services for every citizen</Text>
+          <Text style={desktop.desktopLeftTitle}>Seva Setu</Text>
+          <Text style={desktop.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
+          <Text style={desktop.desktopLeftSlogan}>{isMr ? "प्रत्येक नागरिकासाठी डिजिटल नागरी सेवा" : "Digital civic services for every citizen"}</Text>
         </View>
       </View>
 
-      <View style={desktop.page}>
-        <View style={desktop.panel}>
-          <View style={desktop.welcome}>
-            <Text style={desktop.welcomeTitle}>Welcome to Malvan</Text>
-            <Text style={desktop.welcomeText}>Select your login profile to access municipal services.</Text>
-          </View>
-          <View style={desktop.grid}>
-            {roles.map((role) => (
-              <Pressable key={role.route} onPress={() => onSelect(role.route)} style={({ pressed }) => [desktop.card, pressed && desktop.cardPressed]}>
-                <View style={[desktop.icon, { backgroundColor: role.iconBg }]}> 
-                  <Text style={[desktop.iconEmoji, { color: role.iconColor }]}>{ROLE_ICONS[role.iconKey]}</Text>
-                </View>
-                <View style={desktop.cardCopy}>
-                  <Text style={desktop.cardTitle}>{role.title}</Text>
-                  <Text style={desktop.cardText}>{role.description}</Text>
-                </View>
-                <View style={[desktop.arrow, { borderColor: `${role.iconColor}45` }]}>
-                  <Text style={[desktop.arrowText, { color: role.iconColor }]}>→</Text>
-                </View>
-              </Pressable>
-            ))}
+      {/* Right side column */}
+      <View style={desktop.desktopRight}>
+        <View style={desktop.desktopRightContainer}>
+          <View style={desktop.desktopCardWrapper}>
+            <View style={desktop.welcome}>
+              <Text style={desktop.welcomeTitle}>{t('welcomeMalvan')}</Text>
+              <Text style={desktop.welcomeText}>{t('roleSelectHint')}</Text>
+            </View>
+            <View style={desktop.grid}>
+              {roles.map((role) => (
+                <Pressable key={role.route} onPress={() => onSelect(role.route)} style={({ pressed }) => [desktop.card, pressed && desktop.cardPressed]}>
+                  <View style={[desktop.icon, { backgroundColor: role.iconBg }]}> 
+                    <Text style={[desktop.iconEmoji, { color: role.iconColor }]}>{ROLE_ICONS[role.iconKey]}</Text>
+                  </View>
+                  <View style={desktop.cardCopy}>
+                    <Text style={desktop.cardTitle}>{role.title}</Text>
+                    <Text style={desktop.cardText}>{role.description}</Text>
+                  </View>
+                  <View style={[desktop.arrow, { borderColor: `${role.iconColor}45` }]}>
+                    <Text style={[desktop.arrowText, { color: role.iconColor }]}>→</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
           </View>
         </View>
       </View>
@@ -118,7 +127,7 @@ const RoleCard = memo(function RoleCard({
     <Pressable
       onPress={() => onSelect(role.route)}
       android_ripple={{ color: 'rgba(15,23,42,0.06)', borderless: false }}
-      style={({ pressed }) => [styles.card, { width }, isDesktop && styles.cardDesktop, pressed && desktop.cardPressed]}
+      style={({ pressed }) => [styles.card, { width }, isDesktop && styles.cardDesktop, pressed && styles.cardPressed]}
     >
       <View style={[styles.iconWrap, { backgroundColor: role.iconBg }]}> 
         <Text style={[styles.iconEmoji, { color: role.iconColor }]}>{ROLE_ICONS[role.iconKey]}</Text>
@@ -134,7 +143,7 @@ const RoleCard = memo(function RoleCard({
 
       <View style={styles.arrowRow}>
         <View style={[styles.arrowCircle, { borderColor: `${role.iconColor}40` }]}>
-          <Text style={[styles.arrowSymbol, { color: role.iconColor }]}>→</Text>
+          <Text style={[styles.arrowText, { color: role.iconColor }]}>→</Text>
         </View>
       </View>
     </Pressable>
@@ -147,8 +156,6 @@ export default function RoleSelectionScreen() {
   const { t } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
-  // Compute this from the live viewport. The previous module-level value and
-  // desktop grid styles made compact screens inherit a 932px-wide grid.
   const cardWidth = isDesktop ? 460 : Math.max(0, Math.floor((width - SIDE_PAD * 2 - COL_GAP) / 2));
 
   const roles = useMemo<RoleOption[]>(
@@ -201,7 +208,7 @@ export default function RoleSelectionScreen() {
   }, []);
 
   if (isDesktop) {
-    return <DesktopRoleLanding roles={roles} onSelect={navigateTo} heroHeight={Math.max(300, Math.min(390, Math.round(height * 0.38)))} />;
+    return <DesktopRoleLanding roles={roles} onSelect={navigateTo} />;
   }
 
   return (
@@ -370,6 +377,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.soft,
   },
   cardDesktop: { minHeight: 148, padding: 18, borderRadius: 18, ...SHADOWS.card },
+  cardPressed: { opacity: 0.85 },
 
   // Icon rounded-square
   iconWrap: {
@@ -421,28 +429,112 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  arrowSymbol: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
 });
 
 const desktop = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F4F8FC' },
-  hero: { minHeight: 300, overflow: 'hidden', justifyContent: 'center' },
-  heroNav: { position: 'absolute', top: 22, left: 0, right: 0, zIndex: 2, width: '100%', maxWidth: 1200, alignSelf: 'center', paddingHorizontal: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heroNavText: { color: 'rgba(255,255,255,0.84)', fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
-  heroContent: { alignItems: 'center', justifyContent: 'center', paddingTop: 24 },
-  langToggle: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.12)' },
-  langToggleText: { color: COLORS.white, fontSize: 11, fontWeight: '700' },
-  logoRing: { width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.9)', ...SHADOWS.xl },
-  logo: { width: 57, height: 57 }, title: { marginTop: 12, color: COLORS.white, fontSize: 38, lineHeight: 46, fontWeight: '900', letterSpacing: .3 }, subtitle: { color: 'rgba(255,255,255,0.94)', fontSize: 16, fontWeight: '700', marginTop: 2 }, tagline: { color: '#8ED4FF', fontSize: 13, fontWeight: '700', marginTop: 6 },
-  page: { flex: 1, marginTop: -42, paddingHorizontal: 28, paddingBottom: 28, alignItems: 'center' },
-  panel: { width: '100%', maxWidth: 1120, backgroundColor: COLORS.white, borderRadius: 24, padding: 26, borderWidth: 1, borderColor: '#DCE8F2', ...SHADOWS.xl },
-  welcome: { alignItems: 'center', paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#E8F0F6', marginBottom: 20 }, welcomeTitle: { color: COLORS.primary, fontSize: 22, fontWeight: '900' }, welcomeText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600', marginTop: 5 },
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    height: (Platform.OS === 'web' ? '100vh' : '100%') as any,
+    backgroundColor: '#F8FAFC',
+  },
+  desktopLeft: {
+    width: '45%',
+    height: '100%',
+    position: 'relative',
+  },
+  desktopLeftHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    zIndex: 10,
+  },
+  desktopLeftContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingBottom: 64,
+  },
+  desktopLogoWrap: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 18,
+    borderRadius: 28,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      } as any
+    })
+  },
+  desktopLogo: {
+    width: 80,
+    height: 80,
+  },
+  desktopLeftTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  desktopLeftSubtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.88)',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  desktopLeftSlogan: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: 'rgba(255, 255, 255, 0.72)',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  desktopRight: {
+    width: '55%',
+    height: '100%',
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  desktopRightContainer: {
+    width: '100%',
+    maxWidth: 960,
+    justifyContent: 'center',
+  },
+  desktopCardWrapper: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 40,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    width: '100%',
+  },
+  welcome: { alignItems: 'center', paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#E8F0F6', marginBottom: 20 },
+  welcomeTitle: { color: COLORS.primary, fontSize: 22, fontWeight: '900' },
+  welcomeText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600', marginTop: 5 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
-  card: { width: '48.9%' as any, minHeight: 148, padding: 20, borderRadius: 18, borderWidth: 1, borderColor: '#DCE8F2', backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 15, ...SHADOWS.soft }, cardPressed: { transform: [{ scale: .985 }], backgroundColor: '#F5FAFF', borderColor: '#A9CAE8' },
-  icon: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }, cardCopy: { flex: 1 }, cardTitle: { color: COLORS.text, fontSize: 17, fontWeight: '900' }, cardText: { color: COLORS.textMuted, fontSize: 12.5, fontWeight: '600', lineHeight: 18, marginTop: 5 }, arrow: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#F8FBFE' },
-  iconEmoji: { fontSize: 20 },
-  arrowText: { fontSize: 14, fontWeight: '700' },
+  card: { width: '48%' as any, minHeight: 120, padding: 18, borderRadius: 16, borderWidth: 1, borderColor: '#DCE8F2', backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 15, ...SHADOWS.soft },
+  cardPressed: { transform: [{ scale: .985 }], backgroundColor: '#F5FAFF', borderColor: '#A9CAE8' },
+  icon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  cardCopy: { flex: 1 },
+  cardTitle: { color: COLORS.text, fontSize: 15, fontWeight: '900' },
+  cardText: { color: COLORS.textMuted, fontSize: 11.5, fontWeight: '600', lineHeight: 16, marginTop: 4 },
+  arrow: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, backgroundColor: '#F8FBFE' },
+  iconEmoji: { fontSize: 18 },
+  arrowText: { fontSize: 13, fontWeight: '700' },
 });

@@ -28,13 +28,22 @@ const { width } = Dimensions.get('window');
 const STAT_CARD_W = (width - 18 * 2 - 10) / 2;
 
 function getGreeting(t: (k: string) => string) {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: t('goodMorningCitizen'), icon: 'weather-sunset-up' as const };
-  if (hour < 17) return { text: t('goodAfternoonCitizen'), icon: 'weather-sunny' as const };
-  return { text: t('goodEveningCitizen'), icon: 'weather-night' as const };
+  const hr = new Date().getHours();
+  if (hr < 12) return { text: t('goodMorning') || 'Good Morning', icon: 'weather-sunset-up' as const };
+  if (hr < 17) return { text: t('goodAfternoon') || 'Good Afternoon', icon: 'weather-sunny' as const };
+  return { text: t('goodEvening') || 'Good Evening', icon: 'weather-sunset-down' as const };
 }
 
-export default function Dashboard() {
+const EMERGENCY_CONTACTS = [
+  { label: 'Police', phone: '112', icon: 'shield-outline' as const, colors: ['#E3F2FD', '#BBDEFB'] as const, iconColor: '#2E86DE' },
+  { label: 'Fire', phone: '101', icon: 'fire' as const, colors: ['#FFEBEE', '#FFCDD2'] as const, iconColor: '#EF4444' },
+  { label: 'Hospital', phone: '108', icon: 'hospital-box-outline' as const, colors: ['#E8F5E9', '#C8E6C9'] as const, iconColor: '#10B981' },
+  { label: 'Municipality', phone: '02365-252018', icon: 'phone-classic' as const, colors: ['#EDE7F6', '#D1C4E9'] as const, iconColor: '#7C4DFF' },
+];
+
+import React, { memo, useCallback } from 'react';
+
+const Dashboard = memo(function Dashboard() {
   const router = useRouter();
   const { complaints, profile } = useCitizen();
   const { t } = useTranslation();
@@ -90,9 +99,52 @@ export default function Dashboard() {
 
   const recentComplaints = useMemo(() => complaints.slice(0, 3), [complaints]);
 
-  const handleCall = (number: string) => {
+  const handleCall = useCallback((number: string) => {
     Linking.openURL(`tel:${number}`).catch(() => {});
-  };
+  }, []);
+
+  const statsList = useMemo(() => [
+    {
+      label: t('totalComplaints'),
+      sub: t('overallRecord'),
+      value: counts.total,
+      colors: ['#E3F2FD', '#BBDEFB'] as const,
+      iconColor: '#2E86DE',
+      icon: 'clipboard-text-outline' as const,
+      desktopBg: 'rgba(46, 134, 222, 0.05)',
+      desktopBorder: 'rgba(46, 134, 222, 0.15)',
+    },
+    {
+      label: t('pending2'),
+      sub: t('awaitingAction'),
+      value: counts.pending,
+      colors: ['#FFF3E0', '#FFE0B2'] as const,
+      iconColor: '#F59E0B',
+      icon: 'clock-outline' as const,
+      desktopBg: 'rgba(245, 158, 11, 0.05)',
+      desktopBorder: 'rgba(245, 158, 11, 0.15)',
+    },
+    {
+      label: t('inProgress2'),
+      sub: t('beingResolved'),
+      value: counts.progress,
+      colors: ['#E0F7FA', '#B2EBF2'] as const,
+      iconColor: '#00ACC1',
+      icon: 'progress-wrench' as const,
+      desktopBg: 'rgba(0, 172, 193, 0.05)',
+      desktopBorder: 'rgba(0, 172, 193, 0.15)',
+    },
+    {
+      label: t('resolved2'),
+      sub: t('taskCompleted'),
+      value: counts.resolved,
+      colors: ['#E8F5E9', '#C8E6C9'] as const,
+      iconColor: '#10B981',
+      icon: 'check-circle-outline' as const,
+      desktopBg: 'rgba(16, 185, 129, 0.05)',
+      desktopBorder: 'rgba(16, 185, 129, 0.15)',
+    },
+  ], [t, counts]);
 
   return (
     <CitizenScreen title="Seva Setu" hideHeader>
@@ -124,7 +176,7 @@ export default function Dashboard() {
       )}
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isDesktop && styles.contentDesktop]}
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
@@ -186,58 +238,45 @@ export default function Dashboard() {
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionHeading}>{t('complaintStatistics')}</Text>
           <View style={styles.statsGrid}>
-            {[
-              {
-                label: t('totalComplaints'),
-                sub: t('overallRecord'),
-                value: counts.total,
-                colors: ['#E3F2FD', '#BBDEFB'] as const,
-                iconColor: '#2E86DE',
-                icon: 'clipboard-text-outline' as const,
-              },
-              {
-                label: t('pending2'),
-                sub: t('awaitingAction'),
-                value: counts.pending,
-                colors: ['#FFF3E0', '#FFE0B2'] as const,
-                iconColor: '#F59E0B',
-                icon: 'clock-outline' as const,
-              },
-              {
-                label: t('inProgress2'),
-                sub: t('beingResolved'),
-                value: counts.progress,
-                colors: ['#E0F7FA', '#B2EBF2'] as const,
-                iconColor: '#00ACC1',
-                icon: 'progress-wrench' as const,
-              },
-              {
-                label: t('resolved2'),
-                sub: t('taskCompleted'),
-                value: counts.resolved,
-                colors: ['#E8F5E9', '#C8E6C9'] as const,
-                iconColor: '#10B981',
-                icon: 'check-circle-outline' as const,
-              },
-            ].map((item, idx) => (
+            {statsList.map((item, idx) => (
               <Animated.View
                 key={item.label}
                 entering={FadeInDown.duration(400).delay(80 + idx * 60)}
                 style={[styles.statCardWrap, isDesktop && styles.statCardWrapDesktop]}
               >
-                <LinearGradient
-                  colors={item.colors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.statCard}
-                >
-                  <View style={styles.statIconCircle}>
-                    <MaterialCommunityIcons name={item.icon} size={18} color={item.iconColor} />
+                {isDesktop ? (
+                  <View
+                    style={[
+                      styles.statCard,
+                      {
+                        backgroundColor: item.desktopBg,
+                        borderWidth: 1,
+                        borderColor: item.desktopBorder,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.statIconCircle, { backgroundColor: COLORS.white }]}>
+                      <MaterialCommunityIcons name={item.icon} size={18} color={item.iconColor} />
+                    </View>
+                    <Text style={[styles.statValue, { color: item.iconColor }]}>{item.value}</Text>
+                    <Text style={styles.statLabel}>{item.label}</Text>
+                    <Text style={styles.statSub}>{item.sub}</Text>
                   </View>
-                  <Text style={[styles.statValue, { color: item.iconColor }]}>{item.value}</Text>
-                  <Text style={styles.statLabel}>{item.label}</Text>
-                  <Text style={styles.statSub}>{item.sub}</Text>
-                </LinearGradient>
+                ) : (
+                  <LinearGradient
+                    colors={item.colors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.statCard}
+                  >
+                    <View style={styles.statIconCircle}>
+                      <MaterialCommunityIcons name={item.icon} size={18} color={item.iconColor} />
+                    </View>
+                    <Text style={[styles.statValue, { color: item.iconColor }]}>{item.value}</Text>
+                    <Text style={styles.statLabel}>{item.label}</Text>
+                    <Text style={styles.statSub}>{item.sub}</Text>
+                  </LinearGradient>
+                )}
               </Animated.View>
             ))}
           </View>
@@ -284,7 +323,7 @@ export default function Dashboard() {
                         <View style={styles.complaintBody}>
                           <Text style={styles.complaintTitle} numberOfLines={1}>{c.title}</Text>
                           <View style={styles.complaintMetaRow}>
-                            <Text style={styles.complaintCategory}>{c.category}</Text>
+                            <Text style={styles.complaintCategory}>{t(({ Water: 'catWater', Garbage: 'catGarbage', 'Street Light': 'catStreetLight', Road: 'catRoad', Drainage: 'catDrainage', 'Stray Animals': 'catStrayAnimals', Tree: 'catTree', Other: 'catOther' } as Record<string, string>)[c.category] || c.category)}</Text>
                             <Text style={styles.complaintDot}>•</Text>
                             <Text style={styles.complaintDate}>{dateFmt}</Text>
                           </View>
@@ -296,7 +335,7 @@ export default function Dashboard() {
                           ]}
                         >
                           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-                          <Text style={[styles.statusChipText, { color: statusColor }]}>{c.status}</Text>
+                          <Text style={[styles.statusChipText, { color: statusColor }]}>{t(({ Pending: 'pending', 'In Progress': 'inProgress', Resolved: 'resolved', Escalated: 'escalated' } as Record<string, string>)[c.status] || c.status).toUpperCase()}</Text>
                         </View>
                       </Pressable>
                     </Animated.View>
@@ -306,7 +345,8 @@ export default function Dashboard() {
             </View>
 
             {/* ---------------- WARD INFO ---------------- */}
-            <View style={styles.sectionBlock}>
+            {/* ---------------- WARD INFO ---------------- */}
+            <View style={[styles.sectionBlock, isDesktop && styles.sectionBlockDesktop]}>
               <Text style={styles.sectionHeading}>{t('wardInformation')}</Text>
               <LinearGradient
                 colors={['#0B4F8A', '#1A6BB5']}
@@ -344,7 +384,7 @@ export default function Dashboard() {
             </View>
 
             {/* ---------------- ANNOUNCEMENTS ---------------- */}
-            <View style={styles.sectionBlock}>
+            <View style={[styles.sectionBlock, isDesktop && styles.sectionBlockDesktop]}>
               <Text style={styles.sectionHeading}>{t('latestAnnouncementsTitle')}</Text>
               <ScrollView
                 horizontal
@@ -380,33 +420,32 @@ export default function Dashboard() {
             </View>
 
             {/* ---------------- EMERGENCY CONTACTS ---------------- */}
-            <View style={styles.sectionBlock}>
+            <View style={[styles.sectionBlock, isDesktop && styles.sectionBlockDesktop]}>
               <Text style={styles.sectionHeading}>{t('emergencyContacts')}</Text>
-              <View style={styles.emergencyGrid}>
-                {[
-                  { label: 'Police', phone: '112', icon: 'shield-outline', colors: ['#E3F2FD', '#BBDEFB'], iconColor: '#2E86DE' },
-                  { label: 'Fire', phone: '101', icon: 'fire', colors: ['#FFEBEE', '#FFCDD2'], iconColor: '#EF4444' },
-                  { label: 'Hospital', phone: '108', icon: 'hospital-box-outline', colors: ['#E8F5E9', '#C8E6C9'], iconColor: '#10B981' },
-                  { label: 'Municipality', phone: '02365-252018', icon: 'phone-classic', colors: ['#EDE7F6', '#D1C4E9'], iconColor: '#7C4DFF' },
-                ].map((item, idx) => (
+              <View style={[styles.emergencyGrid, isDesktop && styles.emergencyGridDesktop]}>
+                {EMERGENCY_CONTACTS.map((item, idx) => (
                   <Animated.View
                     key={item.label}
                     entering={FadeInDown.duration(400).delay(80 + idx * 50)}
-                    style={styles.emergencyCardWrap as any}
+                    style={[styles.emergencyCardWrap, isDesktop && styles.emergencyCardWrapDesktop] as any}
                   >
                     <Pressable
-                      onPress={() => handleCall(item.phone)}
-                      style={({ pressed }) => [pressed && { transform: [{ scale: 0.96 }] }]}
+                       onPress={() => handleCall(item.phone)}
+                       style={({ pressed }) => [pressed && { transform: [{ scale: 0.96 }] }]}
                     >
                       <LinearGradient
                         colors={item.colors as any}
-                        style={styles.emergencyCard as any}
+                        style={[styles.emergencyCard, isDesktop && styles.emergencyCardDesktop] as any}
                       >
-                        <View style={styles.emergencyIconCircle as any}>
-                          <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor} />
+                        <View style={[styles.emergencyIconCircle, isDesktop && styles.emergencyIconCircleDesktop] as any}>
+                          <MaterialCommunityIcons name={item.icon as any} size={isDesktop ? 16 : 20} color={item.iconColor} />
                         </View>
-                        <Text style={styles.emergencyLabel as any}>{item.label}</Text>
-                        <Text style={[styles.emergencyPhone, { color: item.iconColor }] as any}>{item.phone}</Text>
+                        <View style={isDesktop ? styles.emergencyTextColDesktop : null}>
+                          <Text style={[styles.emergencyLabel, isDesktop && styles.emergencyLabelDesktop] as any}>
+                            {t(({ Police: 'police', Fire: 'fire', Hospital: 'hospital', Municipality: 'municipality' } as Record<string, string>)[item.label] || item.label)}
+                          </Text>
+                          <Text style={[styles.emergencyPhone as any, { color: item.iconColor }, isDesktop && styles.emergencyPhoneDesktop]}>{item.phone}</Text>
+                        </View>
                       </LinearGradient>
                     </Pressable>
                   </Animated.View>
@@ -418,11 +457,19 @@ export default function Dashboard() {
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default Dashboard;
 
 const styles = StyleSheet.create({
   content: {
     paddingBottom: 130,
+  },
+  contentDesktop: {
+    paddingBottom: 40,
+    width: '100%',
+    maxWidth: 1100,
+    alignSelf: 'center',
   },
 
   // Branded Header Styles
@@ -592,6 +639,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     marginTop: 30,
   },
+  sectionBlockDesktop: {
+    marginTop: 18,
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -620,7 +670,7 @@ const styles = StyleSheet.create({
     width: STAT_CARD_W,
   },
   statCardWrapDesktop: {
-    width: 'calc(50% - 6px)' as any,
+    width: 'calc(25% - 8px)' as any,
   },
   statCard: {
     borderRadius: 20,
@@ -859,13 +909,30 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 10,
   },
+  emergencyGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+  },
   emergencyCardWrap: {
     width: STAT_CARD_W,
+  },
+  emergencyCardWrapDesktop: {
+    width: 'calc(25% - 9px)' as any,
+    minWidth: 160,
   },
   emergencyCard: {
     borderRadius: 20,
     padding: 14,
     alignItems: 'flex-start',
+  },
+  emergencyCardDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    gap: 10,
+    height: 52,
   },
   emergencyIconCircle: {
     width: 34,
@@ -876,14 +943,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 10,
   },
+  emergencyIconCircleDesktop: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    marginBottom: 0,
+  },
+  emergencyTextColDesktop: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   emergencyLabel: {
     fontSize: 12.5,
     fontWeight: '800',
     color: '#334155',
   },
+  emergencyLabelDesktop: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
   emergencyPhone: {
     fontSize: 12,
     fontWeight: '900',
     marginTop: 3,
+  },
+  emergencyPhoneDesktop: {
+    fontSize: 11,
+    marginTop: 1,
+    lineHeight: 13,
   },
 });
