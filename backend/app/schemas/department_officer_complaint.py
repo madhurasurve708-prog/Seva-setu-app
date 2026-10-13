@@ -72,6 +72,7 @@ class ComplaintNoteCreate(BaseModel):
 
 
 class ComplaintNoteResponse(BaseModel):
+    id: Optional[int] = None
     author_name: str
     author_role: str
     created_at: datetime
@@ -82,6 +83,7 @@ class ComplaintNoteResponse(BaseModel):
 
 
 class ComplaintTimelineItem(BaseModel):
+    id: Optional[int] = None
     author_name: str
     author_role: str
     created_at: datetime

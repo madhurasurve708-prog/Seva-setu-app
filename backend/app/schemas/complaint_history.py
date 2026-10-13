@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ComplaintHistoryResponse(BaseModel):
+    id: Optional[int] = None
     author_role: str
     author_name: str
     author_id: Optional[int] = None

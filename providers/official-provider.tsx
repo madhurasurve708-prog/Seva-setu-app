@@ -1,6 +1,14 @@
 import { Complaint } from '@/data/complaints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getMainAdminComplaintDetail, updateNagarsevakProfileName, updateNagarsevakProfilePhone, changeNagarsevakPassword, changeOfficialPassword } from '@/services/official-api';
+import { addOfficialComplaintNote, createMainAdminAnnouncement, escalateOfficialComplaint, getOfficialAnnouncements, getOfficialComplaints, type AnnouncementInput, updateOfficialComplaintStatus, getNagarsevakComplaintTimeline, getDepartmentComplaintTimeline, getMainAdminComplaintDetail, updateNagarsevakProfileName, updateNagarsevakProfilePhone, changeNagarsevakPassword, changeOfficialPassword } from '@/services/official-api';
+
+export type TimelineNote = {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+  imageUrl?: string;
+};
 import { clearOfficialAccessToken, getOfficialAccessToken } from '@/services/api-client';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -152,7 +160,7 @@ type OfficialContextValue = {
   publishAnnouncement: (input: AnnouncementInput) => Promise<void>;
   uploadComplaintImage: (id: string, imageUri: string) => Promise<void>;
   escalateComplaint: (id: string, department: string, reason: string) => Promise<void>;
-  fetchNotes: (id: string) => Promise<any[]>;
+  fetchNotes: (id: string) => Promise<TimelineNote[]>;
   softDeleteComplaint: (id: string, deletedBy: string, reason: string) => Promise<void>;
   restoreComplaint: (id: string) => Promise<void>;
   savePreferences: (preferences: OfficialPreferences) => Promise<void>;
@@ -308,6 +316,10 @@ export function OfficialProvider({ children }: PropsWithChildren) {
   const updateComplaintStatus = async (id: string, status: Complaint['status'], noteText?: string) => {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired.');
+    const existing = complaints.find((c) => c.id === id);
+    if (existing && existing.status === status) {
+      return;
+    }
     await updateOfficialComplaintStatus(profile.role, id, status, token);
     if (noteText) await addOfficialComplaintNote(profile.role, id, noteText, token);
     await loadComplaints(true);
@@ -352,26 +364,37 @@ export function OfficialProvider({ children }: PropsWithChildren) {
     await loadComplaints(true);
   };
 
-  const fetchNotes = useCallback(async (id: string) => {
+  const fetchNotes = useCallback(async (id: string): Promise<TimelineNote[]> => {
     const token = await getOfficialAccessToken();
     if (!token) throw new Error('Your session has expired.');
     
     if (profile.role === 'nagarsevak') {
       const timeline = await getNagarsevakComplaintTimeline(id, token);
       return timeline.map((h: any) => ({
-        id: String(h.id || Math.random()),
+        id: String(h.id ?? `${h.created_at}-${h.author_name}-${h.note_text}`),
         author: `${h.author_name} (${h.author_role})`,
         text: String(h.note_text),
         createdAt: String(h.created_at),
+        imageUrl: h.image_url ? String(h.image_url) : undefined,
       }));
     } else if (profile.role === 'main-admin') {
       const detail = await getMainAdminComplaintDetail(id, token);
       const history = (detail.history || []) as any[];
       return history.map((h: any) => ({
-        id: String(h.id || Math.random()),
+        id: String(h.id ?? `${h.created_at}-${h.author_name}-${h.note_text}`),
         author: `${h.author_name} (${h.author_role})`,
         text: String(h.note_text),
         createdAt: String(h.created_at),
+        imageUrl: h.image_url ? String(h.image_url) : undefined,
+      }));
+    } else if (profile.role === 'department-officer') {
+      const timeline = await getDepartmentComplaintTimeline(id, token);
+      return timeline.map((h: any) => ({
+        id: String(h.id ?? `${h.created_at}-${h.author_name}-${h.note_text}`),
+        author: `${h.author_name} (${h.author_role})`,
+        text: String(h.note_text),
+        createdAt: String(h.created_at),
+        imageUrl: h.image_url ? String(h.image_url) : undefined,
       }));
     }
     return [];

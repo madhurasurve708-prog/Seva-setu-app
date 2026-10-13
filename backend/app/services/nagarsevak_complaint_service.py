@@ -194,8 +194,10 @@ class NagarsevakComplaintService:
         )
 
         return {
+            "id": note.id,
             "author_name": note.author_name,
             "author_role": note.author_role,
+            "author_id": note.author_id,
             "created_at": note.created_at,
             "note_text": note.note_text,
             "image_url": note.image_url,
@@ -217,8 +219,10 @@ class NagarsevakComplaintService:
         history = ComplaintHistoryRepository.get_history_for_complaint(db, complaint_id)
         return [
             {
+                "id": item.id,
                 "author_name": item.author_name,
                 "author_role": item.author_role,
+                "author_id": item.author_id,
                 "created_at": item.created_at,
                 "note_text": item.note_text,
                 "image_url": item.image_url,

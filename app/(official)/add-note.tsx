@@ -54,11 +54,16 @@ export default function AddNoteScreen() {
       Alert.alert(t('noteSaved'), t('noteSavedMessage'), [
         {
           text: t('ok'),
-          onPress: () =>
-            router.replace({
-              pathname: '/(official)/complaint-details',
-              params: { id: complaint.id },
-            } as any),
+          onPress: () => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace({
+                pathname: '/(official)/complaint-details',
+                params: { id: complaint.id },
+              } as any);
+            }
+          },
         },
       ]);
     } catch {

@@ -292,6 +292,7 @@ class DepartmentOfficerComplaintService:
         )
 
         return {
+            "id": note.id,
             "author_name": note.author_name,
             "author_role": note.author_role,
             "created_at": note.created_at,
@@ -329,6 +330,7 @@ class DepartmentOfficerComplaintService:
         history = ComplaintHistoryRepository.get_history_for_complaint(db, complaint_id)
         return [
             {
+                "id": item.id,
                 "author_name": item.author_name,
                 "author_role": item.author_role,
                 "created_at": item.created_at,

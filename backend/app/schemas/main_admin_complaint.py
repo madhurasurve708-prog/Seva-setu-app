@@ -48,6 +48,7 @@ class MainAdminComplaintEscalationInfo(BaseModel):
 
 class MainAdminComplaintHistoryItem(BaseModel):
     """History item for complaint timeline."""
+    id: Optional[int] = None
     author_role: str
     author_name: str
     author_id: Optional[int] = None

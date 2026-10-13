@@ -142,6 +142,7 @@ class MainAdminComplaintService:
         # Build history items (chronological timeline)
         history_items = [
             MainAdminComplaintHistoryItem(
+                id=h.id,
                 author_role=h.author_role,
                 author_name=h.author_name,
                 author_id=h.author_id,

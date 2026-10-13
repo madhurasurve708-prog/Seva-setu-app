@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,27 +9,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PriorityBadge from '@/components/official/PriorityBadge';
 import StatusBadge from '@/components/official/StatusBadge';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { useOfficial } from '@/providers/official-provider';
+import { useOfficial, type TimelineNote } from '@/providers/official-provider';
 
 export default function ComplaintDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile, complaints, updateComplaintStatus, uploadComplaintImage, fetchNotes } = useOfficial();
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<TimelineNote[]>([]);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const complaint = complaints.find((c) => c.id === id);
 
-  useEffect(() => {
-    if (complaint) {
-      fetchNotes(complaint.id)
-        .then((data) => {
-          setNotes(data);
-        })
-        .catch((err) => {
-          console.error("Failed to load timeline notes:", err);
-        });
-    }
-  }, [complaint?.id, fetchNotes]);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      if (complaint?.id) {
+        fetchNotes(complaint.id)
+          .then((data) => {
+            if (isActive) setNotes(data);
+          })
+          .catch((err) => {
+            console.error("Failed to load timeline notes:", err);
+          });
+      }
+      return () => {
+        isActive = false;
+      };
+    }, [complaint?.id, fetchNotes])
+  );
 
   if (!complaint) {
     return (
@@ -65,6 +72,12 @@ export default function ComplaintDetailsScreen() {
     status: 'Pending' | 'In Progress' | 'Resolved',
     note: string,
   ) => {
+    if (updatingStatus) return;
+    if (complaint.status === status) {
+      Alert.alert('No Change', `Complaint is already ${status}.`);
+      return;
+    }
+    setUpdatingStatus(true);
     try {
       console.log("[DEBUG] handleStatus: updating status to", status);
       await updateComplaintStatus(complaint.id, status, note);
@@ -78,36 +91,94 @@ export default function ComplaintDetailsScreen() {
     } catch (err) {
       console.error("[DEBUG] handleStatus error:", err);
       Alert.alert('Error', err instanceof Error ? err.message : String(err));
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
-  const timelineEvents = [
-    {
-      title: 'Complaint registered',
-      description: `Filed by ${complaint.citizenName} from ${complaint.location}`,
-      time: fmtDateTime(complaint.createdAt),
-      icon: 'file-document-outline' as const,
-      color: COLORS.primary,
-    },
-    ...(complaint.assignedDepartment
-      ? [
-          {
-            title: 'Assigned to department',
-            description: `Routed to ${complaint.assignedDepartment}`,
-            time: fmtDateTime(complaint.createdAt),
-            icon: 'domain' as const,
-            color: '#7C3AED',
-          },
-        ]
-      : []),
-    ...notes.map((n) => ({
-      title: 'Action taken',
-      description: `${n.text} — ${n.author}`,
-      time: fmtDateTime(n.createdAt),
-      icon: 'comment-text-outline' as const,
-      color: '#EA580C',
-    })),
-  ];
+  // Deduplicate adjacent identical history items within 30s for display
+  const deduplicatedNotes = useMemo(() => {
+    const result: TimelineNote[] = [];
+    for (const note of notes) {
+      const prev = result[result.length - 1];
+      if (
+        prev &&
+        prev.text === note.text &&
+        prev.author === note.author &&
+        Math.abs(new Date(prev.createdAt).getTime() - new Date(note.createdAt).getTime()) < 30000
+      ) {
+        continue;
+      }
+      result.push(note);
+    }
+    return result;
+  }, [notes]);
+
+  // Actual progress notes added by users/officials (excluding system status logs)
+  const progressNotes = useMemo(() => {
+    return deduplicatedNotes.filter(
+      (n) => !n.text.toLowerCase().startsWith('status updated')
+    );
+  }, [deduplicatedNotes]);
+
+  const timelineEvents = useMemo(() => {
+    const events: Array<{
+      id: string;
+      title: string;
+      description: string;
+      time: string;
+      icon: keyof typeof MaterialCommunityIcons.glyphMap;
+      color: string;
+    }> = [
+      {
+        id: 'registered',
+        title: 'Complaint registered',
+        description: `Filed by ${complaint.citizenName} from ${complaint.location}`,
+        time: fmtDateTime(complaint.createdAt),
+        icon: 'file-document-outline',
+        color: COLORS.primary,
+      },
+    ];
+
+    if (complaint.assignedDepartment) {
+      events.push({
+        id: 'assigned',
+        title: 'Assigned to department',
+        description: `Routed to ${complaint.assignedDepartment}`,
+        time: fmtDateTime(complaint.createdAt),
+        icon: 'domain',
+        color: '#7C3AED',
+      });
+    }
+
+    for (const n of deduplicatedNotes) {
+      const lower = n.text.toLowerCase();
+      let title = 'Action taken';
+      let icon: keyof typeof MaterialCommunityIcons.glyphMap = 'comment-text-outline';
+      let color = '#EA580C';
+
+      if (lower.startsWith('status updated')) {
+        title = 'Status changed';
+        icon = 'sync';
+        color = COLORS.primary;
+      } else if (lower.includes('escalat')) {
+        title = 'Escalation';
+        icon = 'arrow-up-bold-circle-outline';
+        color = '#DC2626';
+      }
+
+      events.push({
+        id: n.id,
+        title,
+        description: `${n.text} — ${n.author}`,
+        time: fmtDateTime(n.createdAt),
+        icon,
+        color,
+      });
+    }
+
+    return events;
+  }, [complaint, deduplicatedNotes]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -244,7 +315,7 @@ export default function ComplaintDetailsScreen() {
             {timelineEvents.map((ev, idx) => {
               const isLast = idx === timelineEvents.length - 1;
               return (
-                <View key={idx} style={styles.timelineRow}>
+                <View key={ev.id || `ev-${idx}`} style={styles.timelineRow}>
                   <View style={styles.timelineLeft}>
                     <View
                       style={[
@@ -272,15 +343,15 @@ export default function ComplaintDetailsScreen() {
         </Animated.View>
 
         {/* ── Section 6: Notes ── */}
-        {notes.length > 0 && (
+        {progressNotes.length > 0 && (
           <Animated.View entering={FadeInDown.duration(340).delay(300)} style={styles.card}>
             <SectionLabel icon="note-text-outline" label="Notes" />
-            {notes.map((n, idx) => (
+            {progressNotes.map((n, idx) => (
               <View
-                key={n.id}
+                key={n.id || `note-${idx}`}
                 style={[
                   styles.noteRow,
-                  idx === notes.length - 1 && { borderBottomWidth: 0 },
+                  idx === progressNotes.length - 1 && { borderBottomWidth: 0 },
                 ]}
               >
                 <View style={styles.noteIconCircle}>
@@ -293,6 +364,14 @@ export default function ComplaintDetailsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.noteAuthor}>{n.author}</Text>
                   <Text style={styles.noteText}>{n.text}</Text>
+                  {n.imageUrl ? (
+                    <Image
+                      source={{ uri: n.imageUrl }}
+                      style={styles.noteAttachment}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  ) : null}
                   <Text style={styles.noteTime}>{fmtDateTime(n.createdAt)}</Text>
                 </View>
               </View>
@@ -309,6 +388,8 @@ export default function ComplaintDetailsScreen() {
               color="#F59E0B"
               bg="#FFF8ED"
               border="#FDE68A"
+              active={complaint.status === 'Pending'}
+              disabled={updatingStatus || complaint.status === 'Pending'}
               onPress={() => handleStatus('Pending', 'Re-assessed complaint.')}
             />
             <ActionBtn
@@ -316,6 +397,8 @@ export default function ComplaintDetailsScreen() {
               color={COLORS.primary}
               bg="#EFF6FF"
               border="#BFDBFE"
+              active={complaint.status === 'In Progress'}
+              disabled={updatingStatus || complaint.status === 'In Progress'}
               onPress={() => handleStatus('In Progress', 'Began resolution process.')}
             />
             <ActionBtn
@@ -323,6 +406,8 @@ export default function ComplaintDetailsScreen() {
               color={COLORS.success}
               bg="#ECFDF5"
               border="#A7F3D0"
+              active={complaint.status === 'Resolved'}
+              disabled={updatingStatus || complaint.status === 'Resolved'}
               onPress={() => handleStatus('Resolved', 'Grievance resolved fully.')}
             />
           </View>
@@ -441,19 +526,31 @@ function ActionBtn({
   bg,
   border,
   onPress,
+  disabled,
+  active,
 }: {
   label: string;
   color: string;
   bg: string;
   border: string;
   onPress: () => void;
+  disabled?: boolean;
+  active?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.actionBtn, { backgroundColor: bg, borderColor: border }]}
+      disabled={disabled}
+      style={[
+        styles.actionBtn,
+        { backgroundColor: bg, borderColor: border },
+        disabled && { opacity: 0.55 },
+        active && { borderWidth: 2, borderColor: color },
+      ]}
     >
-      <Text style={[styles.actionBtnText, { color }]}>{label}</Text>
+      <Text style={[styles.actionBtnText, { color, fontWeight: active ? '800' : '700' }]}>
+        {active ? `✓ ${label}` : label}
+      </Text>
     </Pressable>
   );
 }
@@ -689,6 +786,14 @@ const styles = StyleSheet.create({
   noteAuthor: { fontSize: 12, fontWeight: '800', color: COLORS.primary },
   noteText: { fontSize: 13, fontWeight: '500', color: COLORS.text, marginTop: 2, lineHeight: 18 },
   noteTime: { fontSize: 11, fontWeight: '600', color: COLORS.textPlaceholder, marginTop: 4 },
+  noteAttachment: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
+    marginTop: 6,
+    marginBottom: 4,
+    backgroundColor: '#F1F5F9',
+  },
 
   /* Actions */
   actionRow: { flexDirection: 'row', gap: 8 },
