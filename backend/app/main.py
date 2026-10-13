@@ -61,14 +61,11 @@ app.add_middleware(
 )
 
 @app.exception_handler(SQLAlchemyError)
-async def database_exception_handler(_: Request, exc: SQLAlchemyError) -> JSONResponse:
+async def database_exception_handler(_: Request, __: SQLAlchemyError) -> JSONResponse:
     """Avoid exposing database vendor details to API consumers."""
-    import traceback
-    traceback.print_exc()
-    print("DB ERROR:", exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"An internal database error occurred: {exc}"},
+        content={"detail": "An internal database error occurred."},
     )
 
 

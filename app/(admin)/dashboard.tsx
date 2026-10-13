@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,7 +12,7 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
-// Explore destinations — each goes to its own dedicated screen, no more complaint-explorer
+// Explore destinations
 const EXPLORE_ITEMS = (t: (key: string) => string) => [
   {
     route: '/(admin)/ward-wise',
@@ -59,11 +59,19 @@ const PRIORITY_STYLE: Record<string, { bg: string; text: string }> = {
   Normal:    { bg: '#F1F5F9', text: '#475569' },
 };
 
-export default function AdminDashboard() {
+const AdminDashboard = memo(function AdminDashboard() {
   const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints, announcements } = useOfficial();
   const { width } = useWindowDimensions();
+  const [showHeavyContent, setShowHeavyContent] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowHeavyContent(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const isDesktop = Platform.OS === 'web' && width > 768;
 
@@ -77,7 +85,7 @@ export default function AdminDashboard() {
     return { total, pending, inProgress, resolved, escalated, successRate };
   }, [complaints]);
 
-  const { total, pending, resolved, escalated, successRate } = stats;
+  const { total, pending, inProgress, resolved, escalated, successRate } = stats;
 
   const STAT_CARDS = useMemo(() => [
     { key: 'Pending',     label: t('pending'),     value: stats.pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },
@@ -267,7 +275,9 @@ export default function AdminDashboard() {
       </ScrollView>
     </SafeAreaView>
   );
-}
+});
+
+export default AdminDashboard;
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 

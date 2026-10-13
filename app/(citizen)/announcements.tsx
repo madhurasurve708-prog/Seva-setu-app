@@ -5,15 +5,22 @@ import { getCitizenAnnouncements, type CitizenApiAnnouncement } from '@/services
 import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { COLORS, TYPOGRAPHY } from '../../constants/theme';
 
-export default function Announcements() {
+const Announcements = memo(function Announcements() {
   const { t } = useTranslation();
   const [announcements, setAnnouncements] = useState<CitizenApiAnnouncement[]>([]);
+  const [showList, setShowList] = useState(false);
 
-  useEffect(() => { void getCitizenAnnouncements().then(setAnnouncements).catch(() => setAnnouncements([])); }, []);
+  useEffect(() => {
+    void getCitizenAnnouncements().then(setAnnouncements).catch(() => setAnnouncements([]));
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <CitizenScreen title={t('announcementsTitle')}>
@@ -24,37 +31,43 @@ export default function Announcements() {
       >
         <Text style={styles.sectionTitle}>{t('municipalNotifications')}</Text>
 
-        {announcements.map((a, idx) => (
-          <Animated.View key={a.id} entering={FadeInLeft.duration(400).delay(idx * 80)}>
-            <GlassCard style={styles.card}>
-              <View style={styles.cardHeader}>
-                {a.priority ? (
-                  <View style={styles.pinnedBadge}>
-                    <MaterialCommunityIcons name="pin" size={11} color={COLORS.warning} />
-                  <Text style={styles.pinnedText}>{a.priority}</Text>
+        {showList ? (
+          announcements.map((a, idx) => (
+            <Animated.View key={a.id} entering={FadeInLeft.duration(400).delay(idx * 80)}>
+              <GlassCard style={styles.card}>
+                <View style={styles.cardHeader}>
+                  {a.priority ? (
+                    <View style={styles.pinnedBadge}>
+                      <MaterialCommunityIcons name="pin" size={11} color={COLORS.warning} />
+                    <Text style={styles.pinnedText}>{t('priorityPinned')}</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.infoBadge}>
+                      <MaterialCommunityIcons name="bell-ring-outline" size={11} color={COLORS.accent} />
+                      <Text style={styles.infoBadgeText}>{t('noticeLabel')}</Text>
+                    </View>
+                  )}
+                  <View style={styles.dateBadge}>
+                    <MaterialCommunityIcons name="calendar" size={11} color={COLORS.textMuted} />
+                    <Text style={styles.dateText}>{new Date(a.created_at).toLocaleDateString()}</Text>
                   </View>
-                ) : (
-                  <View style={styles.infoBadge}>
-                    <MaterialCommunityIcons name="bell-ring-outline" size={11} color={COLORS.accent} />
-                    <Text style={styles.infoBadgeText}>{t('noticeLabel')}</Text>
-                  </View>
-                )}
-                <View style={styles.dateBadge}>
-                  <MaterialCommunityIcons name="calendar" size={11} color={COLORS.textMuted} />
-                  <Text style={styles.dateText}>{new Date(a.created_at).toLocaleDateString()}</Text>
                 </View>
-              </View>
 
-              <Text style={styles.title}>{a.title}</Text>
-              <View style={styles.divider} />
-              <Text style={styles.body}>{a.description}</Text>
-            </GlassCard>
-          </Animated.View>
-        ))}
+                <Text style={styles.title}>{a.title}</Text>
+                <View style={styles.divider} />
+                <Text style={styles.body}>{a.description}</Text>
+              </GlassCard>
+            </Animated.View>
+          ))
+        ) : (
+          <Text style={styles.body}>{t('loading')}</Text>
+        )}
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default Announcements;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 120 },

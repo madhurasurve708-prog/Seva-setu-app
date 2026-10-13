@@ -2,11 +2,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import Animated, { FadeInUp, FadeInDown, ZoomIn } from 'react-native-reanimated';
+import { useTranslation } from '@/providers/localization-provider';
 
 type TeamMember = {
   name: string;
@@ -15,7 +16,7 @@ type TeamMember = {
   photo: any;
 };
 
-const TEAM: TeamMember[] = [
+const TEAM_EN: TeamMember[] = [
   {
     name: 'Madhura Surve',
     title: 'Founder',
@@ -30,15 +31,35 @@ const TEAM: TeamMember[] = [
   },
 ];
 
-export default function About() {
+const TEAM_MR: TeamMember[] = [
+  {
+    name: 'मधुरा सुर्वे',
+    title: 'संस्थापक',
+    bio: 'मधुरा सेवा सेतूच्या ध्येयाचे आणि विकासाचे नेतृत्व करतात. त्या उत्पादन धोरण, बॅकएंड विकास, प्रकल्प व्यवस्थापन आणि कार्यक्षम नागरी व्यासपीठ तयार करण्यासाठी नगरपालिका अधिकाऱ्यांसोबतच्या समन्वयाची धुरा सांभाळतात.',
+    photo: require('../../assets/images/madhura.webp'),
+  },
+  {
+    name: 'अपूर्वा सावंत',
+    title: 'सह-संस्थापक',
+    bio: 'सह-संस्थापक म्हणून, अपूर्वा सेवा सेतूचे युझर इंटरफेस (UI/UX) डिझाईन, फ्रंटएंड विकास आणि ब्रँडिंगचे नेतृत्व करतात, ज्यामुळे प्रत्येक नागरिकाला वापरण्यास सोपा आणि सुलभ अनुभव मिळेल.',
+    photo: require('../../assets/images/apurva.webp'),
+  },
+];
+
+import React, { memo } from 'react';
+
+const About = memo(function About() {
   const [isHydrated, setIsHydrated] = useState(false);
+  const { t, language } = useTranslation();
+
+  const team = useMemo(() => (language === 'Marathi' ? TEAM_MR : TEAM_EN), [language]);
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
   return (
-    <CitizenScreen title="About Seva Setu" showBack hideNav>
+    <CitizenScreen title={t('aboutApp')} showBack hideNav>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -70,7 +91,7 @@ export default function About() {
           entering={isHydrated ? FadeInUp.duration(500).delay(300) : undefined} 
           style={styles.version}
         >
-          Citizen Grievance Resolution Node • v1.0.0
+          {t('citizenGrievanceNode')}
         </Animated.Text>
 
         {/* Info Cards */}
@@ -81,20 +102,20 @@ export default function About() {
           <GlassCard style={styles.card}>
             <View style={styles.headingRow}>
               <MaterialCommunityIcons name="bridge" size={24} color={COLORS.accent} />
-              <Text style={styles.cardHeading}>Connecting Malvan</Text>
+              <Text style={styles.cardHeading}>{t('connectingMalvanCitizen')}</Text>
             </View>
             <Text style={styles.cardText}>
-              Seva Setu serves as the official communication bridge between Malvan citizens and the Municipal Administration. By reporting localized ward issues, citizens empower the municipality to act swiftly and maintain local infrastructure with absolute transparency.
+              {t('connectingMalvanCitizenBody')}
             </Text>
           </GlassCard>
 
           <GlassCard style={StyleSheet.flatten([styles.card, styles.supportCard])}>
             <View style={styles.headingRow}>
               <MaterialCommunityIcons name="shield-check" size={22} color={COLORS.secondary} />
-              <Text style={styles.cardHeading}>Official Council Node</Text>
+              <Text style={styles.cardHeading}>{t('officialCouncilNode')}</Text>
             </View>
             <Text style={styles.cardText}>
-              All complaints, data, and tracking are directly synchronized with the Malvan Municipal Council desks. Access is governed under official public data protection norms.
+              {t('officialCouncilNodeBody')}
             </Text>
           </GlassCard>
         </Animated.View>
@@ -102,16 +123,16 @@ export default function About() {
         {/* Team Section Header */}
         <View style={styles.teamSectionHeader}>
           <MaterialCommunityIcons name="account-group-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.teamSectionTitle}>Meet Our Team</Text>
+          <Text style={styles.teamSectionTitle}>{t('meetOurTeam')}</Text>
         </View>
 
         <Text style={styles.teamSectionSub}>
-          The people behind Seva Setu, working to make Malvan’s civic services simpler and faster.
+          {t('meetOurTeamSub')}
         </Text>
 
         {/* Team Members */}
         <View style={styles.teamContainer}>
-          {TEAM.map((member, idx) => (
+          {team.map((member, idx) => (
             <Animated.View
               key={member.name}
               entering={isHydrated ? FadeInDown.duration(500).delay(500 + idx * 120) : undefined}
@@ -147,12 +168,14 @@ export default function About() {
 
         {/* Footer */}
         <Text style={styles.footerText}>
-          © 2026 Malvan Municipal Council • Government of Maharashtra
+          {t('footerCopyright')}
         </Text>
       </ScrollView>
     </CitizenScreen>
   );
-}
+});
+
+export default About;
 
 const styles = StyleSheet.create({
   content: { padding: 24, alignItems: 'center', paddingBottom: 40 },

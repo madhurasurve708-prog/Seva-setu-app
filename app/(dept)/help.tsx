@@ -1,6 +1,6 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS, SHADOWS } from '@/constants/theme';
@@ -15,10 +15,23 @@ const FAQ_DEFS = [
   { qKey: 'deptFaq6Q', aKey: 'deptFaq6A', icon: 'logout' as const, color: '#16A34A', bg: '#DCFCE7' },
 ];
 
-export default function DeptHelpScreen() {
+const DeptHelpScreen = memo(function DeptHelpScreen() {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<number | null>(null);
-  const FAQS = FAQ_DEFS.map((f) => ({ q: t(f.qKey), a: t(f.aKey), icon: f.icon, color: f.color, bg: f.bg }));
+
+  const FAQS = useMemo(() => {
+    return FAQ_DEFS.map((f) => ({
+      q: t(f.qKey),
+      a: t(f.aKey),
+      icon: f.icon,
+      color: f.color,
+      bg: f.bg,
+    }));
+  }, [t]);
+
+  const handleToggle = useCallback((idx: number) => {
+    setExpanded((prev) => (prev === idx ? null : idx));
+  }, []);
 
   return (
     <DepartmentScreen title={t('helpFAQs')} back>
@@ -29,29 +42,33 @@ export default function DeptHelpScreen() {
             key={idx}
             faq={faq}
             isOpen={expanded === idx}
-            onToggle={() => setExpanded((prev) => (prev === idx ? null : idx))}
+            onToggle={() => handleToggle(idx)}
           />
         ))}
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DeptHelpScreen;
 
 type Faq = { q: string; a: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; bg: string };
 
-function AccordionCard({ faq, isOpen, onToggle }: { faq: Faq; isOpen: boolean; onToggle: () => void }) {
+const AccordionCard = memo(function AccordionCard({ faq, isOpen, onToggle }: { faq: Faq; isOpen: boolean; onToggle: () => void }) {
   const progress = useSharedValue(0);
-  const handle = () => {
-    progress.value = withTiming(isOpen ? 0 : 1, { duration: 220 });
-    onToggle();
-  };
+
+  useEffect(() => {
+    progress.value = withTiming(isOpen ? 1 : 0, { duration: 220 });
+  }, [isOpen, progress]);
+
   const answerStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
     maxHeight: progress.value * 200,
     overflow: 'hidden',
   }));
+
   return (
-    <Pressable onPress={handle} style={({ pressed }) => [styles.card, pressed && { backgroundColor: '#F8FAFC' }]}>
+    <Pressable onPress={onToggle} style={({ pressed }) => [styles.card, pressed && { backgroundColor: '#F8FAFC' }]}>
       <View style={styles.questionRow}>
         <View style={[styles.iconCircle, { backgroundColor: faq.bg }]}>
           <MaterialCommunityIcons name={faq.icon} size={18} color={faq.color} />
@@ -67,7 +84,7 @@ function AccordionCard({ faq, isOpen, onToggle }: { faq: Faq; isOpen: boolean; o
       </Animated.View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 44, gap: 10 },

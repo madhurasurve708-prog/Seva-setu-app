@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -13,13 +13,21 @@ const STATUS_LABEL = (t, status) => ({ All: t('all'), Pending: t('pending'), 'In
 const PRIORITY_LABEL = (t, p) => ({ Emergency: t('priorityEmergency'), High: t('priorityHigh'), Medium: t('priorityMedium'), Low: t('priorityLow') }[p] ?? p);
 const wardDisplay = (t, ward) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
-export default function DepartmentComplaints() {
+const DepartmentComplaints = memo(function DepartmentComplaints() {
   const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints, complaintsError, complaintsLoading, loadComplaints } = useDepartment();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('All');
-  useEffect(() => { void loadComplaints().catch(() => {}); }, [loadComplaints]);
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    void loadComplaints().catch(() => {});
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [loadComplaints]);
 
   const mine = useMemo(
     () => complaints.filter(c =>
@@ -30,6 +38,14 @@ export default function DepartmentComplaints() {
     ),
     [complaints, profile, query, status],
   );
+
+  const handlePressStatus = useCallback((item: string) => {
+    setStatus(item);
+  }, []);
+
+  const handlePressComplaint = useCallback((cId: any) => {
+    router.push({ pathname: '/(dept)/complaint-details', params: { id: cId } });
+  }, [router]);
 
   return (
     <DepartmentScreen title={t('deptComplaintsTitle')} tab="complaints">
@@ -49,7 +65,7 @@ export default function DepartmentComplaints() {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
           {['All', 'Pending', 'In Progress', 'Resolved'].map(item => (
-            <Pressable key={item} onPress={() => setStatus(item)} style={[styles.filter, status === item && styles.filterActive]}>
+            <Pressable key={item} onPress={() => handlePressStatus(item)} style={[styles.filter, status === item && styles.filterActive]}>
               <Text style={[styles.filterText, status === item && styles.filterTextActive]}>{STATUS_LABEL(t, item)}</Text>
             </Pressable>
           ))}
@@ -59,30 +75,36 @@ export default function DepartmentComplaints() {
           {t('complaintsCountSuffix').replace('{count}', String(mine.length)).replace('{plural}', mine.length === 1 ? '' : 's')} · {profile?.department} · {t('deptComplaintsScope')}
         </Text>
 
-        {mine.map(c => (
-          <Pressable key={c.id} onPress={() => router.push({ pathname: '/(dept)/complaint-details', params: { id: c.id } })}>
-            <GlassCard style={styles.complaint}>
-              <View style={styles.top}>
-                <Text style={styles.complaintTitle}>{c.title}</Text>
-                <Text style={[styles.priority, { color: c.priority === 'Emergency' ? '#DC2626' : c.priority === 'High' ? '#F59E0B' : COLORS.primary }]}>
-                  {PRIORITY_LABEL(t, c.priority)}
-                </Text>
-              </View>
-              <Text style={styles.meta}>{wardDisplay(t, c.ward)} · {t(c.category)}</Text>
-              <Text numberOfLines={2} style={styles.description}>{c.description}</Text>
-              <View style={styles.bottom}>
-                <Text style={styles.id}>{c.id}</Text>
-                <Text style={styles.status}>{STATUS_LABEL(t, c.status)}</Text>
-              </View>
-            </GlassCard>
-          </Pressable>
-        ))}
+        {showList ? (
+          mine.map(c => (
+            <Pressable key={c.id} onPress={() => handlePressComplaint(c.id)}>
+              <GlassCard style={styles.complaint}>
+                <View style={styles.top}>
+                  <Text style={styles.complaintTitle}>{c.title}</Text>
+                  <Text style={[styles.priority, { color: c.priority === 'Emergency' ? '#DC2626' : c.priority === 'High' ? '#F59E0B' : COLORS.primary }]}>
+                    {PRIORITY_LABEL(t, c.priority)}
+                  </Text>
+                </View>
+                <Text style={styles.meta}>{wardDisplay(t, c.ward)} · {t(c.category)}</Text>
+                <Text numberOfLines={2} style={styles.description}>{c.description}</Text>
+                <View style={styles.bottom}>
+                  <Text style={styles.id}>{c.id}</Text>
+                  <Text style={styles.status}>{STATUS_LABEL(t, c.status)}</Text>
+                </View>
+              </GlassCard>
+            </Pressable>
+          ))
+        ) : (
+          <Text style={styles.empty}>Loading list...</Text>
+        )}
 
-        {!mine.length && <Text style={styles.empty}>{t('noDeptComplaints')}</Text>}
+        {showList && !mine.length && <Text style={styles.empty}>{t('noDeptComplaints')}</Text>}
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentComplaints;
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 24, gap: 11 },

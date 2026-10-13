@@ -7,20 +7,38 @@ import { useTranslation } from '@/providers/localization-provider';
 
 const wardDisplay = (t: (key: string) => string, ward: string) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
-export default function DepartmentAnalytics() {
+import React, { memo, useMemo } from 'react';
+
+const DepartmentAnalytics = memo(function DepartmentAnalytics() {
   const { t } = useTranslation();
   const { profile, complaints } = useDepartment();
-  const mine = complaints.filter(c => c.assignedDepartment === profile?.department && !c.is_deleted);
-  const resolved = mine.filter(c => c.status === 'Resolved').length;
-  const wards = Array.from(new Set(mine.map(c => c.ward)));
-  const categories = Array.from(new Set(mine.map(c => c.category)));
 
-  const cards = [
+  const mine = useMemo(
+    () => complaints.filter(c => c.assignedDepartment === profile?.department && !c.is_deleted),
+    [complaints, profile],
+  );
+
+  const resolved = useMemo(
+    () => mine.filter(c => c.status === 'Resolved').length,
+    [mine],
+  );
+
+  const wards = useMemo(
+    () => Array.from(new Set(mine.map(c => c.ward))),
+    [mine],
+  );
+
+  const categories = useMemo(
+    () => Array.from(new Set(mine.map(c => c.category))),
+    [mine],
+  );
+
+  const cards = useMemo(() => [
     ['pending',     t('pending'),           mine.filter(c => c.status === 'Pending').length],
     ['resolved',    t('resolved'),          resolved],
     ['avgRes',      t('avgResolution'),     '2.4 days'],
     ['performance', t('performanceLabel'),  mine.length ? `${Math.round(resolved / mine.length * 100)}%` : '0%'],
-  ] as const;
+  ] as const, [t, mine, resolved]);
 
   return (
     <DepartmentScreen title={t('deptAnalyticsTitle')} tab="analytics">
@@ -69,7 +87,9 @@ export default function DepartmentAnalytics() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentAnalytics;
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 24, gap: 12 },

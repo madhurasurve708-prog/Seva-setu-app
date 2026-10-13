@@ -13,30 +13,123 @@ import { useOfficial, type TimelineNote } from '@/providers/official-provider';
 
 export default function ComplaintDetailsScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const complaintId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { profile, complaints, updateComplaintStatus, uploadComplaintImage, fetchNotes } = useOfficial();
   const [notes, setNotes] = useState<TimelineNote[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  const complaint = complaints.find((c) => c.id === id);
+  const complaint = complaints.find((c) => c.id === complaintId);
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-      if (complaint?.id) {
-        fetchNotes(complaint.id)
-          .then((data) => {
-            if (isActive) setNotes(data);
-          })
-          .catch((err) => {
-            console.error("Failed to load timeline notes:", err);
-          });
+
+      if (!complaint?.id) {
+        return () => {
+          isActive = false;
+        };
       }
+
+      fetchNotes(complaint.id)
+        .then((data) => {
+          if (isActive) {
+            setNotes(data);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load timeline notes:', err);
+        });
+
       return () => {
         isActive = false;
       };
     }, [complaint?.id, fetchNotes])
   );
+
+  // Deduplicate adjacent identical history items within 30s for display
+  const deduplicatedNotes = useMemo(() => {
+    const result: TimelineNote[] = [];
+    for (const note of notes) {
+      const prev = result[result.length - 1];
+      if (
+        prev &&
+        prev.text === note.text &&
+        prev.author === note.author &&
+        Math.abs(new Date(prev.createdAt).getTime() - new Date(note.createdAt).getTime()) < 30000
+      ) {
+        continue;
+      }
+      result.push(note);
+    }
+    return result;
+  }, [notes]);
+
+  // Actual progress notes added by users/officials (excluding system status logs)
+  const progressNotes = useMemo(() => {
+    return deduplicatedNotes.filter(
+      (n) => !n.text.toLowerCase().startsWith('status updated')
+    );
+  }, [deduplicatedNotes]);
+
+  const timelineEvents = useMemo(() => {
+    const events: {
+      id: string;
+      title: string;
+      description: string;
+      time: string;
+      icon: keyof typeof MaterialCommunityIcons.glyphMap;
+      color: string;
+    }[] = [
+      {
+        id: 'registered',
+        title: 'Complaint registered',
+        description: `Filed by ${complaint?.citizenName ?? 'Citizen'} from ${complaint?.location ?? 'Unknown location'}`,
+        time: complaint ? fmtDateTime(complaint.createdAt) : '—',
+        icon: 'file-document-outline',
+        color: COLORS.primary,
+      },
+    ];
+
+    if (complaint?.assignedDepartment) {
+      events.push({
+        id: 'assigned',
+        title: 'Assigned to department',
+        description: `Routed to ${complaint.assignedDepartment}`,
+        time: complaint ? fmtDateTime(complaint.createdAt) : '—',
+        icon: 'domain',
+        color: '#7C3AED',
+      });
+    }
+
+    for (const n of deduplicatedNotes) {
+      const lower = n.text.toLowerCase();
+      let title = 'Action taken';
+      let icon: keyof typeof MaterialCommunityIcons.glyphMap = 'comment-text-outline';
+      let color = '#EA580C';
+
+      if (lower.startsWith('status updated')) {
+        title = 'Status changed';
+        icon = 'sync';
+        color = COLORS.primary;
+      } else if (lower.includes('escalat')) {
+        title = 'Escalation';
+        icon = 'arrow-up-bold-circle-outline';
+        color = '#DC2626';
+      }
+
+      events.push({
+        id: n.id,
+        title,
+        description: `${n.text} — ${n.author}`,
+        time: fmtDateTime(n.createdAt),
+        icon,
+        color,
+      });
+    }
+
+    return events;
+  }, [complaint, deduplicatedNotes]);
 
   if (!complaint) {
     return (
@@ -95,90 +188,6 @@ export default function ComplaintDetailsScreen() {
       setUpdatingStatus(false);
     }
   };
-
-  // Deduplicate adjacent identical history items within 30s for display
-  const deduplicatedNotes = useMemo(() => {
-    const result: TimelineNote[] = [];
-    for (const note of notes) {
-      const prev = result[result.length - 1];
-      if (
-        prev &&
-        prev.text === note.text &&
-        prev.author === note.author &&
-        Math.abs(new Date(prev.createdAt).getTime() - new Date(note.createdAt).getTime()) < 30000
-      ) {
-        continue;
-      }
-      result.push(note);
-    }
-    return result;
-  }, [notes]);
-
-  // Actual progress notes added by users/officials (excluding system status logs)
-  const progressNotes = useMemo(() => {
-    return deduplicatedNotes.filter(
-      (n) => !n.text.toLowerCase().startsWith('status updated')
-    );
-  }, [deduplicatedNotes]);
-
-  const timelineEvents = useMemo(() => {
-    const events: Array<{
-      id: string;
-      title: string;
-      description: string;
-      time: string;
-      icon: keyof typeof MaterialCommunityIcons.glyphMap;
-      color: string;
-    }> = [
-      {
-        id: 'registered',
-        title: 'Complaint registered',
-        description: `Filed by ${complaint.citizenName} from ${complaint.location}`,
-        time: fmtDateTime(complaint.createdAt),
-        icon: 'file-document-outline',
-        color: COLORS.primary,
-      },
-    ];
-
-    if (complaint.assignedDepartment) {
-      events.push({
-        id: 'assigned',
-        title: 'Assigned to department',
-        description: `Routed to ${complaint.assignedDepartment}`,
-        time: fmtDateTime(complaint.createdAt),
-        icon: 'domain',
-        color: '#7C3AED',
-      });
-    }
-
-    for (const n of deduplicatedNotes) {
-      const lower = n.text.toLowerCase();
-      let title = 'Action taken';
-      let icon: keyof typeof MaterialCommunityIcons.glyphMap = 'comment-text-outline';
-      let color = '#EA580C';
-
-      if (lower.startsWith('status updated')) {
-        title = 'Status changed';
-        icon = 'sync';
-        color = COLORS.primary;
-      } else if (lower.includes('escalat')) {
-        title = 'Escalation';
-        icon = 'arrow-up-bold-circle-outline';
-        color = '#DC2626';
-      }
-
-      events.push({
-        id: n.id,
-        title,
-        description: `${n.text} — ${n.author}`,
-        time: fmtDateTime(n.createdAt),
-        icon,
-        color,
-      });
-    }
-
-    return events;
-  }, [complaint, deduplicatedNotes]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -241,7 +250,7 @@ export default function ComplaintDetailsScreen() {
             }
           />
           <InfoRow label="Ward" value={complaint.ward} />
-          <InfoRow label="Complaint Location" value={complaint.manualLocation || complaint.title || 'N/A'} />
+          <InfoRow label="Complaint Location" value={complaint.manualLocation || complaint.location || 'N/A'} />
           <InfoRow label="Locality" value={complaint.locality || complaint.location || 'N/A'} isLast />
         </Animated.View>
 

@@ -1,7 +1,4 @@
-// app/(dept)/terms.tsx
-// Terms & Conditions for the Department portal.
-// Uses DepartmentScreen so it stays inside (dept) route group
-// and does NOT trigger the OfficialProvider auth guard.
+import React, { memo, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -36,16 +33,19 @@ const SECTION_DEFS = [
   },
 ];
 
-export default function DeptTermsScreen() {
+const DeptTermsScreen = memo(function DeptTermsScreen() {
   const { t } = useTranslation();
-  const SECTIONS = SECTION_DEFS.map((s) => ({
-    number: s.number,
-    title: t(s.titleKey),
-    icon: s.icon,
-    color: s.color,
-    bg: s.bg,
-    paragraphs: s.paraKeys.map((k) => t(k)),
-  }));
+
+  const SECTIONS = useMemo(() => {
+    return SECTION_DEFS.map((s) => ({
+      number: s.number,
+      title: t(s.titleKey),
+      icon: s.icon,
+      color: s.color,
+      bg: s.bg,
+      paragraphs: s.paraKeys.map((k) => t(k)),
+    }));
+  }, [t]);
 
   return (
     <DepartmentScreen title={t('termsConditions')} back>
@@ -79,7 +79,9 @@ export default function DeptTermsScreen() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DeptTermsScreen;
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 44, gap: 14 },

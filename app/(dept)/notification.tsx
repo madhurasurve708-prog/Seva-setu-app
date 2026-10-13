@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -5,7 +6,7 @@ import { DepartmentScreen } from '@/components/dept/department-screen';
 import { COLORS } from '@/constants/theme';
 import { useTranslation } from '@/providers/localization-provider';
 
-export default function DepartmentNotificationScreen() {
+const DepartmentNotificationScreen = memo(function DepartmentNotificationScreen() {
   const { t } = useTranslation();
 
   return (
@@ -19,7 +20,9 @@ export default function DepartmentNotificationScreen() {
       </View>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentNotificationScreen;
 
 const styles = StyleSheet.create({
   empty: {

@@ -1,5 +1,5 @@
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 
@@ -26,21 +26,34 @@ const PRIORITY_STYLES: Record<string, {
 const TABS = ['All', 'Emergency', 'High', 'Pinned', 'Normal'] as const;
 type Tab = typeof TABS[number];
 
-export default function DepartmentAnnouncements() {
+
+
+const DepartmentAnnouncements = memo(function DepartmentAnnouncements() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('All');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [showList, setShowList] = useState(false);
 
   useEffect(() => {
     void (async () => {
       const token = await getOfficialAccessToken();
       if (token) setAnnouncements(await getDepartmentAnnouncements(token));
     })().catch(() => setAnnouncements([]));
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
-  const filtered = tab === 'All'
-    ? announcements
-    : announcements.filter((a) => a.priority === tab);
+  const filtered = useMemo(() => {
+    return tab === 'All'
+      ? announcements
+      : announcements.filter((a) => a.priority === tab);
+  }, [announcements, tab]);
+
+  const handleTabPress = useCallback((t: Tab) => {
+    setTab(t);
+  }, []);
 
   return (
     <DepartmentScreen title={t('announcementsTitle')} tab="announcements">
@@ -63,7 +76,7 @@ export default function DepartmentAnnouncements() {
           {TABS.map((t) => (
             <Pressable
               key={t}
-              onPress={() => setTab(t)}
+              onPress={() => handleTabPress(t)}
               style={[styles.tab, tab === t && styles.tabActive]}
             >
               <Text style={[styles.tabText, tab === t && styles.tabTextActive]} numberOfLines={1}>
@@ -79,7 +92,9 @@ export default function DepartmentAnnouncements() {
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
-        {filtered.length === 0 ? (
+        {!showList ? (
+          <Text style={styles.emptyText}>Loading list...</Text>
+        ) : filtered.length === 0 ? (
           <View style={styles.emptyCard}>
             <MaterialCommunityIcons name="bell-off-outline" size={32} color={COLORS.textMuted} />
             <Text style={styles.emptyTitle}>{t('noAnnouncementsMsg')}</Text>
@@ -114,7 +129,9 @@ export default function DepartmentAnnouncements() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentAnnouncements;
 
 const styles = StyleSheet.create({
   /* Info banner */

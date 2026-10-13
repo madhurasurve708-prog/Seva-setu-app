@@ -1,6 +1,9 @@
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
+import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
+import { useRouter } from 'expo-router';
 import {
     Alert, Pressable, ScrollView, StyleSheet,
     Text, TextInput, View,
@@ -9,8 +12,6 @@ import Animated, { FadeInDown, FadeInLeft } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { useOfficial } from '@/providers/official-provider';
-import { useTranslation } from '@/providers/localization-provider';
 
 // ── Audience hierarchy ────────────────────────────────────────────────────────
 type AudienceGroup = {
@@ -58,9 +59,17 @@ function priorityLabel(t: (key: string) => string, key: string): string {
   return ({ All: t('all'), Normal: t('priorityNormal'), High: t('priorityHigh'), Emergency: t('priorityEmergency'), Pinned: t('priorityPinned') } as Record<string, string>)[key] ?? key;
 }
 
-export default function AdminAnnouncements() {
+const AdminAnnouncements = memo(function AdminAnnouncements() {
   const { t } = useTranslation();
   const { announcements, publishAnnouncement } = useOfficial();
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setShowList(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const AUDIENCE_GROUPS = useMemo(() => buildAudienceGroups(t), [t]);
 
@@ -309,42 +318,50 @@ export default function AdminAnnouncements() {
             })}
           </ScrollView>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
-            {filteredAnnouncements.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <MaterialCommunityIcons name="bullhorn-outline" size={32} color={COLORS.textMuted} />
-                <Text style={styles.emptyTitle}>
-                  {publishedFilter === 'All' ? t('noAnnouncementsYet') : t('noMatchingAnnouncements').replace('{priority}', priorityLabel(t, publishedFilter))}
-                </Text>
-              </View>
-            ) : (
-              filteredAnnouncements.map((a, idx) => {
-                const s = PRIORITY_CARD[a.priority] ?? PRIORITY_CARD.Normal;
-                return (
-                  <Animated.View key={a.id} entering={FadeInLeft.duration(360).delay(idx * 60)}>
-                    <View style={styles.annCard}>
-                      <View style={[styles.annAccent, { backgroundColor: s.text }]} />
-                      <View style={styles.annBody}>
-                        <View style={styles.annTop}>
-                          <View style={[styles.badge, { backgroundColor: s.bg }]}>
-                            <Text style={[styles.badgeText, { color: s.text }]}>{priorityLabel(t, a.priority)}</Text>
+          {showList ? (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} overScrollMode="never">
+              {filteredAnnouncements.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <MaterialCommunityIcons name="bullhorn-outline" size={32} color={COLORS.textMuted} />
+                  <Text style={styles.emptyTitle}>
+                    {publishedFilter === 'All' ? t('noAnnouncementsYet') : t('noMatchingAnnouncements').replace('{priority}', priorityLabel(t, publishedFilter))}
+                  </Text>
+                </View>
+              ) : (
+                filteredAnnouncements.map((a, idx) => {
+                  const s = PRIORITY_CARD[a.priority] ?? PRIORITY_CARD.Normal;
+                  return (
+                    <Animated.View key={a.id} entering={FadeInLeft.duration(360).delay(idx * 60)}>
+                      <View style={styles.annCard}>
+                        <View style={[styles.annAccent, { backgroundColor: s.text }]} />
+                        <View style={styles.annBody}>
+                          <View style={styles.annTop}>
+                            <View style={[styles.badge, { backgroundColor: s.bg }]}>
+                              <Text style={[styles.badgeText, { color: s.text }]}>{priorityLabel(t, a.priority)}</Text>
+                            </View>
+                            <Text style={styles.annDate}>{a.date}</Text>
                           </View>
-                          <Text style={styles.annDate}>{a.date}</Text>
+                          <Text style={styles.annTitle}>{a.title}</Text>
+                          <Text style={styles.annText}>{a.body}</Text>
                         </View>
-                        <Text style={styles.annTitle}>{a.title}</Text>
-                        <Text style={styles.annText}>{a.body}</Text>
                       </View>
-                    </View>
-                  </Animated.View>
-                );
-              })
-            )}
-          </ScrollView>
+                    </Animated.View>
+                  );
+                })
+              )}
+            </ScrollView>
+          ) : (
+            <View style={{ flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={styles.emptyTitle}>Loading...</Text>
+            </View>
+          )}
         </View>
       )}
     </SafeAreaView>
   );
-}
+});
+
+export default AdminAnnouncements;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.background },

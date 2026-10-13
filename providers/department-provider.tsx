@@ -56,7 +56,7 @@ export function DepartmentProvider({ children }: PropsWithChildren) {
 
   const changePassword = async (nextPassword: string) => {
     const token = await getOfficialAccessToken();
-    if (!token) throw new Error('Your session has expired. Please sign in again.');
+    if (!token) throw new Error('Your session has expired.');
     await changeOfficialPassword(nextPassword, token);
   };
 

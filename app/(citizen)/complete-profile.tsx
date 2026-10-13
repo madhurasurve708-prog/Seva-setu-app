@@ -2,7 +2,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -13,7 +13,7 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
-export default function CompleteProfile() {
+const CompleteProfile = memo(function CompleteProfile() {
   const router = useRouter();
   const { saveProfile } = useCitizen();
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export default function CompleteProfile() {
   const [ward, setWard] = useState('');
   const [locality, setLocality] = useState('');
 
-  const complete = async () => {
+  const complete = useCallback(async () => {
     if (!name.trim() || !ward || !locality) return;
     const parts = name.trim().split(/\s+/);
     const firstName = parts[0] || '';
@@ -39,7 +39,7 @@ export default function CompleteProfile() {
       phone: '',
     });
     router.replace('/(citizen)/dashboard');
-  };
+  }, [name, ward, locality, saveProfile, router]);
 
   const isFormValid = name.trim().length > 0 && ward && locality;
 
@@ -133,7 +133,9 @@ export default function CompleteProfile() {
       </ScrollView>
     </SafeAreaView>
   );
-}
+});
+
+export default CompleteProfile;
 
 const styles = StyleSheet.create({
   root: {

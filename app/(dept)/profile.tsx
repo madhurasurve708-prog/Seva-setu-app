@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -10,25 +11,24 @@ import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
-export default function DepartmentProfile() {
+const DepartmentProfile = memo(function DepartmentProfile() {
   const router = useRouter();
   const { t } = useTranslation();
   const { profile, logout } = useDepartment();
 
   const meta = DEPT_META[profile?.department ?? ''];
 
-  const doLogout = async () => {
+  const doLogout = useCallback(async () => {
     await logout();
-    // Let the layout guard redirect — also reset navigation stack
     try {
       router.dismissAll();
     } catch {
       // nothing to dismiss
     }
     router.replace('/(auth)/role-selection');
-  };
+  }, [logout, router]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm(t('logoutDepartmentConfirmation'))) {
         void doLogout();
@@ -39,36 +39,32 @@ export default function DepartmentProfile() {
       { text: t('cancel'), style: 'cancel' },
       { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
-  };
+  }, [doLogout, t]);
 
-  const openContact = (value: string, kind: 'phone' | 'email') => {
+  const openContact = useCallback((value: string, kind: 'phone' | 'email') => {
     if (!value || value === '—') return;
     void Linking.openURL(kind === 'phone' ? `tel:${value.replace(/[^+\d]/g, '')}` : `mailto:${value}`);
-  };
+  }, []);
 
-  const infoRows: { label: string; value: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; contact?: 'phone' | 'email' }[] = [
+  const infoRows = useMemo(() => [
     {
       label: t('department'),
       value: profile?.department ?? '—',
       icon: (meta?.icon ?? 'office-building-outline') as any,
     },
-    { label: t('roleLabel'),   value: t('deptOfficer'),      icon: 'shield-account-outline' },
-    { label: t('phoneLabel'), value: profile?.phone ?? '—', icon: 'phone-outline', contact: 'phone' },
-    { label: t('email'),       value: profile?.email ?? '—', icon: 'email-outline', contact: 'email' },
-    { label: t('employeeId'), value: profile?.employeeId ?? '—', icon: 'card-account-details-outline' },
-  ];
+    { label: t('roleLabel'),   value: t('deptOfficer'),      icon: 'shield-account-outline' as const },
+    { label: t('phoneLabel'), value: profile?.phone ?? '—', icon: 'phone-outline' as const, contact: 'phone' as const },
+    { label: t('email'),       value: profile?.email ?? '—', icon: 'email-outline' as const, contact: 'email' as const },
+    { label: t('employeeId'), value: profile?.employeeId ?? '—', icon: 'card-account-details-outline' as const },
+  ], [t, profile, meta]);
 
-  const menuItems: {
-    label: string;
-    icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-    onPress: () => void;
-  }[] = [
-    { label: t('settings'),         icon: 'cog-outline',           onPress: () => router.push('/(dept)/settings') },
-    { label: t('helpFAQs'),         icon: 'help-circle-outline',   onPress: () => router.push('/(dept)/help') },
-    { label: t('privacyPolicy'),    icon: 'file-document-outline', onPress: () => router.push('/(dept)/privacy-policy') },
-    { label: t('termsConditions'),  icon: 'handshake-outline',     onPress: () => router.push('/(dept)/terms') },
-    { label: t('aboutSevaSetu'),    icon: 'information-outline',   onPress: () => router.push('/(dept)/about') },
-  ];
+  const menuItems = useMemo(() => [
+    { label: t('settings'),         icon: 'cog-outline' as const,           onPress: () => router.push('/(dept)/settings') },
+    { label: t('helpFAQs'),         icon: 'help-circle-outline' as const,   onPress: () => router.push('/(dept)/help') },
+    { label: t('privacyPolicy'),    icon: 'file-document-outline' as const, onPress: () => router.push('/(dept)/privacy-policy') },
+    { label: t('termsConditions'),  icon: 'handshake-outline' as const,     onPress: () => router.push('/(dept)/terms') },
+    { label: t('aboutSevaSetu'),    icon: 'information-outline' as const,   onPress: () => router.push('/(dept)/about') },
+  ], [t, router]);
 
   return (
     <DepartmentScreen title={t('myProfile')} tab="profile">
@@ -163,7 +159,9 @@ export default function DepartmentProfile() {
       </ScrollView>
     </DepartmentScreen>
   );
-}
+});
+
+export default DepartmentProfile;
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32, gap: 14 },

@@ -4,22 +4,23 @@ import { useCitizen } from '@/providers/citizen-provider';
 import { useTranslation } from '@/providers/localization-provider';
 import { useRouter } from 'expo-router';
 import { Alert, Platform } from 'react-native';
+import React, { memo, useCallback } from 'react';
 
-export default function CitizenSettingsScreen() {
+const CitizenSettingsScreen = memo(function CitizenSettingsScreen() {
   const router = useRouter();
   const { preferences, savePreferences, logout } = useCitizen();
   const { t } = useTranslation();
 
-  const toggle = (key: 'complaintUpdates' | 'announcements' | 'smsAlerts') => {
+  const toggle = useCallback((key: 'complaintUpdates' | 'announcements' | 'smsAlerts') => {
     savePreferences({ ...preferences, [key]: !preferences[key] });
-  };
+  }, [preferences, savePreferences]);
 
-  const doLogout = async () => {
+  const doLogout = useCallback(async () => {
     await logout();
     router.replace('/(auth)/role-selection' as any);
-  };
+  }, [logout, router]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm(t('logoutCitizenConfirmation'))) void doLogout();
       return;
@@ -28,7 +29,11 @@ export default function CitizenSettingsScreen() {
       { text: t('cancel'), style: 'cancel' },
       { text: t('logout'), style: 'destructive', onPress: () => void doLogout() },
     ]);
-  };
+  }, [doLogout, t]);
+
+  const handleNavigate = useCallback((route: string) => {
+    router.push(route as any);
+  }, [router]);
 
   return (
     <CitizenScreen title={t('settings')} showBack hideNav>
@@ -60,9 +65,11 @@ export default function CitizenSettingsScreen() {
         privacyRoute="/(citizen)/privacy-policy"
         termsRoute="/(citizen)/terms-conditions"
         aboutRoute="/(citizen)/about"
-        onNavigate={(route) => router.push(route as any)}
+        onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
     </CitizenScreen>
   );
-}
+});
+
+export default CitizenSettingsScreen;
