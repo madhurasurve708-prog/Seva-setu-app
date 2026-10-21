@@ -23,6 +23,12 @@ const STATUS_CONFIG = {
     icon: 'check-circle',
     labelKey: 'resolved',
   },
+  Escalated: {
+    bg: '#FEF2F2',
+    text: '#DC2626',
+    icon: 'alert-octagon-outline',
+    labelKey: 'escalated',
+  },
 } as const;
 
 interface StatusBadgeProps {
@@ -33,7 +39,7 @@ export default function StatusBadge({
   status,
 }: StatusBadgeProps) {
   const { t } = useTranslation();
-  const config = STATUS_CONFIG[status];
+  const config = (STATUS_CONFIG as Record<string, { bg: string; text: string; icon: any; labelKey: string }>)[status] ?? STATUS_CONFIG.Pending;
 
   return (
     <View

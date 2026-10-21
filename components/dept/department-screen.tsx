@@ -106,12 +106,12 @@ export function DepartmentScreen({
     return (
       <DesktopPortal title={title} initial={profile?.avatarInitial ?? 'D'} onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection')); }}
         items={[
-          { label: 'Dashboard', route: '/(dept)/dashboard', icon: 'view-dashboard-outline' },
-          { label: 'Complaints', route: '/(dept)/complaints', icon: 'clipboard-text-outline' },
-          { label: 'Announcements', route: '/(dept)/announcements', icon: 'bullhorn-outline' },
-          { label: 'Reports', route: '/(dept)/analytics', icon: 'chart-bar' },
-          { label: 'Settings', route: '/(dept)/settings', icon: 'cog-outline' },
-          { label: 'Profile', route: '/(dept)/profile', icon: 'account-outline' },
+          { label: t('dashboard'), route: '/(dept)/dashboard', icon: 'view-dashboard-outline' },
+          { label: t('complaintsTitle'), route: '/(dept)/complaints', icon: 'clipboard-text-outline' },
+          { label: t('announcements'), route: '/(dept)/announcements', icon: 'bullhorn-outline' },
+          { label: t('reports'), route: '/(dept)/analytics', icon: 'chart-bar' },
+          { label: t('settings'), route: '/(dept)/settings', icon: 'cog-outline' },
+          { label: t('myProfile'), route: '/(dept)/profile', icon: 'account-outline' },
         ]}>
         {children}
       </DesktopPortal>

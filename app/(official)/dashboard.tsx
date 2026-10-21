@@ -10,7 +10,7 @@ import HeroBanner from "@/components/official/HeroBanner";
 import ProfileDropdown from "@/components/official/ProfileDropdown";
 import { OfficialScreen } from "@/components/official/OfficialScreen";
 import { COLORS, SHADOWS, TYPOGRAPHY } from "@/constants/theme";
-import { categories } from "@/data/categories";
+import { categories, getCategoryLabel } from "@/data/categories";
 import { useOfficial } from "@/providers/official-provider";
 import { useTranslation } from "@/providers/localization-provider";
 
@@ -92,7 +92,7 @@ const STAT_ITEMS = (
 export default function DashboardScreen() {
   const router = useRouter();
   const { profile, complaints, announcements, logout } = useOfficial();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const total = complaints.length;
   const pending = complaints.filter((c) => c.status === "Pending").length;
@@ -272,7 +272,7 @@ export default function DashboardScreen() {
                       color={CATEGORY_STYLE[cat.id]?.color ?? COLORS.primary}
                     />
                   </View>
-                  <Text style={styles.categoryLabel}>{cat.label}</Text>
+                  <Text style={styles.categoryLabel}>{getCategoryLabel(t, cat.id)}</Text>
                 </Pressable>
               </Animated.View>
             ))}
@@ -333,8 +333,8 @@ export default function DashboardScreen() {
                   </View>
                   <Text style={styles.announcementDate}>
                     {new Date(item.date).toLocaleDateString(
-                      profile.language === "mr" ? "mr-IN" : "en-IN",
-                      { month: "short", day: "numeric" },
+                      language === 'Marathi' ? 'mr-IN' : 'en-IN',
+                      { month: 'short', day: 'numeric' },
                     )}
                   </Text>
                 </View>

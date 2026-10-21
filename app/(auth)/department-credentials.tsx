@@ -144,9 +144,9 @@ export default function DepartmentCredentialsScreen() {
           >
             <MaterialCommunityIcons name="information-outline" size={18} color="#A66A00" style={{ marginTop: 1 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.demoLabel}>Demo Credentials • Tap to fill</Text>
+              <Text style={styles.demoLabel}>{t('demoCredentialsTap')}</Text>
               <Text style={styles.demoValue}>
-                ID: {demoCred.username}  |  Password: {demoCred.password}
+                {t('idLabel')}: {demoCred.username}  |  {t('password')}: {demoCred.password}
               </Text>
             </View>
           </Pressable>
@@ -277,7 +277,7 @@ export default function DepartmentCredentialsScreen() {
                 />
               </View>
               <Text style={styles.desktopLeftTitle}>{t('departmentLogin')}</Text>
-              <Text style={styles.desktopLeftSubtitle}>Malvan Municipal Council</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
               <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
             </View>
           </ImageBackground>
@@ -305,7 +305,7 @@ export default function DepartmentCredentialsScreen() {
       <AuthHero
         compact
         title={t('departmentLogin')}
-        subtitle="Malvan Municipal Council"
+        subtitle={t('malvanMunicipal')}
         showLogo={true}
         onBack={onBackAction}
       />

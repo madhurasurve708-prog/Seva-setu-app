@@ -238,26 +238,38 @@ const AdminDashboard = memo(function AdminDashboard() {
             actionLabel={t('viewAll')}
             onAction={() => router.push('/(admin)/announcements' as any)}
           />
-          {announcements.slice(0, 2).map((a, idx) => {
-            const pc = PRIORITY_STYLE[a.priority] ?? PRIORITY_STYLE.Normal;
-            return (
-              <Animated.View key={a.id} entering={FadeInDown.duration(340).delay(80 + idx * 60)}>
-                <View style={styles.annCard}>
-                  <View style={[styles.annAccent, { backgroundColor: pc.text }]} />
-                  <View style={styles.annInner}>
-                    <View style={styles.annTopRow}>
-                      <View style={[styles.annBadge, { backgroundColor: pc.bg }]}>
-                        <Text style={[styles.annBadgeText, { color: pc.text }]}>{a.priority}</Text>
+          {announcements.length === 0 ? (
+            <View style={styles.annEmptyCard}>
+              <MaterialCommunityIcons name="bullhorn-outline" size={28} color={COLORS.textMuted} />
+              <Text style={styles.annEmptyTitle}>{t('noAnnouncements')}</Text>
+            </View>
+          ) : (
+            announcements.slice(0, 2).map((a, idx) => {
+              const pc = PRIORITY_STYLE[a.priority] ?? PRIORITY_STYLE.Normal;
+              const pLabel =
+                a.priority === 'Emergency' ? t('priorityEmergency') :
+                a.priority === 'High' ? t('priorityHigh') :
+                a.priority === 'Pinned' ? (t('priorityPinned') || t('pinned') || a.priority) :
+                t('priorityNormal');
+              return (
+                <Animated.View key={a.id} entering={FadeInDown.duration(340).delay(80 + idx * 60)}>
+                  <View style={styles.annCard}>
+                    <View style={[styles.annAccent, { backgroundColor: pc.text }]} />
+                    <View style={styles.annInner}>
+                      <View style={styles.annTopRow}>
+                        <View style={[styles.annBadge, { backgroundColor: pc.bg }]}>
+                          <Text style={[styles.annBadgeText, { color: pc.text }]}>{pLabel}</Text>
+                        </View>
+                        <Text style={styles.annDate}>{a.date}</Text>
                       </View>
-                      <Text style={styles.annDate}>{a.date}</Text>
+                      <Text style={styles.annTitle}>{a.title}</Text>
+                      <Text style={styles.annBody} numberOfLines={2}>{a.body}</Text>
                     </View>
-                    <Text style={styles.annTitle}>{a.title}</Text>
-                    <Text style={styles.annBody} numberOfLines={2}>{a.body}</Text>
                   </View>
-                </View>
-              </Animated.View>
-            );
-          })}
+                </Animated.View>
+              );
+            })
+          )}
         </View>
 
         {/* ── Quick Actions ── */}
@@ -461,6 +473,11 @@ const styles = StyleSheet.create({
   annDate: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
   annTitle: { fontSize: 13, fontWeight: '800', color: COLORS.text },
   annBody: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted, lineHeight: 17 },
+  annEmptyCard: {
+    backgroundColor: COLORS.card, borderRadius: 18, borderWidth: 1, borderColor: COLORS.border,
+    padding: 24, alignItems: 'center', justifyContent: 'center', gap: 8, ...SHADOWS.soft,
+  },
+  annEmptyTitle: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
 
   /* Quick actions */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

@@ -5,39 +5,41 @@ import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-nati
 import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 const NOTIFICATION_ITEMS = [
   {
     key: 'complaints',
-    label: 'Grievance Assignments',
-    sub: 'Alert when a citizen files a complaint in your ward.',
+    labelKey: 'grievanceAssignments',
+    subKey: 'grievanceAssignmentsDesc',
     icon: 'clipboard-alert-outline' as const,
     defaultValue: true,
   },
   {
     key: 'announcements',
-    label: 'Council Announcements',
-    sub: 'Alert when Main Admin publishes a notice.',
+    labelKey: 'councilAnnouncementsLabel',
+    subKey: 'councilAnnouncementsDesc',
     icon: 'bullhorn-outline' as const,
     defaultValue: true,
   },
   {
     key: 'sms',
-    label: 'SMS Alert Broadcasts',
-    sub: 'Text notifications for emergency alerts.',
+    labelKey: 'smsAlertBroadcasts',
+    subKey: 'smsAlertBroadcastsDesc',
     icon: 'message-text-outline' as const,
     defaultValue: true,
   },
   {
     key: 'email',
-    label: 'Weekly Email Summary',
-    sub: 'Digest of ward resolution statistics every week.',
+    labelKey: 'weeklyEmailSummary',
+    subKey: 'weeklyEmailSummaryDesc',
     icon: 'email-outline' as const,
     defaultValue: false,
   },
 ];
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, boolean>>(
     Object.fromEntries(NOTIFICATION_ITEMS.map((i) => [i.key, i.defaultValue])),
   );
@@ -46,7 +48,7 @@ export default function NotificationsScreen() {
     setValues((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <OfficialScreen title="Notifications" showBack>
+    <OfficialScreen title={t('notifications')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -54,7 +56,7 @@ export default function NotificationsScreen() {
       >
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons name="bell-badge-outline" size={17} color={COLORS.accent} />
-          <Text style={styles.sectionTitle}>Alert Preferences</Text>
+          <Text style={styles.sectionTitle}>{t('alertPreferences')}</Text>
         </View>
         <GlassCard style={styles.card}>
           {NOTIFICATION_ITEMS.map((item, idx) => (
@@ -74,8 +76,8 @@ export default function NotificationsScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>{item.label}</Text>
-                  <Text style={styles.rowSub}>{item.sub}</Text>
+                  <Text style={styles.rowLabel}>{t(item.labelKey)}</Text>
+                  <Text style={styles.rowSub}>{t(item.subKey)}</Text>
                 </View>
               </View>
               <Switch

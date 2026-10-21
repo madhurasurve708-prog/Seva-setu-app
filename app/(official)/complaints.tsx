@@ -15,13 +15,15 @@ import {
 import ComplaintCard from '@/components/official/ComplaintCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { categories } from '@/data/categories';
+import { categories, getCategoryLabel } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const STATUS_TABS = ['Pending', 'In Progress', 'Resolved'] as const;
 type StatusTab = 'All' | (typeof STATUS_TABS)[number];
 
 export default function ComplaintsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
   const { complaints, complaintsError, complaintsLoading, loadComplaints } = useOfficial();
@@ -63,13 +65,13 @@ export default function ComplaintsScreen() {
   }), [complaints]);
 
   return (
-    <OfficialScreen title="Ward Complaints" tab="complaints" hideHeader={true}>
+    <OfficialScreen title={t('wardComplaints')} tab="complaints" hideHeader={true}>
       {/* ── Header ── */}
       {!isDesktop && <View style={styles.headerBar}>
         <View style={styles.headerLeft}>
           <View style={{ marginLeft: 4 }}>
-            <Text style={styles.headerTitle}>Ward Complaints</Text>
-            <Text style={styles.headerSub}>Nagarsevak ward review</Text>
+            <Text style={styles.headerTitle}>{t('wardComplaints')}</Text>
+            <Text style={styles.headerSub}>{t('nagarsevakWardReview')}</Text>
           </View>
         </View>
       </View>}
@@ -80,13 +82,13 @@ export default function ComplaintsScreen() {
         keyboardShouldPersistTaps="handled"
         overScrollMode="never"
       >
-        {complaintsLoading && <Text style={styles.headerSub}>Loading complaints…</Text>}
+        {complaintsLoading && <Text style={styles.headerSub}>{t('loadingComplaints')}</Text>}
         {complaintsError && <Text style={styles.headerSub}>{complaintsError}</Text>}
         {/* ── Search ── */}
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={18} color={COLORS.textMuted} />
           <TextInput
-            placeholder="Search by ID, title, citizen or location…"
+            placeholder={t('searchComplaintsPlaceholder')}
             placeholderTextColor={COLORS.textPlaceholder}
             value={search}
             onChangeText={setSearch}
@@ -112,7 +114,7 @@ export default function ComplaintsScreen() {
             style={[styles.chip, category === 'all' && styles.chipActive]}
           >
             <Text style={[styles.chipText, category === 'all' && styles.chipTextActive]}>
-              All
+              {t('all')}
             </Text>
           </Pressable>
           {visibleCategories.map((cat) => {
@@ -124,7 +126,7 @@ export default function ComplaintsScreen() {
                 style={[styles.chip, active && styles.chipActive]}
               >
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                  {cat.label}
+                  {getCategoryLabel(t, cat.id)}
                 </Text>
               </Pressable>
             );
@@ -135,6 +137,14 @@ export default function ComplaintsScreen() {
         <View style={styles.statusRow}>
           {statusTabs.map((item) => {
             const active = status === item;
+            const statusLabel =
+              item === 'All'
+                ? t('all')
+                : item === 'Pending'
+                ? t('pending')
+                : item === 'In Progress'
+                ? t('inProgress')
+                : t('resolved');
             return (
               <Pressable
                 key={item}
@@ -142,7 +152,7 @@ export default function ComplaintsScreen() {
                 style={[styles.statusTab, active && styles.statusTabActive]}
               >
                 <Text style={[styles.statusTabText, active && styles.statusTabTextActive]}>
-                  {item === 'All' ? 'All' : item}
+                  {statusLabel}
                   {' · '}
                   <Text style={[styles.statusCount, active && styles.statusCountActive]}>
                     {counts[item]}
@@ -154,7 +164,7 @@ export default function ComplaintsScreen() {
         </View>
 
         <Text style={styles.resultCount}>
-          Showing {filtered.length} complaint{filtered.length === 1 ? '' : 's'}
+          {t('showingComplaintsCount', { count: filtered.length })}
         </Text>
 
         <View style={[styles.complaintGrid, isDesktop && styles.complaintGridDesktop]}>{filtered.map((complaint) => (
@@ -185,9 +195,9 @@ export default function ComplaintsScreen() {
         {filtered.length === 0 && (
           <View style={styles.emptyCard}>
             <Ionicons name="search" size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>No Complaints Found</Text>
+            <Text style={styles.emptyTitle}>{t('noComplaintsFound')}</Text>
             <Text style={styles.emptyText}>
-              Try adjusting your search query or filters.
+              {t('adjustFiltersPrompt')}
             </Text>
           </View>
         )}

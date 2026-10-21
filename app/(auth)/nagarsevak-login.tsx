@@ -51,14 +51,14 @@ export default function NagarsevakLoginScreen() {
     try {
       const normalizedOfficialId = officialId.trim();
       const wardNumber = Number(ward.replace(/\D/g, ''));
-      if (!wardNumber) throw new Error('Enter a valid ward number.');
+      if (!wardNumber) throw new Error(t('enterValidWardNumber'));
       const { token, profile } = await loginNagarsevak(normalizedOfficialId, wardNumber, password);
       await saveOfficialAccessToken(token);
       await setAuthenticatedUser(profile);
 
       router.replace('/(official)/dashboard' as any);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unable to sign in.');
+      setError(error instanceof Error ? error.message : t('unableToSignIn'));
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ export default function NagarsevakLoginScreen() {
                 />
               </View>
               <Text style={styles.desktopLeftTitle}>{t('nagarsevakLogin')}</Text>
-              <Text style={styles.desktopLeftSubtitle}>Malvan Municipal Council</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
               <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
             </View>
           </ImageBackground>
@@ -200,7 +200,7 @@ export default function NagarsevakLoginScreen() {
         <AuthHero
           compact
           title={t('nagarsevakLogin')}
-          subtitle="Malvan Municipal Council"
+          subtitle={t('malvanMunicipal')}
           showLogo
           onBack={() => router.back()}
         />

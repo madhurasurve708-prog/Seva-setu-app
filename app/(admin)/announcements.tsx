@@ -352,7 +352,7 @@ const AdminAnnouncements = memo(function AdminAnnouncements() {
             </ScrollView>
           ) : (
             <View style={{ flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={styles.emptyTitle}>Loading...</Text>
+              <Text style={styles.emptyTitle}>{t('loading')}</Text>
             </View>
           )}
         </View>

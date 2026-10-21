@@ -44,9 +44,9 @@ const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
       setNote('');
       const freshNotes = await fetchNotes(complaint.id).catch(() => []);
       setNotes(freshNotes);
-      Alert.alert(t('updated') || 'Updated', `Status set to ${STATUS_LABEL(t, status)}.`);
+      Alert.alert(t('updated'), t('statusSetTo', { status: STATUS_LABEL(t, status) }));
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update status.');
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failedToUpdateStatus'));
     }
   }, [complaint, updateStatus, note, fetchNotes, t]);
 
@@ -58,27 +58,27 @@ const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
         setNote('');
         const freshNotes = await fetchNotes(complaint.id).catch(() => []);
         setNotes(freshNotes);
-        Alert.alert('Success', 'Note added successfully.');
+        Alert.alert(t('success'), t('noteAddedSuccess'));
       } catch (err) {
-        Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add note.');
+        Alert.alert(t('error'), err instanceof Error ? err.message : t('failedToAddNote'));
       }
     }
-  }, [complaint, addNote, note, fetchNotes]);
+  }, [complaint, addNote, note, fetchNotes, t]);
 
   const handleEscalate = useCallback(async () => {
     if (!complaint) return;
     if (!note.trim()) {
-      Alert.alert(t('required') || 'Required', t('enterNoteEscalate') || 'Please enter the escalation reason in the note box first.');
+      Alert.alert(t('required'), t('enterNoteEscalate') || 'Please enter the escalation reason in the note box first.');
       return;
     }
     try {
       await escalateComplaint(complaint.id, note.trim());
       setNote('');
-      Alert.alert(t('escalatedTitle') || 'Escalated', t('escalatedMsg') || 'Grievance escalated successfully.');
+      Alert.alert(t('escalatedTitle'), t('escalatedMsg'));
       const freshNotes = await fetchNotes(complaint.id).catch(() => []);
       setNotes(freshNotes);
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to escalate.');
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('failedToEscalate'));
     }
   }, [complaint, escalateComplaint, note, fetchNotes, t]);
 
@@ -109,8 +109,8 @@ const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
           <Text style={styles.line}>{complaint.citizenName}</Text>
           <Text style={styles.sub}>{complaint.citizenPhone}</Text>
           <Text style={styles.sub}>{wardDisplay(t, complaint.ward)}</Text>
-          <Text style={styles.sub}>{t('complaintLocationLabel') || 'Complaint Location'}: {complaint.manualLocation || complaint.title}</Text>
-          <Text style={styles.sub}>{t('localityLabel') || 'Locality'}: {complaint.locality || complaint.location}</Text>
+          <Text style={styles.sub}>{t('complaintLocation')}: {complaint.manualLocation || complaint.title}</Text>
+          <Text style={styles.sub}>{t('localityAreaStreet')}: {complaint.locality || complaint.location}</Text>
         </GlassCard>
 
         <Text style={styles.heading}>{t('imagesLabel')}</Text>

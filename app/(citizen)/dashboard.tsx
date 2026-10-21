@@ -156,7 +156,7 @@ const Dashboard = memo(function Dashboard() {
               <Image source={require('../../assets/images/logo.webp')} style={styles.headerLogo} contentFit="contain" />
               <View>
                 <Text style={styles.headerTitle}>SEVA SETU</Text>
-                <Text style={styles.headerSubtitle}>Malvan Municipal Council</Text>
+                <Text style={styles.headerSubtitle}>{t('malvanMunicipal')}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -359,9 +359,9 @@ const Dashboard = memo(function Dashboard() {
                     <MaterialCommunityIcons name="office-building-marker-outline" size={22} color={COLORS.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.wardName}>{profile?.ward || 'General Ward'}</Text>
+                    <Text style={styles.wardName}>{profile?.ward || t('generalWard')}</Text>
                     <Text style={styles.wardLocality}>
-                      {profile?.locality || 'Malvan'}, Malvan Municipal Council
+                      {profile?.locality || t('malvanLocality')}, {t('malvanMunicipal')}
                     </Text>
                   </View>
                 </View>
@@ -407,7 +407,7 @@ const Dashboard = memo(function Dashboard() {
                           color={a.priority ? '#F59E0B' : '#2E86DE'}
                         />
                         <Text style={[styles.announceBadgeText, { color: a.priority ? '#F59E0B' : '#2E86DE' }]}>
-                          {a.priority || t('noticeLabel')}
+                          {a.priority ? (({ Emergency: t('priorityEmergency'), High: t('priorityHigh'), Pinned: t('priorityPinned'), Normal: t('priorityNormal') } as Record<string, string>)[a.priority] || a.priority) : t('noticeLabel')}
                         </Text>
                       </LinearGradient>
                       <Text style={styles.announceTitle} numberOfLines={2}>{a.title}</Text>

@@ -50,7 +50,7 @@ const DepartmentComplaints = memo(function DepartmentComplaints() {
   return (
     <DepartmentScreen title={t('deptComplaintsTitle')} tab="complaints">
       <ScrollView contentContainerStyle={styles.content}>
-        {complaintsLoading && <Text style={styles.scope}>Loading complaints…</Text>}
+        {complaintsLoading && <Text style={styles.scope}>{t('loadingComplaints')}</Text>}
         {complaintsError && <Text style={styles.scope}>{complaintsError}</Text>}
         <View style={styles.search}>
           <MaterialCommunityIcons name="magnify" size={20} color={COLORS.textMuted} />
@@ -95,7 +95,7 @@ const DepartmentComplaints = memo(function DepartmentComplaints() {
             </Pressable>
           ))
         ) : (
-          <Text style={styles.empty}>Loading list...</Text>
+          <Text style={styles.empty}>{t('loadingList')}</Text>
         )}
 
         {showList && !mine.length && <Text style={styles.empty}>{t('noDeptComplaints')}</Text>}

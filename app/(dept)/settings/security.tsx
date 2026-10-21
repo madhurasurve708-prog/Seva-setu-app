@@ -25,11 +25,11 @@ export default function DepartmentSecurityScreen() {
 
   const handleSave = async () => {
     if (next.length < 8) {
-      Alert.alert('Weak Password', 'New password must be at least 8 characters.');
+      Alert.alert(t('weakPassword'), t('weakPasswordMessage'));
       return;
     }
     if (next !== confirm) {
-      Alert.alert('Mismatch', 'New password and confirmation do not match.');
+      Alert.alert(t('passwordMismatch'), t('passwordMismatchMessage'));
       return;
     }
     setSaving(true);
@@ -45,10 +45,10 @@ export default function DepartmentSecurityScreen() {
       // Success handler must clear auth state and navigate to login ONLY after backend confirms success
       Alert.alert(
         t('success') || 'Success',
-        'Password updated successfully. Please log in again.',
+        t('passwordUpdatedReLogin'),
         [
           {
-            text: 'OK',
+            text: t('ok') || 'OK',
             onPress: async () => {
               await logout();
               router.replace(redirectRoute as any);
@@ -58,14 +58,14 @@ export default function DepartmentSecurityScreen() {
         { cancelable: false }
       );
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update password. Please try again.');
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('passwordUpdateFailed'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <DepartmentScreen title={t('security') || 'Security'} back>
+    <DepartmentScreen title={t('securityTitle') || t('security')} back>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -78,27 +78,27 @@ export default function DepartmentSecurityScreen() {
             <MaterialCommunityIcons name="shield-lock-outline" size={20} color={COLORS.primary} />
           </View>
           <Text style={styles.infoText}>
-            Use a strong password with letters, numbers, and symbols. Never share it with anyone.
+            {t('securityHint')}
           </Text>
         </View>
 
         <GlassCard style={styles.card}>
           <View style={styles.cardTitleRow}>
             <MaterialCommunityIcons name="lock-reset" size={16} color={COLORS.primary} />
-            <Text style={styles.cardTitle}>{t('changePassword') || 'Change Password'}</Text>
+            <Text style={styles.cardTitle}>{t('changePassword')}</Text>
           </View>
 
           <PasswordField
-            label="New Password"
-            placeholder="Minimum 8 characters"
+            label={t('newPassword')}
+            placeholder={t('passwordMinimumPlaceholder')}
             value={next}
             onChangeText={setNext}
             show={showNext}
             onToggleShow={() => setShowNext((v) => !v)}
           />
           <PasswordField
-            label="Confirm New Password"
-            placeholder="Re-enter new password"
+            label={t('confirmNewPassword')}
+            placeholder={t('confirmPasswordPlaceholder')}
             value={confirm}
             onChangeText={setConfirm}
             show={showConfirm}
@@ -110,15 +110,15 @@ export default function DepartmentSecurityScreen() {
         {/* Strength hints */}
         {next.length > 0 && (
           <View style={styles.strengthRow}>
-            <StrengthDot active={next.length >= 8} color={COLORS.success} label="8+ chars" />
-            <StrengthDot active={/[A-Z]/.test(next)} color="#7C3AED" label="Uppercase" />
-            <StrengthDot active={/[0-9]/.test(next)} color="#EA580C" label="Number" />
-            <StrengthDot active={/[^A-Za-z0-9]/.test(next)} color={COLORS.primary} label="Symbol" />
+            <StrengthDot active={next.length >= 8} color={COLORS.success} label={t('charactersSixPlus')} />
+            <StrengthDot active={/[A-Z]/.test(next)} color="#7C3AED" label={t('uppercase')} />
+            <StrengthDot active={/[0-9]/.test(next)} color="#EA580C" label={t('number')} />
+            <StrengthDot active={/[^A-Za-z0-9]/.test(next)} color={COLORS.primary} label={t('symbol')} />
           </View>
         )}
 
         <PrimaryButton
-          label={saving ? t('saving') || 'Saving…' : t('saveChangesBtn') || 'Save Changes'}
+          label={saving ? t('saving') : t('updatePassword')}
           loading={saving}
           onPress={handleSave}
           disabled={!canSave}

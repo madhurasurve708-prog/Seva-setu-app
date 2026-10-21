@@ -5,46 +5,47 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 const FAQS = [
   {
-    q: 'How do I change the status of a complaint?',
-    a: 'Open any complaint from your Dashboard or Complaints screen. In the details view, tap the appropriate status button (Pending / In Progress / Resolved) and add an optional note describing the update.',
+    qKey: 'officialFaq1Q',
+    aKey: 'officialFaq1A',
     icon: 'clipboard-edit-outline' as const,
     color: COLORS.primary,
     bg: '#EFF6FF',
   },
   {
-    q: 'When should I escalate a complaint?',
-    a: 'If a civic issue requires resources or permissions beyond your ward authority — such as pipeline repairs or road construction — tap "Escalate Complaint", choose the target department, and provide a reason.',
+    qKey: 'officialFaq2Q',
+    aKey: 'officialFaq2A',
     icon: 'arrow-up-bold-circle-outline' as const,
     color: '#DC2626',
     bg: '#FEF2F2',
   },
   {
-    q: 'Can citizens see the notes I add?',
-    a: 'Yes. All notes added by representatives are attached to the public complaint audit trail and are visible to the reporting citizen on their Seva Setu app.',
+    qKey: 'officialFaq3Q',
+    aKey: 'officialFaq3A',
     icon: 'eye-outline' as const,
     color: '#0891B2',
     bg: '#CFFAFE',
   },
   {
-    q: 'How do I change my assigned ward details?',
-    a: 'Ward, Locality, and Department are loaded from your municipal registry record. If they are incorrect, contact the Main Council Admin desk to update your registry.',
+    qKey: 'officialFaq4Q',
+    aKey: 'officialFaq4A',
     icon: 'map-marker-outline' as const,
     color: '#7C3AED',
     bg: '#F5F3FF',
   },
   {
-    q: 'How do I add a verification photo to a complaint?',
-    a: 'Open the complaint details screen and tap "Upload" in the Attached Photos section. You can upload a photo from your camera or gallery as proof of resolution.',
+    qKey: 'officialFaq5Q',
+    aKey: 'officialFaq5A',
     icon: 'camera-outline' as const,
     color: '#16A34A',
     bg: '#DCFCE7',
   },
   {
-    q: 'What happens after I escalate a complaint?',
-    a: 'The complaint priority is automatically set to Emergency and routed to the selected department or Main Admin. The escalation is recorded in the complaint timeline.',
+    qKey: 'officialFaq6Q',
+    aKey: 'officialFaq6A',
     icon: 'information-outline' as const,
     color: '#EA580C',
     bg: '#FFF7ED',
@@ -52,19 +53,20 @@ const FAQS = [
 ];
 
 export default function SettingsFaqsScreen() {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const toggle = (idx: number) =>
     setExpanded((prev) => (prev === idx ? null : idx));
 
   return (
-    <OfficialScreen title="Help & FAQs" showBack>
+    <OfficialScreen title={t('helpFaqs')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
-        <Text style={styles.intro}>Tap any question to expand the answer.</Text>
+        <Text style={styles.intro}>{t('tapToExpand')}</Text>
 
         {FAQS.map((faq, idx) => (
           <AccordionCard
@@ -72,6 +74,7 @@ export default function SettingsFaqsScreen() {
             faq={faq}
             isOpen={expanded === idx}
             onToggle={() => toggle(idx)}
+            t={t}
           />
         ))}
       </ScrollView>
@@ -83,10 +86,12 @@ function AccordionCard({
   faq,
   isOpen,
   onToggle,
+  t,
 }: {
   faq: (typeof FAQS)[0];
   isOpen: boolean;
   onToggle: () => void;
+  t: (key: string) => string;
 }) {
   const progress = useSharedValue(0);
 
@@ -110,7 +115,7 @@ function AccordionCard({
         <View style={[styles.iconCircle, { backgroundColor: faq.bg }]}>
           <MaterialCommunityIcons name={faq.icon} size={18} color={faq.color} />
         </View>
-        <Text style={styles.questionText}>{faq.q}</Text>
+        <Text style={styles.questionText}>{t(faq.qKey)}</Text>
         <MaterialCommunityIcons
           name={isOpen ? 'chevron-up' : 'chevron-down'}
           size={20}
@@ -121,7 +126,7 @@ function AccordionCard({
       <Animated.View style={answerStyle}>
         <View style={styles.answerWrap}>
           <View style={[styles.answerAccent, { backgroundColor: faq.color }]} />
-          <Text style={styles.answerText}>{faq.a}</Text>
+          <Text style={styles.answerText}>{t(faq.aKey)}</Text>
         </View>
       </Animated.View>
     </Pressable>

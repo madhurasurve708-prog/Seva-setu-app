@@ -5,20 +5,22 @@ import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 
 import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function AppearanceScreen() {
+  const { t } = useTranslation();
   const [activeTheme, setActiveTheme] = useState<'Light' | 'Dark' | 'System'>('Light');
   const [highContrast, setHighContrast] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   const THEMES = [
-    { key: 'Light', icon: 'weather-sunny' as const },
-    { key: 'Dark',  icon: 'weather-night' as const },
-    { key: 'System', icon: 'cog-outline' as const },
+    { key: 'Light', labelKey: 'themeLight', icon: 'weather-sunny' as const },
+    { key: 'Dark',  labelKey: 'themeDark',  icon: 'weather-night' as const },
+    { key: 'System', labelKey: 'themeSystem', icon: 'cog-outline' as const },
   ] as const;
 
   return (
-    <OfficialScreen title="Appearance" showBack>
+    <OfficialScreen title={t('appearanceTitle') || t('appearance')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -27,11 +29,11 @@ export default function AppearanceScreen() {
         {/* Theme selection */}
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons name="palette-outline" size={17} color={COLORS.accent} />
-          <Text style={styles.sectionTitle}>Select Theme</Text>
+          <Text style={styles.sectionTitle}>{t('selectTheme')}</Text>
         </View>
         <GlassCard style={styles.card}>
           <View style={styles.themeRow}>
-            {THEMES.map(({ key, icon }) => {
+            {THEMES.map(({ key, labelKey, icon }) => {
               const active = activeTheme === key;
               return (
                 <Pressable
@@ -45,7 +47,7 @@ export default function AppearanceScreen() {
                     color={active ? COLORS.primary : COLORS.textMuted}
                   />
                   <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>
-                    {key}
+                    {t(labelKey)}
                   </Text>
                 </Pressable>
               );
@@ -56,18 +58,18 @@ export default function AppearanceScreen() {
         {/* Accessibility */}
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons name="eye-settings-outline" size={17} color={COLORS.accent} />
-          <Text style={styles.sectionTitle}>Accessibility</Text>
+          <Text style={styles.sectionTitle}>{t('accessibilityLabel') || t('accessibility')}</Text>
         </View>
         <GlassCard style={styles.card}>
           <ToggleRow
-            label="High Contrast Mode"
-            sub="Increases text contrast for better legibility."
+            label={t('highContrastMode')}
+            sub={t('highContrastDesc')}
             value={highContrast}
             onChange={() => setHighContrast((v) => !v)}
           />
           <ToggleRow
-            label="Reduce Motion"
-            sub="Disables slide-in animations and transitions."
+            label={t('reduceMotion')}
+            sub={t('reduceMotionDesc')}
             value={reduceMotion}
             onChange={() => setReduceMotion((v) => !v)}
             isLast

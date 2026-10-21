@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 const LANGUAGES = [
   { code: 'English', label: 'English' },
@@ -14,6 +15,7 @@ const LANGUAGES = [
 ];
 
 export default function PreferencesScreen() {
+  const { t, setLanguage: setAppLanguage } = useTranslation();
   const { profile, saveProfile } = useOfficial();
   const [selectedLang, setSelectedLang] = useState(profile.language);
   const [biometric, setBiometric] = useState(true);
@@ -21,26 +23,29 @@ export default function PreferencesScreen() {
 
   const handleLanguage = async (code: string) => {
     setSelectedLang(code);
+    if (code === 'English' || code === 'Marathi') {
+      await setAppLanguage(code);
+    }
     try {
       await saveProfile({ ...profile, language: code });
-      Alert.alert('Language Updated', `Display language set to: ${code}`);
+      Alert.alert(t('languageUpdated'), t('displayLanguageSet', { language: code }));
     } catch {
-      Alert.alert('Error', 'Could not save language preference.');
+      Alert.alert(t('error'), t('languageSaveFailed'));
     }
   };
 
   return (
-    <OfficialScreen title="Preferences" showBack>
+    <OfficialScreen title={t('preferencesTitle')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         overScrollMode="never"
       >
         {/* Language */}
-        <SectionHeader icon="translate" label="Select Language" />
+        <SectionHeader icon="translate" label={t('selectLanguage')} />
         <GlassCard style={styles.card}>
           <Text style={styles.cardHint}>
-            Choose your preferred display language for the Malvan municipal console.
+            {t('preferencesHint')}
           </Text>
           {LANGUAGES.map((lang) => {
             const active = selectedLang === lang.code;
@@ -64,17 +69,17 @@ export default function PreferencesScreen() {
         </GlassCard>
 
         {/* General */}
-        <SectionHeader icon="tune-variant" label="General Settings" />
+        <SectionHeader icon="tune-variant" label={t('generalSettings')} />
         <GlassCard style={styles.card}>
           <ToggleRow
-            label="Biometric Authentication"
-            sub="Use FaceID/Fingerprint to login quickly."
+            label={t('biometricAuthentication')}
+            sub={t('biometricAuthenticationHint')}
             value={biometric}
             onChange={() => setBiometric((v) => !v)}
           />
           <ToggleRow
-            label="Auto Logout Session"
-            sub="Log out after 30 minutes of inactivity."
+            label={t('autoLogoutSession')}
+            sub={t('autoLogoutSessionHint')}
             value={autoLogout}
             onChange={() => setAutoLogout((v) => !v)}
             isLast

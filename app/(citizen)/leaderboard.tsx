@@ -5,6 +5,7 @@ import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from '@/providers/localization-provider';
 
 type WardRank = {
   rank: number;
@@ -58,8 +59,10 @@ const RankBadge = memo(function RankBadge({ rank }: { rank: number }) {
 });
 
 const LeaderboardScreen = memo(function LeaderboardScreen() {
+  const { t } = useTranslation();
+
   return (
-    <CitizenScreen title="Ward Leaderboard">
+    <CitizenScreen title={t('wardLeaderboard')}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -74,9 +77,9 @@ const LeaderboardScreen = memo(function LeaderboardScreen() {
         >
           <View style={styles.introRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.introTitle}>Clean & Swift Ward rankings</Text>
+              <Text style={styles.introTitle}>{t('leaderboardTitle')}</Text>
               <Text style={styles.introBody}>
-                Wards are ranked dynamically based on resolution rates, public cleanliness ratings, and feedback logs.
+                {t('leaderboardBody')}
               </Text>
             </View>
             <MaterialCommunityIcons name="chart-bell-curve-cumulative" size={48} color="rgba(79, 195, 247, 0.25)" />
@@ -85,9 +88,9 @@ const LeaderboardScreen = memo(function LeaderboardScreen() {
 
         {/* Header Row */}
         <View style={styles.tableHeader}>
-          <Text style={[styles.headerLabel, { width: 50, textAlign: 'center' }]}>Rank</Text>
-          <Text style={[styles.headerLabel, { flex: 1, paddingLeft: 8 }]}>Ward & Representative</Text>
-          <Text style={[styles.headerLabel, { width: 80, textAlign: 'right' }]}>Res. Rate</Text>
+          <Text style={[styles.headerLabel, { width: 50, textAlign: 'center' }]}>{t('rankLabel')}</Text>
+          <Text style={[styles.headerLabel, { flex: 1, paddingLeft: 8 }]}>{t('wardRepLabel')}</Text>
+          <Text style={[styles.headerLabel, { width: 80, textAlign: 'right' }]}>{t('resolutionRateLabel')}</Text>
         </View>
 
         {/* List of ranks */}
@@ -108,7 +111,7 @@ const LeaderboardScreen = memo(function LeaderboardScreen() {
 
                   <View style={{ width: 80, alignItems: 'flex-end' }}>
                     <Text style={styles.rateText}>{item.rate}</Text>
-                    <Text style={styles.pointsText}>{item.points} pts</Text>
+                    <Text style={styles.pointsText}>{item.points} {t('ptsSuffix')}</Text>
                   </View>
                 </View>
                 {idx < WARD_RANKS.length - 1 && <View style={styles.divider} />}

@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { categories } from '@/data/categories';
+import { categories, getCategoryLabel } from '@/data/categories';
 import type { Complaint } from '@/data/complaints';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
@@ -98,7 +98,7 @@ const AdminComplaints = memo(function AdminComplaints() {
 
   const ctxLabel =
     params.ward       ? `${t('ctxWardLabel')} ${params.ward}` :
-    params.category   ? `${t('ctxCategoryLabel')} ${params.category}` :
+    params.category   ? `${t('ctxCategoryLabel')} ${getCategoryLabel(t, params.category)}` :
     params.department ? `${t('ctxDeptLabel')} ${params.department}` : null;
 
   const filtered = useMemo(() =>
@@ -204,7 +204,7 @@ const AdminComplaints = memo(function AdminComplaints() {
                 contentContainerStyle={s.chipRow} style={s.chipScroll}>
                 <FChip label={t('all')} active={!params.category} onPress={() => router.setParams({ category: undefined })} />
                 {categories.filter((c) => c.id !== 'all').map((c) => (
-                  <FChip key={c.id} label={t(c.id)} active={params.category === c.id}
+                  <FChip key={c.id} label={getCategoryLabel(t, c.id)} active={params.category === c.id}
                     onPress={() => router.setParams({ category: c.id })} />
                 ))}
               </ScrollView>
@@ -259,7 +259,7 @@ const AdminComplaints = memo(function AdminComplaints() {
         />
       ) : (
         <View style={{ flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={s.emptyText}>Loading complaints...</Text>
+          <Text style={s.emptyText}>{t('loadingComplaints')}</Text>
         </View>
       )}
 
@@ -321,6 +321,9 @@ function PremiumCard({ t, complaint: c, expanded, onToggle, onView, onNote, onEs
       </Pressable>
 
       <View style={cs.badgesRow}>
+        <View style={[cs.badge, { backgroundColor: cat.bg, borderColor: `${cat.color}33` }]}>
+          <Text style={[cs.badgeText, { color: cat.color }]}>{getCategoryLabel(t, c.category)}</Text>
+        </View>
         <View style={[cs.badge, { backgroundColor: prio.bg, borderColor: prio.border }]}>
           <Text style={[cs.badgeText, { color: prio.text }]}>{priorityLabel(t, c.priority)}</Text>
         </View>

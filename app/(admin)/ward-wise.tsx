@@ -87,7 +87,7 @@ const WardWiseScreen = memo(function WardWiseScreen() {
                     <Text style={styles.wardNum}>{item.ward.split(' ')[1]}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.wardName}>{item.ward}</Text>
+                    <Text style={styles.wardName}>{item.ward.replace('Ward', t('ward2'))}</Text>
                   </View>
                   {item.emergency > 0 && (
                     <View style={styles.emergBadge}>

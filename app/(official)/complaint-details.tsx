@@ -10,8 +10,10 @@ import PriorityBadge from '@/components/official/PriorityBadge';
 import StatusBadge from '@/components/official/StatusBadge';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { useOfficial, type TimelineNote } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function ComplaintDetailsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const complaintId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -83,8 +85,8 @@ export default function ComplaintDetailsScreen() {
     }[] = [
       {
         id: 'registered',
-        title: 'Complaint registered',
-        description: `Filed by ${complaint?.citizenName ?? 'Citizen'} from ${complaint?.location ?? 'Unknown location'}`,
+        title: t('complaintRegisteredEvent'),
+        description: `${t('filedOn')} ${complaint?.citizenName ?? 'Citizen'} • ${complaint?.location ?? ''}`,
         time: complaint ? fmtDateTime(complaint.createdAt) : '—',
         icon: 'file-document-outline',
         color: COLORS.primary,
@@ -94,8 +96,8 @@ export default function ComplaintDetailsScreen() {
     if (complaint?.assignedDepartment) {
       events.push({
         id: 'assigned',
-        title: 'Assigned to department',
-        description: `Routed to ${complaint.assignedDepartment}`,
+        title: t('assignedToDept'),
+        description: `${t('routedTo')} ${complaint.assignedDepartment}`,
         time: complaint ? fmtDateTime(complaint.createdAt) : '—',
         icon: 'domain',
         color: '#7C3AED',
@@ -104,16 +106,16 @@ export default function ComplaintDetailsScreen() {
 
     for (const n of deduplicatedNotes) {
       const lower = n.text.toLowerCase();
-      let title = 'Action taken';
+      let title = t('actionTaken');
       let icon: keyof typeof MaterialCommunityIcons.glyphMap = 'comment-text-outline';
       let color = '#EA580C';
 
       if (lower.startsWith('status updated')) {
-        title = 'Status changed';
+        title = t('statusChanged');
         icon = 'sync';
         color = COLORS.primary;
       } else if (lower.includes('escalat')) {
-        title = 'Escalation';
+        title = t('escalation');
         icon = 'arrow-up-bold-circle-outline';
         color = '#DC2626';
       }
@@ -129,7 +131,7 @@ export default function ComplaintDetailsScreen() {
     }
 
     return events;
-  }, [complaint, deduplicatedNotes]);
+  }, [complaint, deduplicatedNotes, t]);
 
   if (!complaint) {
     return (
@@ -138,12 +140,12 @@ export default function ComplaintDetailsScreen() {
           <View style={styles.emptyIconCircle}>
             <Ionicons name="alert-circle-outline" size={36} color={COLORS.danger} />
           </View>
-          <Text style={styles.emptyTitle}>Complaint not found</Text>
+          <Text style={styles.emptyTitle}>{t('complaintNotFound')}</Text>
           <Text style={styles.emptyText}>
-            The grievance reference ID does not exist in this ward.
+            {t('complaintNotFoundDesc')}
           </Text>
           <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-            <Text style={styles.emptyBtnText}>Go Back</Text>
+            <Text style={styles.emptyBtnText}>{t('goBack')}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -158,7 +160,7 @@ export default function ComplaintDetailsScreen() {
     ];
     const uri = samples[Math.floor(Math.random() * samples.length)];
     await uploadComplaintImage(complaint.id, uri);
-    Alert.alert('Success', 'Verification photo uploaded.');
+    Alert.alert(t('successUpload'), t('successUploadMsg'));
   };
 
   const handleStatus = async (
@@ -167,7 +169,7 @@ export default function ComplaintDetailsScreen() {
   ) => {
     if (updatingStatus) return;
     if (complaint.status === status) {
-      Alert.alert('No Change', `Complaint is already ${status}.`);
+      Alert.alert(t('noChange'), t('complaintAlreadyStatus', { status }));
       return;
     }
     setUpdatingStatus(true);
@@ -180,10 +182,10 @@ export default function ComplaintDetailsScreen() {
         return [];
       });
       setNotes(freshNotes);
-      Alert.alert('Updated', `Status set to ${status}.`);
+      Alert.alert(t('statusUpdated'), t('statusUpdatedSuccess', { status }));
     } catch (err) {
       console.error("[DEBUG] handleStatus error:", err);
-      Alert.alert('Error', err instanceof Error ? err.message : String(err));
+      Alert.alert(t('error'), err instanceof Error ? err.message : String(err));
     } finally {
       setUpdatingStatus(false);
     }
@@ -222,47 +224,47 @@ export default function ComplaintDetailsScreen() {
       >
         {/* ── Section 1: Complaint Summary ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(0)} style={styles.card}>
-          <SectionLabel icon="clipboard-text-outline" label="Complaint Summary" />
+          <SectionLabel icon="clipboard-text-outline" label={t('complaintSummary')} />
           <Text style={styles.summaryTitle}>{complaint.title}</Text>
           <Text style={styles.summaryDesc}>{complaint.description}</Text>
           <View style={styles.metaRow}>
             <MetaChip
               icon="calendar-outline"
-              text={`Filed ${fmtDate(complaint.createdAt)}`}
+              text={`${t('filedOn')} ${fmtDate(complaint.createdAt)}`}
             />
             <MetaChip
               icon="refresh-outline"
-              text={`Updated ${fmtDate(complaint.updatedAt)}`}
+              text={`${t('updatedOn')} ${fmtDate(complaint.updatedAt)}`}
             />
           </View>
         </Animated.View>
 
         {/* ── Section 2: Citizen Information ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(60)} style={styles.card}>
-          <SectionLabel icon="account-outline" label="Citizen Information" />
-          <InfoRow label="Citizen Name" value={complaint.citizenName} />
+          <SectionLabel icon="account-outline" label={t('citizenInformation')} />
+          <InfoRow label={t('citizenName')} value={complaint.citizenName} />
           <InfoRow
-            label="Phone"
+            label={t('phone')}
             value={complaint.citizenPhone}
             isLink
             onPress={() =>
-              Alert.alert('Call Citizen', `Calling ${complaint.citizenPhone}`)
+              Alert.alert(t('callCitizen'), t('callingCitizen', { phone: complaint.citizenPhone }))
             }
           />
-          <InfoRow label="Ward" value={complaint.ward} />
-          <InfoRow label="Complaint Location" value={complaint.manualLocation || complaint.location || 'N/A'} />
-          <InfoRow label="Locality" value={complaint.locality || complaint.location || 'N/A'} isLast />
+          <InfoRow label={t('wardLabel')} value={complaint.ward} />
+          <InfoRow label={t('complaintLocation')} value={complaint.manualLocation || complaint.location || 'N/A'} />
+          <InfoRow label={t('localityAreaStreet')} value={complaint.locality || complaint.location || 'N/A'} isLast />
         </Animated.View>
 
         {/* ── Section 3: Complaint Details ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(120)} style={styles.card}>
-          <SectionLabel icon="information-outline" label="Complaint Details" />
-          <InfoRow label="Category" value={complaint.category} />
-          <InfoRow label="Priority" value={complaint.priority} />
-          <InfoRow label="Status" value={complaint.status} />
+          <SectionLabel icon="information-outline" label={t('complaintDetailsSection')} />
+          <InfoRow label={t('category')} value={complaint.category} />
+          <InfoRow label={t('priorityLevel')} value={complaint.priority} />
+          <InfoRow label={t('status')} value={complaint.status} />
           <InfoRow
-            label="Assigned Dept."
-            value={complaint.assignedDepartment || 'Unassigned'}
+            label={t('assignedDept')}
+            value={complaint.assignedDepartment || t('unassigned')}
             isLast
           />
         </Animated.View>
@@ -270,10 +272,10 @@ export default function ComplaintDetailsScreen() {
         {/* ── Section 4: Attached Photos ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(180)} style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <SectionLabel icon="image-multiple-outline" label="Attached Photos" noMargin />
+            <SectionLabel icon="image-multiple-outline" label={t('attachedPhotos')} noMargin />
             <Pressable onPress={handleAddPhoto} style={styles.inlineBtn}>
               <Ionicons name="camera" size={13} color={COLORS.primary} />
-              <Text style={styles.inlineBtnText}>Upload</Text>
+              <Text style={styles.inlineBtnText}>{t('uploadBtn')}</Text>
             </Pressable>
           </View>
           {(!complaint.images || complaint.images.length === 0) ? (
@@ -283,7 +285,7 @@ export default function ComplaintDetailsScreen() {
                 size={24}
                 color={COLORS.textMuted}
               />
-              <Text style={styles.emptyPhotosText}>No photos attached yet.</Text>
+              <Text style={styles.emptyPhotosText}>{t('noPhotosYet')}</Text>
             </View>
           ) : (
             <ScrollView
@@ -306,7 +308,7 @@ export default function ComplaintDetailsScreen() {
         {/* ── Section 5: Timeline ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(240)} style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <SectionLabel icon="timeline-outline" label="Timeline" noMargin />
+            <SectionLabel icon="timeline-outline" label={t('timeline')} noMargin />
             <Pressable
               onPress={() =>
                 router.push({
@@ -317,7 +319,7 @@ export default function ComplaintDetailsScreen() {
               style={[styles.inlineBtn, { backgroundColor: '#FFF7ED' }]}
             >
               <MaterialCommunityIcons name="plus-circle-outline" size={13} color="#EA580C" />
-              <Text style={[styles.inlineBtnText, { color: '#EA580C' }]}>Add note</Text>
+              <Text style={[styles.inlineBtnText, { color: '#EA580C' }]}>{t('addNoteBtn')}</Text>
             </Pressable>
           </View>
           <View style={styles.timelineList}>
@@ -354,7 +356,7 @@ export default function ComplaintDetailsScreen() {
         {/* ── Section 6: Notes ── */}
         {progressNotes.length > 0 && (
           <Animated.View entering={FadeInDown.duration(340).delay(300)} style={styles.card}>
-            <SectionLabel icon="note-text-outline" label="Notes" />
+            <SectionLabel icon="note-text-outline" label={t('notes')} />
             {progressNotes.map((n, idx) => (
               <View
                 key={n.id || `note-${idx}`}
@@ -390,10 +392,10 @@ export default function ComplaintDetailsScreen() {
 
         {/* ── Section 7: Actions ── */}
         <Animated.View entering={FadeInDown.duration(340).delay(360)} style={styles.card}>
-          <SectionLabel icon="cog-outline" label="Actions" />
+          <SectionLabel icon="cog-outline" label={t('actions')} />
           <View style={styles.actionRow}>
             <ActionBtn
-              label="Pending"
+              label={t('pending')}
               color="#F59E0B"
               bg="#FFF8ED"
               border="#FDE68A"
@@ -402,7 +404,7 @@ export default function ComplaintDetailsScreen() {
               onPress={() => handleStatus('Pending', 'Re-assessed complaint.')}
             />
             <ActionBtn
-              label="In Progress"
+              label={t('inProgress')}
               color={COLORS.primary}
               bg="#EFF6FF"
               border="#BFDBFE"
@@ -411,7 +413,7 @@ export default function ComplaintDetailsScreen() {
               onPress={() => handleStatus('In Progress', 'Began resolution process.')}
             />
             <ActionBtn
-              label="Resolved"
+              label={t('resolved')}
               color={COLORS.success}
               bg="#ECFDF5"
               border="#A7F3D0"
@@ -438,7 +440,7 @@ export default function ComplaintDetailsScreen() {
               size={20}
               color={COLORS.white}
             />
-            <Text style={styles.escalateBtnText}>Escalate Complaint</Text>
+            <Text style={styles.escalateBtnText}>{t('escalateComplaint')}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

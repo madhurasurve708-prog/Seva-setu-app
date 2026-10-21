@@ -28,7 +28,7 @@ export default function HeroBanner({
   resolvedCount = 0,
   successRate = '0%',
 }: HeroBannerProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [currentDate, setCurrentDate] = useState('');
 
   const greeting = useMemo(() => {
@@ -39,13 +39,14 @@ export default function HeroBanner({
   }, [t]);
 
   useEffect(() => {
-    const dateText = new Intl.DateTimeFormat('en-IN', {
+    const locale = language === 'Marathi' ? 'mr-IN' : 'en-IN';
+    const dateText = new Intl.DateTimeFormat(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     }).format(new Date());
     setCurrentDate(dateText);
-  }, []);
+  }, [language]);
 
   return (
     <View style={styles.container}>

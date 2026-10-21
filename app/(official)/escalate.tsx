@@ -118,7 +118,7 @@ export default function EscalateScreen() {
           style={[styles.confirmBtn, !canSubmit && styles.confirmBtnDisabled]}
         >
           <Text style={styles.confirmBtnText}>
-            {saving ? 'Escalating…' : 'Confirm'}
+            {saving ? t('escalating') : t('confirmAction')}
           </Text>
         </Pressable>
       </View>

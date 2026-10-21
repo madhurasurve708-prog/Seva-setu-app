@@ -154,7 +154,7 @@ export default function CitizenLoginScreen() {
       }, 350);
     } catch (error) {
       setSendingOtp(false);
-      setMobileError(error instanceof Error ? error.message : 'Could not send OTP.');
+      setMobileError(error instanceof Error ? error.message : t('couldNotSendOtp'));
     }
   }, [isMobileValid, mobile, animateToStep, startCountdown, t]);
 
@@ -242,7 +242,7 @@ export default function CitizenLoginScreen() {
     } catch (error) {
       setVerifying(false);
       setCheckingUser(false);
-      setOtpError(error instanceof Error ? error.message : 'OTP verification failed.');
+      setOtpError(error instanceof Error ? error.message : t('otpVerificationFailed'));
     }
   }, [isOtpComplete, playSuccessAnimation, mobile, otp, animateToStep, router, saveProfile, t]);
 
@@ -261,9 +261,9 @@ export default function CitizenLoginScreen() {
       startCountdown();
       setTimeout(() => otpRefs.current[0]?.focus(), 150);
     } catch (error) {
-      setOtpError(error instanceof Error ? error.message : 'Could not resend OTP.');
+      setOtpError(error instanceof Error ? error.message : t('couldNotResendOtp'));
     }
-  }, [canResend, mobile, startCountdown]);
+  }, [canResend, mobile, startCountdown, t]);
 
   const validateRegistration = useCallback(() => {
     let ok = true;
@@ -315,9 +315,9 @@ export default function CitizenLoginScreen() {
       router.replace('/(citizen)/dashboard' as any);
     } catch (error) {
       setRegistering(false);
-      setNameError(error instanceof Error ? error.message : 'Could not create profile.');
+      setNameError(error instanceof Error ? error.message : t('couldNotCreateProfile'));
     }
-  }, [validateRegistration, fullName, mobile, ward, locality, playSuccessAnimation, router, saveProfile]);
+  }, [validateRegistration, fullName, mobile, ward, locality, playSuccessAnimation, router, saveProfile, t]);
 
   const goBackStep = useCallback(() => {
     if (step === 1) {
@@ -375,7 +375,7 @@ export default function CitizenLoginScreen() {
                 />
               </View>
               <Text style={styles.desktopLeftTitle}>{t('citizenLogin')}</Text>
-              <Text style={styles.desktopLeftSubtitle}>Seva Setu - Malvan</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('sevaSetuMalvan')}</Text>
               <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
             </View>
           </ImageBackground>

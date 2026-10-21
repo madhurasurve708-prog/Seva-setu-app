@@ -197,11 +197,11 @@ const ComplaintDetail = memo(function ComplaintDetail() {
                 const isLast = idx === detailedComplaint.notes.length - 1;
                 let displayRole = note.author_role;
                 if (note.author_role === 'Nagarsevak') {
-                  displayRole = 'Nagarsevak';
+                  displayRole = t('nagarsevak');
                 } else if (note.author_role === 'Department') {
-                  displayRole = 'Department Officer';
+                  displayRole = t('deptOfficer');
                 } else if (note.author_role === 'Admin') {
-                  displayRole = 'Main Admin';
+                  displayRole = t('mainAdmin');
                 }
 
                 return (

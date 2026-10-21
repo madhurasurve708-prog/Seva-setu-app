@@ -29,6 +29,18 @@ const PRIORITY_CONFIG = {
     icon: 'arrow-down-bold-circle',
     labelKey: 'priorityLow',
   },
+  Normal: {
+    bg: '#475569',
+    text: '#FFFFFF',
+    icon: 'information-outline',
+    labelKey: 'priorityNormal',
+  },
+  Pinned: {
+    bg: '#1E6FD9',
+    text: '#FFFFFF',
+    icon: 'pin',
+    labelKey: 'priorityPinned',
+  },
 } as const;
 
 interface PriorityBadgeProps {
@@ -39,7 +51,7 @@ export default function PriorityBadge({
   priority,
 }: PriorityBadgeProps) {
   const { t } = useTranslation();
-  const config = PRIORITY_CONFIG[priority];
+  const config = (PRIORITY_CONFIG as Record<string, { bg: string; text: string; icon: any; labelKey: string }>)[priority] ?? PRIORITY_CONFIG.Low;
 
   return (
     <View

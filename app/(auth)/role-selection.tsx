@@ -77,7 +77,7 @@ const DesktopRoleLanding = memo(function DesktopRoleLanding({ roles, onSelect }:
           </View>
           <Text style={desktop.desktopLeftTitle}>Seva Setu</Text>
           <Text style={desktop.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
-          <Text style={desktop.desktopLeftSlogan}>{isMr ? "प्रत्येक नागरिकासाठी डिजिटल नागरी सेवा" : "Digital civic services for every citizen"}</Text>
+          <Text style={desktop.desktopLeftSlogan}>{t('digitalCivicServices')}</Text>
         </View>
       </View>
 
@@ -215,6 +215,10 @@ export default function RoleSelectionScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
+      <View style={{ position: 'absolute', top: Platform.OS === 'ios' ? 48 : 36, right: 16, zIndex: 20 }}>
+        <LanguageToggle size={36} variant="light" />
+      </View>
+
       <View style={styles.hero}>
         <Image
           source={HERO_IMAGE}
@@ -231,8 +235,8 @@ export default function RoleSelectionScreen() {
         <View style={styles.heroInner}>
           <Image source={LOGO_IMAGE} style={styles.heroLogo} contentFit="contain" accessibilityLabel="Seva Setu logo" alt="Seva Setu logo" priority="high" cachePolicy="memory-disk" />
           <Text style={styles.heroTitle}>Seva Setu</Text>
-          <Text style={styles.heroSubtitle}>Malvan Municipal Council</Text>
-          <Text style={styles.heroTagline}>Digital civic services for every citizen</Text>
+          <Text style={styles.heroSubtitle}>{t('malvanMunicipal')}</Text>
+          <Text style={styles.heroTagline}>{t('digitalCivicServices')}</Text>
         </View>
       </View>
 

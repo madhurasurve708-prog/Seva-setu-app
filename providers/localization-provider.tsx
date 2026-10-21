@@ -10,7 +10,7 @@ const KEY = '@seva-setu/language';
 type Value = {
   language: AppLanguage;
   setLanguage: (language: AppLanguage) => Promise<void>;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
 
 const LocalizationContext = createContext<Value | undefined>(undefined);
@@ -35,9 +35,15 @@ export function LocalizationProvider({ children }: PropsWithChildren) {
     () => ({
       language,
       setLanguage,
-      t: (key: string) => {
+      t: (key: string, params?: Record<string, string | number>) => {
         const transKey = key as keyof typeof en;
-        return (language === 'Marathi' ? mr[transKey] : en[transKey]) || en[transKey] || key;
+        let str = (language === 'Marathi' ? mr[transKey] : en[transKey]) || en[transKey] || key;
+        if (params) {
+          Object.entries(params).forEach(([k, v]) => {
+            str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+          });
+        }
+        return str;
       },
     }),
     [language]

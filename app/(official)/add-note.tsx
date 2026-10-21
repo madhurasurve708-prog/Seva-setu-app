@@ -92,7 +92,7 @@ export default function AddNoteScreen() {
           style={[styles.saveHeaderBtn, !canSave && styles.saveHeaderBtnDisabled]}
         >
           <Text style={styles.saveHeaderBtnText}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('saving') : t('save')}
           </Text>
         </Pressable>
       </View>

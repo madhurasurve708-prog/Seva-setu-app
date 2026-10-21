@@ -6,10 +6,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { categories } from '@/data/categories';
+import { categories, getCategoryLabel } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { complaints, profile } = useOfficial();
 
@@ -21,19 +23,19 @@ export default function AnalyticsScreen() {
   const rate       = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   const STAT_ITEMS = [
-    { label: 'Total',       value: total,      color: COLORS.primary, icon: 'clipboard-list-outline'  as const, bg: '#EFF6FF' },
-    { label: 'Pending',     value: pending,    color: '#F59E0B',      icon: 'clock-outline'             as const, bg: '#FFF8ED' },
-    { label: 'In Progress', value: inProgress, color: '#2563EB',      icon: 'progress-wrench'           as const, bg: '#EFF6FF' },
-    { label: 'Resolved',    value: resolved,   color: '#10B981',      icon: 'check-circle-outline'      as const, bg: '#ECFDF5' },
-    { label: 'Escalated',   value: escalated,  color: '#DC2626',      icon: 'alert-circle-outline'      as const, bg: '#FEF2F2' },
-    { label: 'Success Rate',value: `${rate}%`, color: '#7C3AED',      icon: 'chart-donut'               as const, bg: '#F5F3FF' },
+    { label: t('total'),       value: total,      color: COLORS.primary, icon: 'clipboard-list-outline'  as const, bg: '#EFF6FF' },
+    { label: t('pending'),     value: pending,    color: '#F59E0B',      icon: 'clock-outline'             as const, bg: '#FFF8ED' },
+    { label: t('inProgress'), value: inProgress, color: '#2563EB',      icon: 'progress-wrench'           as const, bg: '#EFF6FF' },
+    { label: t('resolved'),    value: resolved,   color: '#10B981',      icon: 'check-circle-outline'      as const, bg: '#ECFDF5' },
+    { label: t('escalated'),   value: escalated,  color: '#DC2626',      icon: 'alert-circle-outline'      as const, bg: '#FEF2F2' },
+    { label: t('successRateShort'),value: `${rate}%`, color: '#7C3AED', icon: 'chart-donut'               as const, bg: '#F5F3FF' },
   ];
 
   return (
-    <OfficialScreen title="Analytics" tab="analytics" hideHeader={true}>
+    <OfficialScreen title={t('analyticsNav')} tab="analytics" hideHeader={true}>
       <View style={styles.header}>
         <View style={{ flex: 1, marginLeft: 4 }}>
-          <Text style={styles.headerTitle}>Analytics</Text>
+          <Text style={styles.headerTitle}>{t('analyticsNav')}</Text>
           <Text style={styles.headerSub}>{profile.ward} · {profile.locality}</Text>
         </View>
       </View>
@@ -44,7 +46,7 @@ export default function AnalyticsScreen() {
         overScrollMode="never"
       >
         {/* Stats grid */}
-        <Text style={styles.sectionTitle}>Ward Performance</Text>
+        <Text style={styles.sectionTitle}>{t('wardPerformance')}</Text>
         <View style={styles.statsGrid}>
           {STAT_ITEMS.map((s, idx) => (
             <Animated.View
@@ -66,7 +68,7 @@ export default function AnalyticsScreen() {
         {/* Resolution bar */}
         <GlassCard style={styles.rateCard}>
           <View style={styles.rateRow}>
-            <Text style={styles.rateLabel}>Resolution Rate</Text>
+            <Text style={styles.rateLabel}>{t('resolutionRate')}</Text>
             <Text style={[styles.rateVal, { color: rate >= 70 ? COLORS.success : '#F59E0B' }]}>
               {rate}%
             </Text>
@@ -82,11 +84,11 @@ export default function AnalyticsScreen() {
               ]}
             />
           </View>
-          <Text style={styles.rateSub}>{resolved} resolved out of {total} total</Text>
+          <Text style={styles.rateSub}>{t('resolvedOutOfTotal', { resolved, total })}</Text>
         </GlassCard>
 
         {/* Category breakdown */}
-        <Text style={styles.sectionTitle}>Category Breakdown</Text>
+        <Text style={styles.sectionTitle}>{t('categoryBreakdown')}</Text>
         <GlassCard style={styles.catCard}>
           {categories
             .filter((c) => c.id !== 'all')
@@ -96,7 +98,9 @@ export default function AnalyticsScreen() {
               const isLast = idx === categories.length - 2;
               return (
                 <View key={cat.id} style={[styles.catRow, isLast && { borderBottomWidth: 0 }]}>
-                  <Text style={styles.catLabel} numberOfLines={1}>{cat.label}</Text>
+                  <Text style={styles.catLabel} numberOfLines={1}>
+                    {getCategoryLabel(t, cat.id)}
+                  </Text>
                   <View style={styles.barBg}>
                     <View style={[styles.barFill, { width: `${barW}%` }]} />
                   </View>
@@ -109,9 +113,9 @@ export default function AnalyticsScreen() {
         {/* Coming soon placeholder */}
         <GlassCard style={styles.comingSoonCard}>
           <MaterialCommunityIcons name="chart-timeline-variant-shimmer" size={28} color={COLORS.accent} />
-          <Text style={styles.comingSoonTitle}>Monthly Trends Coming Soon</Text>
+          <Text style={styles.comingSoonTitle}>{t('trendChartsComingSoon')}</Text>
           <Text style={styles.comingSoonText}>
-            Detailed monthly charts, ward comparison graphs and citizen satisfaction index will be available after backend integration.
+            {t('trendChartsDesc')}
           </Text>
         </GlassCard>
       </ScrollView>

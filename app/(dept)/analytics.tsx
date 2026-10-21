@@ -36,7 +36,7 @@ const DepartmentAnalytics = memo(function DepartmentAnalytics() {
   const cards = useMemo(() => [
     ['pending',     t('pending'),           mine.filter(c => c.status === 'Pending').length],
     ['resolved',    t('resolved'),          resolved],
-    ['avgRes',      t('avgResolution'),     '2.4 days'],
+    ['avgRes',      t('avgResolution'),     t('daysFormat', { count: '2.4' })],
     ['performance', t('performanceLabel'),  mine.length ? `${Math.round(resolved / mine.length * 100)}%` : '0%'],
   ] as const, [t, mine, resolved]);
 
@@ -56,7 +56,7 @@ const DepartmentAnalytics = memo(function DepartmentAnalytics() {
 
         <Text style={styles.title}>{t('monthlyPerformanceLabel')}</Text>
         <GlassCard style={styles.card}>
-          <Text style={styles.row}>July 2026</Text>
+          <Text style={styles.row}>{t('currentMonthYear')}</Text>
           <View style={styles.bar}>
             <View style={[styles.fill, { width: `${mine.length ? Math.round(resolved / mine.length * 100) : 0}%` }]} />
           </View>

@@ -197,17 +197,17 @@ const Profile = memo(function Profile() {
 
           <Text style={styles.readOnlyHeading}>{t('officialDemographics')}</Text>
           <Text style={styles.readOnlySubtext}>
-            Ward info is attached from your municipal registrations record.
+            {t('wardInfoAttachedDesc')}
           </Text>
 
           <View style={styles.row}>
             <View style={styles.readOnlyContainer}>
               <View style={styles.rowLabelGroup}>
                 <MaterialCommunityIcons name="map-marker-outline" size={14} color={COLORS.textMuted} />
-                <Text style={styles.readOnlyLabel}>WARD</Text>
+                <Text style={styles.readOnlyLabel}>{t('wardLabelUpper')}</Text>
               </View>
               <View style={styles.readOnlyField}>
-                <Text style={styles.readOnlyValue}>{profile?.ward || 'General'}</Text>
+                <Text style={styles.readOnlyValue}>{profile?.ward || t('generalWard')}</Text>
                 <MaterialCommunityIcons name="lock-outline" size={14} color={COLORS.textMuted} />
               </View>
             </View>
@@ -215,10 +215,10 @@ const Profile = memo(function Profile() {
             <View style={styles.readOnlyContainer}>
               <View style={styles.rowLabelGroup}>
                 <MaterialCommunityIcons name="home-city-outline" size={14} color={COLORS.textMuted} />
-                <Text style={styles.readOnlyLabel}>MUNICIPALITY</Text>
+                <Text style={styles.readOnlyLabel}>{t('municipalityLabelUpper')}</Text>
               </View>
               <View style={styles.readOnlyField}>
-                <Text style={styles.readOnlyValue}>Malvan</Text>
+                <Text style={styles.readOnlyValue}>{t('malvanMunicipalName')}</Text>
                 <MaterialCommunityIcons name="lock-outline" size={14} color={COLORS.textMuted} />
               </View>
             </View>

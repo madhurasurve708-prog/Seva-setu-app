@@ -67,7 +67,7 @@ export default function ProfileDropdown({
     },
     {
       icon: 'bell-outline',
-      label: 'Notifications',
+      label: t('notifications'),
       route: '/(official)/settings/notifications',
       color: '#7C3AED',
       bg: '#F5F3FF',
@@ -112,7 +112,7 @@ export default function ProfileDropdown({
                 <View style={{ flex: 1 }}>
                   <Text style={styles.dropdownName} numberOfLines={1}>{name}</Text>
                   <Text style={styles.dropdownRole} numberOfLines={1}>
-                    {roleLabel ?? 'Nagarsevak'}{ward ? ` · ${ward}` : ''}
+                    {roleLabel ?? t('nagarsevak')}{ward ? ` · ${ward}` : ''}
                   </Text>
                 </View>
               </View>

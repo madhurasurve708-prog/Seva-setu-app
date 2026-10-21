@@ -161,7 +161,7 @@ export default function AdminLoginScreen() {
                 />
               </View>
               <Text style={styles.desktopLeftTitle}>{t('nagaradhyaksha')}</Text>
-              <Text style={styles.desktopLeftSubtitle}>Malvan Municipal Council — Admin Portal</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('malvanCouncilAdminPortal')}</Text>
               <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
             </View>
           </ImageBackground>
@@ -187,7 +187,7 @@ export default function AdminLoginScreen() {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <AuthHero
         title={t('nagaradhyaksha')}
-        subtitle="Malvan Municipal Council — Admin Portal"
+        subtitle={t('malvanCouncilAdminPortal')}
         badge={t('restrictedAccess')}
         icon="shield-crown"
         showLogo

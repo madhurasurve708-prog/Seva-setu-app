@@ -114,6 +114,7 @@ export function OfficialScreen({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const { t } = useTranslation();
 
   const handleBack = () => {
     if (backHref) {
@@ -129,12 +130,12 @@ export function OfficialScreen({
     return (
       <DesktopPortal title={title} initial={profile.avatarInitial} onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
         items={[
-          { label: 'Dashboard', route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
-          { label: 'Complaints', route: '/(official)/complaints', icon: 'clipboard-text-outline' },
-          { label: 'Announcements', route: '/(official)/announcements', icon: 'bullhorn-outline' },
-          { label: 'Reports', route: '/(official)/analytics', icon: 'chart-bar' },
-          { label: 'Settings', route: '/(official)/settings', icon: 'cog-outline' },
-          { label: 'Profile', route: '/(official)/profile', icon: 'account-outline' },
+          { label: t('dashboard'), route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
+          { label: t('complaintsTitle'), route: '/(official)/complaints', icon: 'clipboard-text-outline' },
+          { label: t('announcements'), route: '/(official)/announcements', icon: 'bullhorn-outline' },
+          { label: t('reports'), route: '/(official)/analytics', icon: 'chart-bar' },
+          { label: t('settings'), route: '/(official)/settings', icon: 'cog-outline' },
+          { label: t('myProfile'), route: '/(official)/profile', icon: 'account-outline' },
         ]}>
         {children}
       </DesktopPortal>

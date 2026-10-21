@@ -33,10 +33,10 @@ const MyComplaints = memo(function MyComplaints() {
         showsVerticalScrollIndicator={false}
         overScrollMode="never"
       >
-        {complaintsLoading && <Text style={styles.listHeading}>Loading complaints…</Text>}
+        {complaintsLoading && <Text style={styles.listHeading}>{t('loadingComplaints')}</Text>}
         {complaintsError && <Text style={styles.emptyText}>{complaintsError}</Text>}
         {!showList ? (
-          <Text style={styles.listHeading}>Loading...</Text>
+          <Text style={styles.listHeading}>{t('loading')}</Text>
         ) : complaints.length === 0 ? (
           <Animated.View entering={FadeInUp.duration(600)} style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>

@@ -69,7 +69,7 @@ export default function BestWardsScreen() {
               <Text style={styles.avgVal}>{cityAvg}%</Text>
             </View>
             <View style={styles.avgBadge}>
-              <Text style={styles.avgBadgeText}>Malvan</Text>
+              <Text style={styles.avgBadgeText}>{t('malvanLocality') || 'Malvan'}</Text>
             </View>
           </LinearGradient>
         </Animated.View>
@@ -106,7 +106,7 @@ export default function BestWardsScreen() {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.rankWardName}>{item.ward}</Text>
+                <Text style={styles.rankWardName}>{item.ward.replace('Ward', t('ward2'))}</Text>
                 <Text style={styles.rankWardLabel}>{item.label}</Text>
               </View>
 
@@ -170,6 +170,7 @@ function PodiumCard({
   medalLabels: string[];
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   if (!item) return <View style={styles.podiumEmpty} />;
   const medalColor = MEDAL_COLORS[rank - 1];
   return (
@@ -184,7 +185,7 @@ function PodiumCard({
         <MaterialCommunityIcons name="medal" size={featured ? 26 : 22} color={medalColor} />
         <Text style={[styles.podiumRateText, { color: featured ? '#fff' : COLORS.text }]}>{item.rate}%</Text>
         <Text style={[styles.podiumWardName, { color: featured ? 'rgba(255,255,255,0.9)' : COLORS.textMuted }]} numberOfLines={1}>
-          {item.ward}
+          {item.ward.replace('Ward', t('ward2'))}
         </Text>
         <Text style={[styles.podiumMedal, { color: medalColor }]}>{medalLabels[rank - 1]}</Text>
       </LinearGradient>

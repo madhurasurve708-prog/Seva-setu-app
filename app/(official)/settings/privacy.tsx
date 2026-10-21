@@ -5,32 +5,34 @@ import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-nati
 import { GlassCard } from '@/components/common/GlassCard';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
 
 const PERMISSIONS = [
   {
     key: 'location',
-    label: 'Location Access',
-    sub: 'Use GPS to determine complaint locations on maps.',
+    labelKey: 'locationAccess',
+    subKey: 'locationAccessDesc',
     icon: 'map-marker-outline' as const,
     defaultValue: true,
   },
   {
     key: 'camera',
-    label: 'Camera Access',
-    sub: 'Capture photos to upload as verification for resolved grievances.',
+    labelKey: 'cameraAccess',
+    subKey: 'cameraAccessDesc',
     icon: 'camera-outline' as const,
     defaultValue: true,
   },
   {
     key: 'gallery',
-    label: 'Photo Library',
-    sub: 'Select existing photos from device gallery to attach to updates.',
+    labelKey: 'photoLibrary',
+    subKey: 'photoLibraryDesc',
     icon: 'image-outline' as const,
     defaultValue: true,
   },
 ];
 
 export default function PrivacyScreen() {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, boolean>>(
     Object.fromEntries(PERMISSIONS.map((p) => [p.key, p.defaultValue])),
   );
@@ -39,7 +41,7 @@ export default function PrivacyScreen() {
     setValues((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <OfficialScreen title="Privacy & Permissions" showBack>
+    <OfficialScreen title={t('privacyPolicy')} showBack>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -47,7 +49,7 @@ export default function PrivacyScreen() {
       >
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons name="shield-check-outline" size={17} color={COLORS.accent} />
-          <Text style={styles.sectionTitle}>Device Permissions</Text>
+          <Text style={styles.sectionTitle}>{t('devicePermissions')}</Text>
         </View>
         <GlassCard style={styles.card}>
           {PERMISSIONS.map((item, idx) => (
@@ -67,8 +69,8 @@ export default function PrivacyScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>{item.label}</Text>
-                  <Text style={styles.rowSub}>{item.sub}</Text>
+                  <Text style={styles.rowLabel}>{t(item.labelKey)}</Text>
+                  <Text style={styles.rowSub}>{t(item.subKey)}</Text>
                 </View>
               </View>
               <Switch

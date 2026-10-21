@@ -24,3 +24,15 @@ export function getCategoryCount(categoryId: CategoryItem['id']): number {
   if (categoryId === 'all') return complaints.length;
   return complaints.filter((c) => c.category === categoryId).length;
 }
+
+export function getCategoryLabel(t: (key: string) => string, categoryIdOrLabel: string): string {
+  if (categoryIdOrLabel === 'all' || categoryIdOrLabel === 'All') {
+    return t('all');
+  }
+  const cat = categories.find((c) => c.id === categoryIdOrLabel || c.label === categoryIdOrLabel);
+  if (cat) {
+    const translated = t(cat.id);
+    if (translated && translated !== cat.id) return translated;
+  }
+  return t(categoryIdOrLabel) || categoryIdOrLabel;
+}

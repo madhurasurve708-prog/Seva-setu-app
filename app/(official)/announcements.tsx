@@ -58,17 +58,29 @@ export default function AnnouncementsScreen() {
         contentContainerStyle={styles.tabs}
         style={styles.tabsWrap}
       >
-        {announcementsLoading && <Text style={styles.emptyText}>Loading announcements…</Text>}
+        {announcementsLoading && <Text style={styles.emptyText}>{t('loading')}</Text>}
         {announcementsError && <Text style={styles.emptyText}>{announcementsError}</Text>}
-        {TABS.map((t) => (
-          <Pressable
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tab, tab === t && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>{t}</Text>
-          </Pressable>
-        ))}
+        {TABS.map((tb) => {
+          const tabLabel =
+            tb === 'All'
+              ? t('all')
+              : tb === 'Emergency'
+              ? t('emergency')
+              : tb === 'High'
+              ? (t('priorityHigh') || t('high'))
+              : tb === 'Pinned'
+              ? (t('priorityPinned') || t('pinned'))
+              : (t('priorityNormal') || t('normal'));
+          return (
+            <Pressable
+              key={tb}
+              onPress={() => setTab(tb)}
+              style={[styles.tab, tab === tb && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, tab === tb && styles.tabTextActive]}>{tabLabel}</Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       <ScrollView
@@ -93,7 +105,7 @@ export default function AnnouncementsScreen() {
                   <View style={styles.cardTop}>
                     <View style={[styles.badge, { backgroundColor: s.bg }]}>
                       <MaterialCommunityIcons name={s.icon} size={11} color={s.text} />
-                      <Text style={[styles.badgeText, { color: s.text }]}>{a.priority}</Text>
+                      <Text style={[styles.badgeText, { color: s.text }]}>{t(a.priority.toLowerCase()) || a.priority}</Text>
                     </View>
                     <View style={styles.dateRow}>
                       <MaterialCommunityIcons name="calendar-outline" size={11} color={COLORS.textMuted} />
@@ -116,12 +128,12 @@ export default function AnnouncementsScreen() {
     return <DesktopPortal title={t('announcementsTitle')} initial={profile.avatarInitial}
       onLogout={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }}
       items={[
-        { label: 'Dashboard', route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
-        { label: 'Complaints', route: '/(official)/complaints', icon: 'clipboard-text-outline' },
-        { label: 'Announcements', route: '/(official)/announcements', icon: 'bullhorn-outline' },
-        { label: 'Reports', route: '/(official)/analytics', icon: 'chart-bar' },
-        { label: 'Settings', route: '/(official)/settings', icon: 'cog-outline' },
-        { label: 'Profile', route: '/(official)/profile', icon: 'account-outline' },
+        { label: t('dashboard'), route: '/(official)/dashboard', icon: 'view-dashboard-outline' },
+        { label: t('complaintsTitle'), route: '/(official)/complaints', icon: 'clipboard-text-outline' },
+        { label: t('announcements'), route: '/(official)/announcements', icon: 'bullhorn-outline' },
+        { label: t('reports'), route: '/(official)/analytics', icon: 'chart-bar' },
+        { label: t('settings'), route: '/(official)/settings', icon: 'cog-outline' },
+        { label: t('myProfile'), route: '/(official)/profile', icon: 'account-outline' },
       ]}><View style={styles.root}>{page}</View></DesktopPortal>;
   }
 

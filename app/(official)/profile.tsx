@@ -17,8 +17,10 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 import { OfficialScreen } from '@/components/official/OfficialScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 import { OfficialProfile, useOfficial } from '@/providers/official-provider';
+import { useTranslation } from '@/providers/localization-provider';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { profile, saveProfile, logout } = useOfficial();
 
@@ -51,9 +53,9 @@ export default function ProfileScreen() {
         [field]: value.trim(),
       };
       await saveProfile(updated);
-      Alert.alert('Success', `${field === 'phone' ? 'Phone number' : 'Email address'} updated successfully.`);
+      Alert.alert(t('success'), t('profileUpdated'));
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update field.');
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('profileUpdateError'));
     } finally {
       setSaving(false);
     }
@@ -61,15 +63,15 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Validation', 'Full name is required.');
+      Alert.alert(t('validationTitle'), t('nameRequired'));
       return;
     }
     if (!phone.trim()) {
-      Alert.alert('Validation', 'Phone number is required.');
+      Alert.alert(t('validationTitle'), t('phoneRequired'));
       return;
     }
     if (password.trim()) {
-      Alert.alert('Security', 'Please change your password from the Security Settings page to verify your identity.');
+      Alert.alert(t('securityTitle') || 'Security', t('changePasswordSecurityNotice') || 'Please change your password from the Security Settings page to verify your identity.');
       return;
     }
 
@@ -84,9 +86,9 @@ export default function ProfileScreen() {
         avatarInitial: name.trim().charAt(0).toUpperCase() || 'U',
       };
       await saveProfile(updated);
-      Alert.alert('Success', 'Profile updated successfully.');
+      Alert.alert(t('success'), t('profileUpdated'));
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to save profile. Please try again.');
+      Alert.alert(t('error'), err instanceof Error ? err.message : t('profileUpdateError'));
     } finally {
       setSaving(false);
     }
@@ -108,24 +110,24 @@ export default function ProfileScreen() {
     if (Platform.OS === 'web') {
       const ok =
         typeof window !== 'undefined'
-          ? window.confirm('Are you sure you want to logout?')
+          ? window.confirm(t('logoutConfirmMessage'))
           : true;
       if (ok) void doLogout();
       return;
     }
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => void doLogout() },
+    Alert.alert(t('logoutConfirmTitle'), t('logoutConfirmMessage'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logoutLabel'), style: 'destructive', onPress: () => void doLogout() },
     ]);
   };
 
   return (
-    <OfficialScreen title="My Profile" tab="profile" hideHeader={true}>
+    <OfficialScreen title={t('myProfile')} tab="profile" hideHeader={true}>
       {/* Header — matches CitizenScreen header exactly */}
       <View style={styles.headerWrap}>
         <View style={styles.header}>
           <View style={styles.headerBtn} />
-          <Text style={styles.headerTitle}>My Profile</Text>
+          <Text style={styles.headerTitle}>{t('myProfile')}</Text>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{profile.avatarInitial}</Text>
           </View>
@@ -154,15 +156,15 @@ export default function ProfileScreen() {
               <MaterialCommunityIcons name="camera" size={16} color={COLORS.white} />
             </View>
           </Pressable>
-          <Text style={styles.avatarLabel}>Tap to change profile picture</Text>
+          <Text style={styles.avatarLabel}>{t('tapToChangeProfilePic')}</Text>
         </View>
 
         {/* Editable fields card */}
         <GlassCard style={styles.formCard}>
           <CustomTextInput
             icon="account-outline"
-            label="Full Name"
-            placeholder="Enter full name"
+            label={t('fullName')}
+            placeholder={t('enterFullName')}
             value={name}
             onChangeText={setName}
           />
@@ -171,8 +173,8 @@ export default function ProfileScreen() {
             <View style={styles.editInputContainer}>
               <CustomTextInput
                 icon="phone-outline"
-                label="Phone Number"
-                placeholder="Enter phone number"
+                label={t('phoneNumber')}
+                placeholder={t('enterPhoneNumber')}
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={(txt) => {
@@ -194,7 +196,7 @@ export default function ProfileScreen() {
                   }}
                   style={[styles.miniBtn, styles.miniBtnSave]}
                 >
-                  <Text style={styles.miniBtnText}>Save</Text>
+                  <Text style={styles.miniBtnText}>{t('save')}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -204,7 +206,7 @@ export default function ProfileScreen() {
                   }}
                   style={[styles.miniBtn, styles.miniBtnCancel]}
                 >
-                  <Text style={styles.miniBtnTextCancel}>Cancel</Text>
+                  <Text style={styles.miniBtnTextCancel}>{t('cancel')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -213,8 +215,8 @@ export default function ProfileScreen() {
               <View style={styles.fieldViewLeft}>
                 <MaterialCommunityIcons name="phone-outline" size={20} color={COLORS.textMuted} />
                 <View style={styles.fieldViewTextCol}>
-                  <Text style={styles.fieldViewLabel}>Phone Number</Text>
-                  <Text style={styles.fieldViewValue}>{phone || 'Not registered'}</Text>
+                  <Text style={styles.fieldViewLabel}>{t('phoneNumber')}</Text>
+                  <Text style={styles.fieldViewValue}>{phone || t('notRegistered')}</Text>
                 </View>
               </View>
               <Pressable onPress={() => setIsPhoneEditing(true)} style={styles.editIconBtn}>
@@ -227,8 +229,8 @@ export default function ProfileScreen() {
             <View style={styles.editInputContainer}>
               <CustomTextInput
                 icon="email-outline"
-                label="Email Address (Optional)"
-                placeholder="Enter email address"
+                label={t('emailOptional')}
+                placeholder={t('enterEmail')}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -251,7 +253,7 @@ export default function ProfileScreen() {
                   }}
                   style={[styles.miniBtn, styles.miniBtnSave]}
                 >
-                  <Text style={styles.miniBtnText}>Save</Text>
+                  <Text style={styles.miniBtnText}>{t('save')}</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -261,7 +263,7 @@ export default function ProfileScreen() {
                   }}
                   style={[styles.miniBtn, styles.miniBtnCancel]}
                 >
-                  <Text style={styles.miniBtnTextCancel}>Cancel</Text>
+                  <Text style={styles.miniBtnTextCancel}>{t('cancel')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -270,8 +272,8 @@ export default function ProfileScreen() {
               <View style={styles.fieldViewLeft}>
                 <MaterialCommunityIcons name="email-outline" size={20} color={COLORS.textMuted} />
                 <View style={styles.fieldViewTextCol}>
-                  <Text style={styles.fieldViewLabel}>Email Address (Optional)</Text>
-                  <Text style={styles.fieldViewValue}>{email || 'Not registered'}</Text>
+                  <Text style={styles.fieldViewLabel}>{t('emailOptional')}</Text>
+                  <Text style={styles.fieldViewValue}>{email || t('notRegistered')}</Text>
                 </View>
               </View>
               <Pressable onPress={() => setIsEmailEditing(true)} style={styles.editIconBtn}>
@@ -282,8 +284,8 @@ export default function ProfileScreen() {
 
           <CustomTextInput
             icon="lock-outline"
-            label="Change Password (Optional)"
-            placeholder="Enter new password"
+            label={t('changePasswordOptional')}
+            placeholder={t('enterNewPassword')}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -291,12 +293,12 @@ export default function ProfileScreen() {
         </GlassCard>
 
         {/* Read-only workspace information */}
-        <Text style={styles.sectionHeader}>Workspace Information</Text>
+        <Text style={styles.sectionHeader}>{t('workspaceInformation')}</Text>
         <GlassCard style={styles.roCard}>
           <View style={styles.roGroup}>
             <View style={styles.roLabelRow}>
               <MaterialCommunityIcons name="badge-account-horizontal-outline" size={15} color={COLORS.textMuted} />
-              <Text style={styles.roLabel}>Employee / Official ID</Text>
+              <Text style={styles.roLabel}>{t('employeeOfficialId')}</Text>
             </View>
             <View style={styles.roField}>
               <Text style={styles.roValue}>{profile.employeeId}</Text>
@@ -307,7 +309,7 @@ export default function ProfileScreen() {
           <View style={styles.roGroup}>
             <View style={styles.roLabelRow}>
               <MaterialCommunityIcons name="account-cog-outline" size={15} color={COLORS.textMuted} />
-              <Text style={styles.roLabel}>Designation / Role</Text>
+              <Text style={styles.roLabel}>{t('designationRole')}</Text>
             </View>
             <View style={styles.roField}>
               <Text style={styles.roValue}>{profile.designation}</Text>
@@ -318,7 +320,7 @@ export default function ProfileScreen() {
           <View style={styles.roGroup}>
             <View style={styles.roLabelRow}>
               <MaterialCommunityIcons name="map-marker-outline" size={15} color={COLORS.textMuted} />
-              <Text style={styles.roLabel}>Assigned Ward</Text>
+              <Text style={styles.roLabel}>{t('assignedWard')}</Text>
             </View>
             <View style={styles.roField}>
               <Text style={styles.roValue}>{profile.ward}</Text>
@@ -330,7 +332,7 @@ export default function ProfileScreen() {
             <View style={styles.roGroup}>
               <View style={styles.roLabelRow}>
                 <MaterialCommunityIcons name="office-building" size={15} color={COLORS.textMuted} />
-                <Text style={styles.roLabel}>Assigned Department</Text>
+                <Text style={styles.roLabel}>{t('assignedDepartment')}</Text>
               </View>
               <View style={styles.roField}>
                 <Text style={styles.roValue}>{profile.department}</Text>
@@ -343,7 +345,7 @@ export default function ProfileScreen() {
         {/* Action Buttons */}
         <View style={{ marginTop: 12 }}>
           <PrimaryButton
-            label={saving ? 'Saving...' : 'Save Profile Changes'}
+            label={saving ? t('saving') : t('saveProfileChanges')}
             onPress={handleSave}
             disabled={saving}
             style={styles.saveBtn}
@@ -359,7 +361,7 @@ export default function ProfileScreen() {
             ]}
           >
             <MaterialCommunityIcons name="logout" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutText}>{loggingOut ? 'Logging out...' : 'Log Out of Portal'}</Text>
+            <Text style={styles.logoutText}>{loggingOut ? t('loggingOutLabel') : t('logOutOfPortal')}</Text>
           </Pressable>
         </View>
       </ScrollView>

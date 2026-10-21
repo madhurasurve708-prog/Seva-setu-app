@@ -90,7 +90,7 @@ export default function DepartmentLoginScreen() {
                 />
               </View>
               <Text style={styles.desktopLeftTitle}>{t('departmentLogin')}</Text>
-              <Text style={styles.desktopLeftSubtitle}>Malvan Municipal Council</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
               <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
             </View>
           </ImageBackground>
@@ -166,7 +166,7 @@ export default function DepartmentLoginScreen() {
       <AuthHero
         compact
         title={t('departmentLogin')}
-        subtitle="Malvan Municipal Council"
+        subtitle={t('malvanMunicipal')}
         badge={t('departmentAccess')}
         showLogo={true}
         onBack={onBackAction}

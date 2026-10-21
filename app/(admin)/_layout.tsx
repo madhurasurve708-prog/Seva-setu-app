@@ -7,30 +7,33 @@ import { COLORS, SHADOWS } from '@/constants/theme';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
-const ADMIN_MENU = [
-  { label: 'Dashboard', route: '/(admin)/dashboard', icon: 'view-dashboard-outline' as const },
-  { label: 'Ward Wise', route: '/(admin)/ward-wise', icon: 'map-outline' as const },
-  { label: 'Complaints', route: '/(admin)/complaints', icon: 'clipboard-text-outline' as const },
-  { label: 'Announcements', route: '/(admin)/announcements', icon: 'bullhorn-outline' as const },
-  { label: 'Users', route: '/(admin)/people', icon: 'account-group-outline' as const },
-  { label: 'Reports', route: '/(admin)/reports', icon: 'chart-box-outline' as const },
-  { label: 'Settings', route: '/(admin)/settings', icon: 'cog-outline' as const },
+const ADMIN_MENU = (t: (key: string) => string) => [
+  { label: t('dashboard'), route: '/(admin)/dashboard', icon: 'view-dashboard-outline' as const },
+  { label: t('wardWiseLabel'), route: '/(admin)/ward-wise', icon: 'map-outline' as const },
+  { label: t('complaintsTitle'), route: '/(admin)/complaints', icon: 'clipboard-text-outline' as const },
+  { label: t('tabAnnounce'), route: '/(admin)/announcements', icon: 'bullhorn-outline' as const },
+  { label: t('citizens'), route: '/(admin)/people', icon: 'account-group-outline' as const },
+  { label: t('reports'), route: '/(admin)/reports', icon: 'chart-box-outline' as const },
+  { label: t('settings'), route: '/(admin)/settings', icon: 'cog-outline' as const },
 ];
 
 const AdminDesktopSidebar = memo(function AdminDesktopSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, profile } = useOfficial();
+  const { t } = useTranslation();
+  const menu = useMemo(() => ADMIN_MENU(t), [t]);
+
   return (
     <View style={desktopStyles.sidebar}>
-      <View style={desktopStyles.brand}><MaterialCommunityIcons name="office-building-marker-outline" size={26} color={COLORS.primary} /><View><Text style={desktopStyles.brandTitle}>Seva Setu</Text><Text style={desktopStyles.brandSub}>MALVAN MUNICIPAL COUNCIL</Text></View></View>
-      <Text style={desktopStyles.menuTitle}>ADMINISTRATION</Text>
-      <View style={{ gap: 5 }}>{ADMIN_MENU.map((item) => {
+      <View style={desktopStyles.brand}><MaterialCommunityIcons name="office-building-marker-outline" size={26} color={COLORS.primary} /><View><Text style={desktopStyles.brandTitle}>Seva Setu</Text><Text style={desktopStyles.brandSub}>{t('malvanMunicipal').toUpperCase()}</Text></View></View>
+      <Text style={desktopStyles.menuTitle}>{t('administration')}</Text>
+      <View style={{ gap: 5 }}>{menu.map((item) => {
         const active = pathname.endsWith(`/${item.route.split('/').pop()}`);
         return <Pressable key={item.route} onPress={() => !active && router.replace(item.route as any)} style={[desktopStyles.item, active && desktopStyles.itemActive]}><MaterialCommunityIcons name={item.icon} size={20} color={active ? COLORS.white : COLORS.textMuted} /><Text style={[desktopStyles.itemText, active && desktopStyles.itemTextActive]}>{item.label}</Text></Pressable>;
       })}</View>
-      <View style={desktopStyles.profile}><View style={desktopStyles.avatar}><Text style={desktopStyles.avatarText}>{profile.avatarInitial}</Text></View><View style={{ flex: 1 }}><Text style={desktopStyles.profileName} numberOfLines={1}>{profile.name}</Text><Text style={desktopStyles.profileRole}>Municipal Administrator</Text></View></View>
-      <Pressable onPress={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }} style={desktopStyles.logout}><MaterialCommunityIcons name="logout" size={19} color={COLORS.danger} /><Text style={desktopStyles.logoutText}>Logout</Text></Pressable>
+      <View style={desktopStyles.profile}><View style={desktopStyles.avatar}><Text style={desktopStyles.avatarText}>{profile.avatarInitial}</Text></View><View style={{ flex: 1 }}><Text style={desktopStyles.profileName} numberOfLines={1}>{profile.name}</Text><Text style={desktopStyles.profileRole}>{t('municipalAdministrator')}</Text></View></View>
+      <Pressable onPress={() => { void logout().then(() => router.replace('/(auth)/role-selection' as any)); }} style={desktopStyles.logout}><MaterialCommunityIcons name="logout" size={19} color={COLORS.danger} /><Text style={desktopStyles.logoutText}>{t('logout')}</Text></Pressable>
     </View>
   );
 });
