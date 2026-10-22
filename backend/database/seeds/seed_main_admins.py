@@ -4,7 +4,7 @@ Main Admin seed script.
 Creates the 3 Main Admin accounts for the Seva Setu system:
 - Nagaradhyaksha (Mamta Waradkar)
 - Upnagaradhyaksha (Dipak Patkar)
-- CEO
+- CO
 
 Safe to run multiple times — uses INSERT ... ON CONFLICT DO NOTHING.
 Default password: admin@123 (must be changed after first login).
