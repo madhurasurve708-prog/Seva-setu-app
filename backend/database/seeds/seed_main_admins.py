@@ -37,8 +37,8 @@ MAIN_ADMINS_DATA = [
         "role": "upnagaradhyaksha",
     },
     {
-        "name": "CEO",
-        "role": "ceo",
+        "name": "CO",
+        "role": "CO",
     },
 ]
 
