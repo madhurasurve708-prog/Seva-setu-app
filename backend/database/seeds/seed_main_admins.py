@@ -68,6 +68,14 @@ def _seed_main_admins(db: Session) -> None:
     print("Seeding Main Admin accounts...")
     hashed_password = get_password_hash("admin@123")
 
+    # Migrate existing 'CEO' account to 'CO' if present
+    ceo_admin = db.query(MainAdmin).filter(MainAdmin.name == "CEO").first()
+    if ceo_admin:
+        print("  Migrating existing 'CEO' account to 'CO'...")
+        ceo_admin.name = "CO"
+        ceo_admin.role = "CO"
+        db.commit()
+
     rows = []
     for admin_data in MAIN_ADMINS_DATA:
         rows.append(

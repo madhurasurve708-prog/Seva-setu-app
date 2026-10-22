@@ -11,6 +11,8 @@ VALID_ADMIN_ROLES = frozenset({
     "nagaradhyaksha",
     "upnagaradhyaksha",
     "ceo",
+    "co",
+    "CO",
 })
 
 
