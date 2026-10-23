@@ -460,12 +460,24 @@ export const mr: Record<string, string> = {
   nagarsevakLoginSubtitle: "वॉर्ड-स्तरीय नगरपालिका डॅशबोर्डमध्ये प्रवेश करा.",
   signInToContinue: "सुरू ठेवण्यासाठी साइन इन करा",
   nagarsevakLoginHint:
-    "नगरसेवक पोर्टल उघडण्यासाठी तुमचे वॉर्ड अधिकारी क्रेडेन्शियल वापरा.",
+    "साइन इन करण्यासाठी तुमचे नाव, नोंदणीकृत मोबाइल क्रमांक आणि पासवर्ड प्रविष्ट करा.",
+  nagarsevakNameLabel: "नाव",
+  nagarsevakNamePlaceholder: "तुमचे नाव प्रविष्ट करा",
+  registeredMobileNumber: "नोंदणीकृत मोबाइल क्रमांक",
+  registeredMobilePlaceholder: "१०-अंकी नोंदणीकृत मोबाइल क्रमांक",
   wardLabel2: "वॉर्ड",
   wardPlaceholder: "वॉर्ड प्रविष्ट करा",
   passwordLabel: "पासवर्ड",
   passwordPlaceholder: "पासवर्ड प्रविष्ट करा",
   login: "लॉगिन",
+  nagarsevakRecoveryTitle: "पासवर्ड पुनर्प्राप्ती",
+  nagarsevakRecoverySubtitle: "नगरसेवक अधिकृत खाते",
+  nagarsevakRecoveryNotice:
+    "स्वयं-सेवा पासवर्ड पुनर्प्राप्ती सध्या नगरपरिषद सेवांसह जोडली जात आहे. आपले क्रेडेन्शियल रीसेट करण्यासाठी, कृपया नगरपरिषद प्रशासक डेस्कशी संपर्क साधा.",
+  contactAdminDesk: "प्रशासक डेस्कशी संपर्क साधा",
+  backToLogin: "लॉगिनवर परत जा",
+  recoveryRequestSent:
+    "पुनर्प्राप्ती विनंती नोंदवली. कृपया क्रेडेन्शियल पडताळणीसाठी प्रशासकीय डेस्कशी संपर्क साधा.",
 
   // ── Official / Nagarsevak Dashboard ───────────────────────────────────────
   wardOverview: "प्रभागाचा आढावा",

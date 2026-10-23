@@ -15,6 +15,7 @@ export default function AuthLayout() {
       <Stack.Screen name="role-selection" />
       <Stack.Screen name="citizen-login" />
       <Stack.Screen name="nagarsevak-login" />
+      <Stack.Screen name="nagarsevak-forgot-password" />
       <Stack.Screen name="department-login" />
       <Stack.Screen name="department-credentials" />
       <Stack.Screen name="admin-login" />

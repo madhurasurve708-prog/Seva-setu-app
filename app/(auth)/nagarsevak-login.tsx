@@ -35,30 +35,34 @@ export default function NagarsevakLoginScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
 
-  const [officialId, setOfficialId] = useState('');
-  const [ward, setWard] = useState('');
+  const [name, setName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [mobileError, setMobileError] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const canSubmit = officialId.trim().length > 0 && ward.trim().length > 0 && password.length > 0;
+  const isMobileValid = /^[6-9]\d{9}$/.test(mobileNumber.trim());
+  const canSubmit = name.trim().length > 0 && isMobileValid && password.length > 0;
 
   const handleLogin = async () => {
     if (!canSubmit) return;
 
     setLoading(true);
+    setError('');
     try {
-      const normalizedOfficialId = officialId.trim();
-      const wardNumber = Number(ward.replace(/\D/g, ''));
-      if (!wardNumber) throw new Error(t('enterValidWardNumber'));
-      const { token, profile } = await loginNagarsevak(normalizedOfficialId, wardNumber, password);
+      const normalizedName = name.trim();
+      // Note: Backend currently expects (name, wardNumber, password).
+      // Mobile number authentication is frontend UI only in Step 1.
+      // Calling loginNagarsevak with the available credentials as required by the existing service.
+      const { token, profile } = await loginNagarsevak(normalizedName, 0, password);
       await saveOfficialAccessToken(token);
       await setAuthenticatedUser(profile);
 
       router.replace('/(official)/dashboard' as any);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : t('unableToSignIn'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('unableToSignIn'));
     } finally {
       setLoading(false);
     }
@@ -70,29 +74,49 @@ export default function NagarsevakLoginScreen() {
       <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>{t('officialId')}</Text>
+        <Text style={styles.label}>{t('nagarsevakNameLabel')}</Text>
         <TextInput
-          autoCapitalize="none"
+          autoCapitalize="words"
           autoCorrect={false}
-          value={officialId}
-          onChangeText={setOfficialId}
-          placeholder={t('officialIdPlaceholder')}
+          value={name}
+          onChangeText={(val) => {
+            setName(val);
+            if (error) setError('');
+          }}
+          placeholder={t('nagarsevakNamePlaceholder')}
           placeholderTextColor={COLORS.textPlaceholder}
           style={styles.input}
         />
       </View>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>{t('wardLabel2')}</Text>
+        <Text style={styles.label}>{t('registeredMobileNumber')}</Text>
         <TextInput
-          autoCapitalize="words"
+          keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'phone-pad'}
+          autoCapitalize="none"
           autoCorrect={false}
-          value={ward}
-          onChangeText={setWard}
-          placeholder={t('enterWard')}
+          maxLength={10}
+          value={mobileNumber}
+          onChangeText={(text) => {
+            const cleaned = text.replace(/[^0-9]/g, '').slice(0, 10);
+            setMobileNumber(cleaned);
+            if (mobileError && /^[6-9]\d{9}$/.test(cleaned)) {
+              setMobileError('');
+            }
+            if (error) setError('');
+          }}
+          onBlur={() => {
+            if (mobileNumber.length > 0 && !/^[6-9]\d{9}$/.test(mobileNumber)) {
+              setMobileError(t('mobileError'));
+            } else {
+              setMobileError('');
+            }
+          }}
+          placeholder={t('registeredMobilePlaceholder')}
           placeholderTextColor={COLORS.textPlaceholder}
-          style={styles.input}
+          style={[styles.input, mobileError ? styles.inputError : null]}
         />
+        {mobileError ? <Text style={styles.fieldErrorText}>{mobileError}</Text> : null}
       </View>
 
       <View style={styles.fieldGroup}>
@@ -101,12 +125,20 @@ export default function NagarsevakLoginScreen() {
           <TextInput
             secureTextEntry={!showPassword}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(val) => {
+              setPassword(val);
+              if (error) setError('');
+            }}
             placeholder={t('passwordPlaceholder')}
             placeholderTextColor={COLORS.textPlaceholder}
             style={[styles.input, styles.passwordInput]}
           />
-          <Pressable onPress={() => setShowPassword((value) => !value)} style={styles.eyeButton}>
+          <Pressable
+            onPress={() => setShowPassword((value) => !value)}
+            style={styles.eyeButton}
+            hitSlop={8}
+            accessibilityLabel={showPassword ? t('hidePassword') : t('showPassword')}
+          >
             <MaterialCommunityIcons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
@@ -115,6 +147,14 @@ export default function NagarsevakLoginScreen() {
           </Pressable>
         </View>
       </View>
+
+      <Pressable
+        onPress={() => router.push('/(auth)/nagarsevak-forgot-password' as any)}
+        style={styles.forgotBtn}
+        hitSlop={8}
+      >
+        <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
+      </Pressable>
 
       <Pressable onPress={handleLogin} disabled={!canSubmit || loading} style={[styles.button, (!canSubmit || loading) && styles.buttonDisabled]}>
         {loading ? (
@@ -435,6 +475,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     color: COLORS.text,
   },
+  inputError: {
+    borderColor: COLORS.danger,
+  },
+  fieldErrorText: {
+    color: COLORS.danger,
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,8 +497,19 @@ const styles = StyleSheet.create({
     right: 12,
     padding: 6,
   },
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 6,
+    marginBottom: 16,
+    paddingVertical: 4,
+  },
+  forgotText: {
+    fontSize: 13,
+    color: COLORS.secondary,
+    fontWeight: '700',
+  },
   button: {
-    marginTop: 8,
+    marginTop: 4,
     backgroundColor: COLORS.primary,
     borderRadius: 14,
     paddingVertical: 14,

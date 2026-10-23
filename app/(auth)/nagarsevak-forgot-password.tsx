@@ -1,0 +1,476 @@
+// app/(auth)/nagarsevak-forgot-password.tsx
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Image, ImageBackground } from 'expo-image';
+import React, { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import LanguageToggle from '@/components/common/LanguageToggle';
+import { AuthHero } from '@/components/common/AuthScaffold';
+import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
+import { useTranslation } from '@/providers/localization-provider';
+
+export default function NagarsevakForgotPasswordScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
+
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [mobileError, setMobileError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const isMobileValid = /^[6-9]\d{9}$/.test(mobileNumber.trim());
+
+  const handleRequestRecovery = () => {
+    if (!isMobileValid) {
+      setMobileError(t('mobileError'));
+      return;
+    }
+    setMobileError('');
+    setSubmitted(true);
+  };
+
+  const formCard = (
+    <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+      <Text style={styles.cardTitle}>{t('nagarsevakRecoveryTitle')}</Text>
+      <Text style={styles.cardText}>{t('nagarsevakRecoverySubtitle')}</Text>
+
+      {/* Info Notice Box */}
+      <View style={styles.noticeBox}>
+        <MaterialCommunityIcons name="information-outline" size={20} color={COLORS.secondary} style={styles.noticeIcon} />
+        <Text style={styles.noticeText}>{t('nagarsevakRecoveryNotice')}</Text>
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <Text style={styles.label}>{t('registeredMobileNumber')}</Text>
+        <TextInput
+          keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'phone-pad'}
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={10}
+          value={mobileNumber}
+          onChangeText={(text) => {
+            const cleaned = text.replace(/[^0-9]/g, '').slice(0, 10);
+            setMobileNumber(cleaned);
+            if (mobileError && /^[6-9]\d{9}$/.test(cleaned)) {
+              setMobileError('');
+            }
+          }}
+          placeholder={t('registeredMobilePlaceholder')}
+          placeholderTextColor={COLORS.textPlaceholder}
+          style={[styles.input, mobileError ? styles.inputError : null]}
+        />
+        {mobileError ? <Text style={styles.fieldErrorText}>{mobileError}</Text> : null}
+      </View>
+
+      {submitted ? (
+        <View style={styles.submittedBox}>
+          <MaterialCommunityIcons name="check-circle-outline" size={22} color={COLORS.primary} style={styles.submittedIcon} />
+          <Text style={styles.submittedText}>{t('recoveryRequestSent')}</Text>
+        </View>
+      ) : null}
+
+      <Pressable
+        onPress={handleRequestRecovery}
+        disabled={!isMobileValid}
+        style={[styles.button, !isMobileValid && styles.buttonDisabled]}
+      >
+        <Text style={styles.buttonText}>{t('contactAdminDesk')}</Text>
+      </Pressable>
+
+      <Pressable onPress={() => router.back()} style={styles.backLink} hitSlop={8}>
+        <MaterialCommunityIcons name="arrow-left" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
+        <Text style={styles.backLinkText}>{t('backToLogin')}</Text>
+      </Pressable>
+    </View>
+  );
+
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopContainer}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+        {/* Left Side: 45% Width */}
+        <View style={styles.desktopLeft}>
+          <ImageBackground
+            source={require('../../assets/images/hero_banner.webp')}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          >
+            <LinearGradient
+              colors={[
+                'rgba(5, 18, 35, 0.85)',
+                'rgba(8, 55, 110, 0.72)',
+                'rgba(5, 18, 35, 0.92)',
+              ]}
+              locations={[0, 0.5, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+
+            <View style={styles.desktopLeftHeader}>
+              <Pressable
+                onPress={() => router.back()}
+                style={styles.desktopBackBtn}
+                hitSlop={12}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.white} />
+              </Pressable>
+              <LanguageToggle size={40} variant="dark" />
+            </View>
+
+            <View style={styles.desktopLeftContent}>
+              <View style={styles.desktopLogoWrap}>
+                <Image
+                  source={require('../../assets/images/logo.webp')}
+                  style={styles.desktopLogo}
+                  contentFit="contain"
+                />
+              </View>
+              <Text style={styles.desktopLeftTitle}>{t('nagarsevakRecoveryTitle')}</Text>
+              <Text style={styles.desktopLeftSubtitle}>{t('malvanMunicipal')}</Text>
+              <Text style={styles.desktopLeftSlogan}>&quot;आपला मालवण, आपली जबाबदारी&quot;</Text>
+            </View>
+          </ImageBackground>
+        </View>
+
+        {/* Right Side: 55% Width */}
+        <View style={styles.desktopRight}>
+          <KeyboardAvoidingView
+            style={styles.desktopRightContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.desktopCardWrapper}>
+              {formCard}
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[styles.safeArea, isDesktop && styles.safeAreaDesktop]} edges={['left', 'right', 'bottom']}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      {isDesktop ? (
+        <AuthHero
+          compact
+          title={t('nagarsevakRecoveryTitle')}
+          subtitle={t('malvanMunicipal')}
+          showLogo
+          onBack={() => router.back()}
+        />
+      ) : (
+        <LinearGradient
+          colors={[COLORS.primary, COLORS.secondary]}
+          style={[styles.header, { paddingTop: insets.top + 14 }]}
+        >
+          <View style={[styles.headerContent, isDesktop && styles.headerContentDesktop]}>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.backBtn}
+              hitSlop={10}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.white} />
+            </Pressable>
+            <View style={styles.iconWrap}>
+              <MaterialCommunityIcons name="lock-reset" size={26} color={COLORS.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{t('nagarsevakRecoveryTitle')}</Text>
+              <Text style={styles.subtitle}>{t('nagarsevakRecoverySubtitle')}</Text>
+            </View>
+            <LanguageToggle size={38} variant="dark" />
+          </View>
+        </LinearGradient>
+      )}
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={[styles.container, isDesktop && styles.containerDesktop]}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          {formCard}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    height: (Platform.OS === 'web' ? '100vh' : '100%') as any,
+    backgroundColor: '#F8FAFC',
+  },
+  desktopLeft: {
+    width: '45%',
+    height: '100%',
+    position: 'relative',
+  },
+  desktopLeftHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    zIndex: 10,
+  },
+  desktopBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  desktopLeftContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingBottom: 64,
+  },
+  desktopLogoWrap: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 18,
+    borderRadius: 28,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      } as any,
+    }),
+  },
+  desktopLogo: {
+    width: 80,
+    height: 80,
+  },
+  desktopLeftTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  desktopLeftSubtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.88)',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  desktopLeftSlogan: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: 'rgba(255, 255, 255, 0.72)',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  desktopRight: {
+    width: '55%',
+    height: '100%',
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  desktopRightContainer: {
+    width: '100%',
+    maxWidth: 480,
+    justifyContent: 'center',
+  },
+  desktopCardWrapper: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 40,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    width: '100%',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  safeAreaDesktop: { backgroundColor: '#F3F7FB' },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerContentDesktop: { width: '100%', maxWidth: 980, alignSelf: 'center' },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.white,
+  },
+  subtitle: {
+    ...TYPOGRAPHY.caption,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
+  container: {
+    flex: 1,
+    marginTop: -12,
+  },
+  containerDesktop: { backgroundColor: '#F5F8FC', justifyContent: 'center', marginTop: 0 },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 8,
+  },
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: 24,
+    padding: 20,
+    ...SHADOWS.card,
+  },
+  cardDesktop: { marginTop: 0, borderRadius: 24, padding: 32, borderWidth: 1, borderColor: 'rgba(226,232,240,0.95)', ...SHADOWS.xl },
+  cardTitle: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.text,
+    marginBottom: 6,
+  },
+  cardText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    marginBottom: 16,
+  },
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(11, 79, 138, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(11, 79, 138, 0.2)',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
+  noticeIcon: {
+    marginTop: 2,
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  fieldGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: COLORS.surface,
+    color: COLORS.text,
+    fontSize: 15,
+  },
+  inputError: {
+    borderColor: COLORS.danger,
+  },
+  fieldErrorText: {
+    color: COLORS.danger,
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  submittedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  submittedIcon: {
+    marginTop: 1,
+  },
+  submittedText: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  button: {
+    marginTop: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    ...TYPOGRAPHY.button,
+  },
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    paddingVertical: 6,
+  },
+  backLinkText: {
+    color: COLORS.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+});
