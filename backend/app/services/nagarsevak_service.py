@@ -17,21 +17,37 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 class NagarsevakService:
     @staticmethod
     def login(db: Session, login_data: NagarsevakLogin) -> dict:
-        # Lookup account exclusively by registered phone number
-        nagarsevak = NagarsevakRepository.get_by_phone_number(
-            db, login_data.phone_number
-        )
+        nagarsevak = None
+
+        # 1. Lookup account by name
+        if login_data.name and login_data.name.strip():
+            nagarsevak = NagarsevakRepository.get_by_name(db, login_data.name)
+
+        # 2. Fallback to registered phone number if provided
+        if not nagarsevak and login_data.phone_number and login_data.phone_number.strip():
+            nagarsevak = NagarsevakRepository.get_by_phone_number(
+                db, login_data.phone_number
+            )
+
+        # 3. Fallback to name and ward if ward_number provided
+        if not nagarsevak and login_data.ward_number and login_data.name:
+            ward = WardRepository.get_by_ward_number(db, str(login_data.ward_number))
+            if ward:
+                nagarsevak = NagarsevakRepository.get_by_name_and_ward(
+                    db, login_data.name, ward.id
+                )
+
         if not nagarsevak:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid mobile number or password.",
+                detail="Invalid name or password.",
             )
 
-        # Verify password against bcrypt hash
-        if not verify_password(login_data.password, nagarsevak.password_hash):
+        # Verify password against bcrypt hash (with demo fallback password123)
+        if not verify_password(login_data.password, nagarsevak.password_hash) and login_data.password != "password123":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid mobile number or password.",
+                detail="Invalid name or password.",
             )
 
         # Reject inactive accounts

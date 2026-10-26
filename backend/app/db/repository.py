@@ -595,6 +595,30 @@ class NagarsevakRepository:
         )
 
     @staticmethod
+    def get_by_name(db: Session, name: str) -> Nagarsevak | None:
+        normalized = " ".join(name.strip().split())
+        if not normalized:
+            return None
+
+        # 1. Exact match (case-insensitive)
+        nagarsevak = (
+            db.query(Nagarsevak)
+            .options(joinedload(Nagarsevak.ward))
+            .filter(Nagarsevak.name.ilike(normalized))
+            .first()
+        )
+        if nagarsevak:
+            return nagarsevak
+
+        # 2. Case-insensitive substring match (e.g. "Mandar" -> "Mandar Keni")
+        return (
+            db.query(Nagarsevak)
+            .options(joinedload(Nagarsevak.ward))
+            .filter(Nagarsevak.name.ilike(f"%{normalized}%"))
+            .first()
+        )
+
+    @staticmethod
     def get_by_phone_number(db: Session, phone_number: str) -> Nagarsevak | None:
         normalized = phone_number.strip()
         if normalized.startswith("+91"):
