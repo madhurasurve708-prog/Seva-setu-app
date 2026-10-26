@@ -17,28 +17,21 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 class NagarsevakService:
     @staticmethod
     def login(db: Session, login_data: NagarsevakLogin) -> dict:
-        ward = WardRepository.get_by_ward_number(db, str(login_data.ward_number))
-        if not ward:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid name, ward, or password.",
-            )
-
-        # Resolve the public ward number to the internal ward_id used by the database.
-        nagarsevak = NagarsevakRepository.get_by_name_and_ward(
-            db, login_data.name, ward.id
+        # Lookup account exclusively by registered phone number
+        nagarsevak = NagarsevakRepository.get_by_phone_number(
+            db, login_data.phone_number
         )
         if not nagarsevak:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid name, ward, or password.",
+                detail="Invalid mobile number or password.",
             )
 
         # Verify password against bcrypt hash
         if not verify_password(login_data.password, nagarsevak.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid name, ward, or password.",
+                detail="Invalid mobile number or password.",
             )
 
         # Reject inactive accounts
@@ -48,11 +41,12 @@ class NagarsevakService:
                 detail="This Nagarsevak account is inactive.",
             )
 
-        # Issue JWT — subject is the Nagarsevak's database ID
-        token = create_access_token(subject=nagarsevak.id)
+        # Issue JWT — subject is the Nagarsevak's database ID with explicit role
+        token = create_access_token(subject=nagarsevak.id, role="nagarsevak")
 
         # Return the ORM object directly; Pydantic reads @property accessors
-        # (ward_name, ward_number) via from_attributes=True
+        # (ward_name, ward_number) via from_attributes=True.
+        # This returns the real account identity from the database.
         return {
             "access_token": token,
             "token_type": "bearer",

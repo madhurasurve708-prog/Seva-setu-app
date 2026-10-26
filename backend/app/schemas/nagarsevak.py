@@ -7,7 +7,8 @@ class NagarsevakLogin(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str = Field(..., min_length=1, max_length=150, description="Display name of the Nagarsevak")
-    ward_number: int = Field(..., gt=0, description="Ward number for login, for example 2")
+    phone_number: str = Field(..., min_length=10, max_length=20, description="Registered mobile number for authentication")
+    ward_number: Optional[int] = Field(None, description="Optional legacy ward number for backwards compatibility")
     password: str = Field(..., min_length=1, max_length=100, description="Password")
 
 

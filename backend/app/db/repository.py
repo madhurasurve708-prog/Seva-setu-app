@@ -595,6 +595,27 @@ class NagarsevakRepository:
         )
 
     @staticmethod
+    def get_by_phone_number(db: Session, phone_number: str) -> Nagarsevak | None:
+        normalized = phone_number.strip()
+        if normalized.startswith("+91"):
+            normalized = normalized[3:].strip()
+        elif normalized.startswith("0") and len(normalized) == 11:
+            normalized = normalized[1:]
+
+        return (
+            db.query(Nagarsevak)
+            .options(joinedload(Nagarsevak.ward))
+            .filter(
+                or_(
+                    Nagarsevak.phone_number == normalized,
+                    Nagarsevak.phone_number == phone_number.strip(),
+                    Nagarsevak.phone_number == f"+91{normalized}",
+                )
+            )
+            .first()
+        )
+
+    @staticmethod
     def get_by_name_and_ward(db: Session, name: str, ward_id: int) -> Nagarsevak | None:
         return (
             db.query(Nagarsevak)

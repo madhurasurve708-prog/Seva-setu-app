@@ -74,6 +74,74 @@ function requestCacheKey(path: string, token?: string | null) {
   return `${path}|${token ?? 'anonymous'}`;
 }
 
+export function extractErrorMessage(payload: unknown, status: number): string {
+  if (!payload || typeof payload !== 'object') {
+    return status >= 500
+      ? 'Municipal server error. Please try again later.'
+      : `Request failed (${status}).`;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  // 1. If detail is a plain string
+  if (typeof record.detail === 'string' && record.detail.trim().length > 0) {
+    if (status >= 500) {
+      return 'Municipal server error. Please try again later.';
+    }
+    return record.detail.trim();
+  }
+
+  // 2. If detail is an array (e.g. FastAPI / Pydantic 422 validation errors)
+  if (Array.isArray(record.detail) && record.detail.length > 0) {
+    const messages = record.detail
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (item && typeof item === 'object') {
+          const dict = item as Record<string, unknown>;
+          const msg = typeof dict.msg === 'string' ? dict.msg.trim() : typeof dict.message === 'string' ? dict.message.trim() : '';
+          const loc = Array.isArray(dict.loc)
+            ? dict.loc.filter((p) => p !== 'body').join('.')
+            : '';
+          if (loc && msg) {
+            return `${loc}: ${msg}`;
+          }
+          if (msg) return msg;
+        }
+        return '';
+      })
+      .filter((s) => s.length > 0);
+
+    if (messages.length > 0) {
+      return messages.join('. ');
+    }
+  }
+
+  // 3. If detail is an object with msg / message
+  if (record.detail && typeof record.detail === 'object') {
+    const detailObj = record.detail as Record<string, unknown>;
+    const msg = typeof detailObj.msg === 'string' ? detailObj.msg.trim() : typeof detailObj.message === 'string' ? detailObj.message.trim() : '';
+    if (msg) return msg;
+  }
+
+  // 4. If message is a string
+  if (typeof record.message === 'string' && record.message.trim().length > 0) {
+    if (status >= 500) {
+      return 'Municipal server error. Please try again later.';
+    }
+    return record.message.trim();
+  }
+
+  // 5. Friendly fallbacks by HTTP status code
+  if (status === 400) return 'Invalid request. Please verify entered data.';
+  if (status === 401) return 'Invalid credentials. Please check your details and try again.';
+  if (status === 403) return 'Access denied. Account may be inactive or restricted.';
+  if (status === 404) return 'Requested service was not found.';
+  if (status === 422) return 'Invalid request data. Please check the entered fields.';
+  if (status >= 500) return 'Municipal server error. Please try again later.';
+
+  return `Request failed (${status}).`;
+}
+
 async function performRequest<T>(path: string, options: RequestInit, token?: string | null): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -89,7 +157,9 @@ async function performRequest<T>(path: string, options: RequestInit, token?: str
       },
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new ApiError(payload.detail ?? payload.message ?? `Request failed (${response.status}).`, response.status);
+    if (!response.ok) {
+      throw new ApiError(extractErrorMessage(payload, response.status), response.status);
+    }
     return payload as T;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError' && !options.signal?.aborted) {

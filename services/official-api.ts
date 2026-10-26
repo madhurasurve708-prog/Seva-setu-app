@@ -58,10 +58,34 @@ export async function createMainAdminAnnouncement(input: AnnouncementInput, toke
   }, token);
 }
 
-export async function loginNagarsevak(name: string, wardNumber: number, password: string) {
-  const response = await apiRequest<LoginResponse>('/api/nagarsevak/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, ward_number: wardNumber, password }) });
+export async function loginNagarsevak(name: string, phoneNumber: string, password: string) {
+  const response = await apiRequest<LoginResponse>('/api/nagarsevak/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, phone_number: phoneNumber, password }),
+  });
   const user = response.nagarsevak ?? {};
-  const profile: OfficialProfile = { name: String(user.name ?? name), phone: String(user.phone_number ?? ''), email: '', username: name, employeeId: `NAG-${String(user.id ?? '')}`, designation: 'Nagarsevak (Ward Representative)', ward: `Ward ${String(user.ward_number ?? wardNumber)}`, locality: String(user.ward_name ?? ''), department: '', role: 'nagarsevak', roleLabel: 'Nagarsevak', avatarUri: typeof user.profile_photo_url === 'string' ? user.profile_photo_url : undefined, avatarInitial: String(user.name ?? name).charAt(0).toUpperCase(), language: 'English' };
+  const wardNumberStr = String(user.ward_number ?? '').trim();
+  const wardDisplay = wardNumberStr
+    ? (wardNumberStr.toLowerCase().startsWith('ward') ? wardNumberStr : `Ward ${wardNumberStr}`)
+    : '';
+
+  const profile: OfficialProfile = {
+    name: String(user.name ?? name),
+    phone: String(user.phone_number ?? phoneNumber),
+    email: '',
+    username: String(user.name ?? name),
+    employeeId: user.id ? `NAG-${String(user.id)}` : 'NAG',
+    designation: 'Nagarsevak (Ward Representative)',
+    ward: wardDisplay,
+    locality: String(user.ward_name ?? ''),
+    department: '',
+    role: 'nagarsevak',
+    roleLabel: 'Nagarsevak',
+    avatarUri: typeof user.profile_photo_url === 'string' ? user.profile_photo_url : undefined,
+    avatarInitial: String(user.name ?? name).charAt(0).toUpperCase(),
+    language: 'English',
+  };
   return { token: response.access_token, profile };
 }
 

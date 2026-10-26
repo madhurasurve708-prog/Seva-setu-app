@@ -53,16 +53,24 @@ export default function NagarsevakLoginScreen() {
     setError('');
     try {
       const normalizedName = name.trim();
-      // Note: Backend currently expects (name, wardNumber, password).
-      // Mobile number authentication is frontend UI only in Step 1.
-      // Calling loginNagarsevak with the available credentials as required by the existing service.
-      const { token, profile } = await loginNagarsevak(normalizedName, 0, password);
+      const normalizedMobile = mobileNumber.trim();
+      const { token, profile } = await loginNagarsevak(normalizedName, normalizedMobile, password);
       await saveOfficialAccessToken(token);
       await setAuthenticatedUser(profile);
 
       router.replace('/(official)/dashboard' as any);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('unableToSignIn'));
+      let displayMessage = t('unableToSignIn');
+      if (err instanceof Error && err.message) {
+        displayMessage = err.message;
+      } else if (typeof err === 'string' && err.trim().length > 0) {
+        displayMessage = err.trim();
+      }
+
+      if (typeof displayMessage === 'object' || displayMessage === '[object Object]') {
+        displayMessage = t('unableToSignIn');
+      }
+      setError(displayMessage);
     } finally {
       setLoading(false);
     }
