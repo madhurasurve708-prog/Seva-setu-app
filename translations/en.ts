@@ -446,7 +446,7 @@ export const en = {
   nagarsevakLogin: 'Nagarsevak Login',
   nagarsevakLoginSubtitle: 'Access the ward-level municipal dashboard.',
   signInToContinue: 'Sign in to continue',
-  nagarsevakLoginHint: 'Enter your name, registered mobile number, and password to sign in.',
+  nagarsevakLoginHint: 'Enter your registered mobile number and password to sign in.',
   nagarsevakNameLabel: 'Name',
   nagarsevakNamePlaceholder: 'Enter your name',
   registeredMobileNumber: 'Registered Mobile Number',

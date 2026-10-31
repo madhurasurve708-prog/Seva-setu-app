@@ -6,10 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class NagarsevakLogin(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    name: str = Field(..., min_length=1, max_length=150, description="Display name of the Nagarsevak")
+    phone_number: str = Field(..., min_length=10, max_length=20, description="Registered mobile number of the Nagarsevak")
     password: str = Field(..., min_length=1, max_length=100, description="Password")
-    phone_number: Optional[str] = Field(None, max_length=20, description="Optional registered mobile number for authentication")
-    ward_number: Optional[int] = Field(None, description="Optional legacy ward number for backwards compatibility")
 
 
 class NagarsevakProfile(BaseModel):
@@ -53,4 +51,3 @@ class NagarsevakChangePassword(BaseModel):
 
 class OfficialChangePassword(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=100, description="New secure password")
-

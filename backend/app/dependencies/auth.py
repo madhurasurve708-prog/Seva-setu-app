@@ -44,6 +44,13 @@ def get_current_nagarsevak(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if not nagarsevak.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This Nagarsevak account is inactive.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return nagarsevak
 
 
@@ -108,9 +115,8 @@ def get_current_official(
         nagarsevak = NagarsevakRepository.get_by_id(db, nagarsevak_id)
         if not nagarsevak or not nagarsevak.is_active:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Nagarsevak not found or inactive",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This Nagarsevak account is inactive.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return {"role": "nagarsevak", "user": nagarsevak}
-

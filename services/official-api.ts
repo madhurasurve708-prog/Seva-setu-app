@@ -58,11 +58,14 @@ export async function createMainAdminAnnouncement(input: AnnouncementInput, toke
   }, token);
 }
 
-export async function loginNagarsevak(name: string, phoneNumber: string, password: string) {
+export async function loginNagarsevak(phoneNumber: string, password: string) {
   const response = await apiRequest<LoginResponse>('/api/nagarsevak/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, phone_number: phoneNumber, password }),
+    body: JSON.stringify({
+      phone_number: phoneNumber.trim(),
+      password,
+    }),
   });
   const user = response.nagarsevak ?? {};
   const wardNumberStr = String(user.ward_number ?? '').trim();
@@ -71,10 +74,10 @@ export async function loginNagarsevak(name: string, phoneNumber: string, passwor
     : '';
 
   const profile: OfficialProfile = {
-    name: String(user.name ?? name),
-    phone: String(user.phone_number ?? phoneNumber),
+    name: String(user.name ?? ''),
+    phone: String(user.phone_number ?? phoneNumber.trim()),
     email: '',
-    username: String(user.name ?? name),
+    username: String(user.name ?? ''),
     employeeId: user.id ? `NAG-${String(user.id)}` : 'NAG',
     designation: 'Nagarsevak (Ward Representative)',
     ward: wardDisplay,
@@ -83,7 +86,7 @@ export async function loginNagarsevak(name: string, phoneNumber: string, passwor
     role: 'nagarsevak',
     roleLabel: 'Nagarsevak',
     avatarUri: typeof user.profile_photo_url === 'string' ? user.profile_photo_url : undefined,
-    avatarInitial: String(user.name ?? name).charAt(0).toUpperCase(),
+    avatarInitial: String(user.name ?? '').charAt(0).toUpperCase(),
     language: 'English',
   };
   return { token: response.access_token, profile };

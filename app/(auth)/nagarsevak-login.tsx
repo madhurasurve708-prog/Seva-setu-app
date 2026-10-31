@@ -35,16 +35,13 @@ export default function NagarsevakLoginScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
 
-  const [name, setName] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [mobileError, setMobileError] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isMobileValid = /^[6-9]\d{9}$/.test(mobileNumber.trim());
-  const canSubmit = name.trim().length > 0 && isMobileValid && password.length > 0;
+  const canSubmit = phoneNumber.trim().length > 0 && password.length > 0;
 
   const handleLogin = async () => {
     if (!canSubmit) return;
@@ -52,9 +49,7 @@ export default function NagarsevakLoginScreen() {
     setLoading(true);
     setError('');
     try {
-      const normalizedName = name.trim();
-      const normalizedMobile = mobileNumber.trim();
-      const { token, profile } = await loginNagarsevak(normalizedName, normalizedMobile, password);
+      const { token, profile } = await loginNagarsevak(phoneNumber.trim(), password);
       await saveOfficialAccessToken(token);
       await setAuthenticatedUser(profile);
 
@@ -82,49 +77,20 @@ export default function NagarsevakLoginScreen() {
       <Text style={styles.cardText}>{t('nagarsevakLoginHint')}</Text>
 
       <View style={styles.fieldGroup}>
-        <Text style={styles.label}>{t('nagarsevakNameLabel')}</Text>
-        <TextInput
-          autoCapitalize="words"
-          autoCorrect={false}
-          value={name}
-          onChangeText={(val) => {
-            setName(val);
-            if (error) setError('');
-          }}
-          placeholder={t('nagarsevakNamePlaceholder')}
-          placeholderTextColor={COLORS.textPlaceholder}
-          style={styles.input}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
         <Text style={styles.label}>{t('registeredMobileNumber')}</Text>
         <TextInput
-          keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'phone-pad'}
           autoCapitalize="none"
           autoCorrect={false}
-          maxLength={10}
-          value={mobileNumber}
-          onChangeText={(text) => {
-            const cleaned = text.replace(/[^0-9]/g, '').slice(0, 10);
-            setMobileNumber(cleaned);
-            if (mobileError && /^[6-9]\d{9}$/.test(cleaned)) {
-              setMobileError('');
-            }
+          keyboardType="phone-pad"
+          value={phoneNumber}
+          onChangeText={(val) => {
+            setPhoneNumber(val);
             if (error) setError('');
-          }}
-          onBlur={() => {
-            if (mobileNumber.length > 0 && !/^[6-9]\d{9}$/.test(mobileNumber)) {
-              setMobileError(t('mobileError'));
-            } else {
-              setMobileError('');
-            }
           }}
           placeholder={t('registeredMobilePlaceholder')}
           placeholderTextColor={COLORS.textPlaceholder}
-          style={[styles.input, mobileError ? styles.inputError : null]}
+          style={styles.input}
         />
-        {mobileError ? <Text style={styles.fieldErrorText}>{mobileError}</Text> : null}
       </View>
 
       <View style={styles.fieldGroup}>

@@ -460,7 +460,7 @@ export const mr: Record<string, string> = {
   nagarsevakLoginSubtitle: "वॉर्ड-स्तरीय नगरपालिका डॅशबोर्डमध्ये प्रवेश करा.",
   signInToContinue: "सुरू ठेवण्यासाठी साइन इन करा",
   nagarsevakLoginHint:
-    "साइन इन करण्यासाठी तुमचे नाव, नोंदणीकृत मोबाइल क्रमांक आणि पासवर्ड प्रविष्ट करा.",
+    "साइन इन करण्यासाठी तुमचा नोंदणीकृत मोबाइल क्रमांक आणि पासवर्ड प्रविष्ट करा.",
   nagarsevakNameLabel: "नाव",
   nagarsevakNamePlaceholder: "तुमचे नाव प्रविष्ट करा",
   registeredMobileNumber: "नोंदणीकृत मोबाइल क्रमांक",

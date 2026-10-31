@@ -14,8 +14,7 @@ def run_tests():
     # 1. Attempt login with old password
     print("\n1. Testing login with initial seeded password...")
     login_data = {
-        "name": "Mamata Waradkar",
-        "ward_number": 1,
+        "phone_number": "8208454975",
         "password": "password123"
     }
     response = requests.post(f"{BASE_URL}/api/nagarsevak/login", json=login_data)
@@ -80,8 +79,7 @@ def run_tests():
     # 6. Verify that the NEW password works
     print("\n6. Testing login with the NEW password...")
     login_data_new = {
-        "name": "Mamata Waradkar",
-        "ward_number": 1,
+        "phone_number": "8208454975",
         "password": "newpassword123"
     }
     response = requests.post(f"{BASE_URL}/api/nagarsevak/login", json=login_data_new)

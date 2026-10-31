@@ -15,11 +15,12 @@ class Nagarsevak(Base):
         # Prevents duplicate nagarsevak entries for the same ward.
         # Also used as the ON CONFLICT target in the seed script.
         UniqueConstraint("name", "ward_id", name="uq_nagarsevak_name_ward"),
+        UniqueConstraint("phone_number", name="uq_nagarsevak_phone_number"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+    phone_number: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
     ward_id: Mapped[int] = mapped_column(ForeignKey("wards.id", ondelete="RESTRICT"), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

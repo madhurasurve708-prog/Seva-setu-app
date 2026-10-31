@@ -1,6 +1,8 @@
 from sqlalchemy import desc, or_, and_, func, case
 from sqlalchemy.orm import Session, joinedload
 from datetime import date
+from fastapi import HTTPException, status
+from app.utils.phone import normalize_phone_number
 from app.models.citizen import Citizen
 from app.models.complaint import Complaint
 from app.models.category import Category
@@ -620,24 +622,30 @@ class NagarsevakRepository:
 
     @staticmethod
     def get_by_phone_number(db: Session, phone_number: str) -> Nagarsevak | None:
-        normalized = phone_number.strip()
-        if normalized.startswith("+91"):
-            normalized = normalized[3:].strip()
-        elif normalized.startswith("0") and len(normalized) == 11:
-            normalized = normalized[1:]
+        normalized = normalize_phone_number(phone_number)
+        raw_stripped = phone_number.strip()
 
-        return (
+        candidates = (
             db.query(Nagarsevak)
             .options(joinedload(Nagarsevak.ward))
             .filter(
                 or_(
                     Nagarsevak.phone_number == normalized,
-                    Nagarsevak.phone_number == phone_number.strip(),
+                    Nagarsevak.phone_number == raw_stripped,
                     Nagarsevak.phone_number == f"+91{normalized}",
                 )
             )
-            .first()
+            .all()
         )
+
+        if not candidates:
+            return None
+        if len(candidates) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Multiple accounts found with this phone number. Please contact municipal administration.",
+            )
+        return candidates[0]
 
     @staticmethod
     def get_by_name_and_ward(db: Session, name: str, ward_id: int) -> Nagarsevak | None:
@@ -660,7 +668,8 @@ class NagarsevakRepository:
 
     @staticmethod
     def update_phone(db: Session, nagarsevak: Nagarsevak, phone_number: str) -> Nagarsevak:
-        nagarsevak.phone_number = phone_number.strip()
+        normalized = normalize_phone_number(phone_number)
+        nagarsevak.phone_number = normalized
         db.commit()
         db.refresh(nagarsevak)
         return nagarsevak

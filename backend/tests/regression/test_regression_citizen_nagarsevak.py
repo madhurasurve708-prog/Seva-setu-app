@@ -41,8 +41,7 @@ def test_nagarsevak_endpoints():
     
     # Test nagarsevak login endpoint exists
     login_data = {
-        "name": "Mamata Waradkar",
-        "ward_id": 1,
+        "phone_number": "8208454975",
         "password": "password123"
     }
     

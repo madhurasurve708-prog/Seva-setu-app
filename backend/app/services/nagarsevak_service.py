@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from app.db.repository import NagarsevakRepository, WardRepository
+from app.db.repository import NagarsevakRepository
 from app.models.nagarsevak import Nagarsevak
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.schemas.nagarsevak import NagarsevakLogin, NagarsevakChangePassword
 from app.utils.storage import upload_image_to_storage, PROFILE_PHOTOS_BUCKET
+from app.utils.phone import normalize_phone_number
 
 ALLOWED_IMAGE_TYPES: dict[str, str] = {
     "image/jpeg": "jpg",
@@ -13,41 +15,35 @@ ALLOWED_IMAGE_TYPES: dict[str, str] = {
 }
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
+_INVALID_CREDENTIALS_MSG = "Invalid credentials or password."
+
 
 class NagarsevakService:
     @staticmethod
     def login(db: Session, login_data: NagarsevakLogin) -> dict:
-        nagarsevak = None
+        """
+        Authenticate a Nagarsevak exclusively by registered mobile number and password.
 
-        # 1. Lookup account by name
-        if login_data.name and login_data.name.strip():
-            nagarsevak = NagarsevakRepository.get_by_name(db, login_data.name)
-
-        # 2. Fallback to registered phone number if provided
-        if not nagarsevak and login_data.phone_number and login_data.phone_number.strip():
-            nagarsevak = NagarsevakRepository.get_by_phone_number(
-                db, login_data.phone_number
-            )
-
-        # 3. Fallback to name and ward if ward_number provided
-        if not nagarsevak and login_data.ward_number and login_data.name:
-            ward = WardRepository.get_by_ward_number(db, str(login_data.ward_number))
-            if ward:
-                nagarsevak = NagarsevakRepository.get_by_name_and_ward(
-                    db, login_data.name, ward.id
-                )
+        The identity and assigned ward are always retrieved from the authenticated database record.
+        A generic 401 message is returned for both an unknown phone number and an incorrect password.
+        Inactive accounts are rejected with 403.
+        No demo bypasses or name-based fallbacks are permitted.
+        """
+        nagarsevak = NagarsevakRepository.get_by_phone_number(
+            db, login_data.phone_number
+        )
 
         if not nagarsevak:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid name or password.",
+                detail=_INVALID_CREDENTIALS_MSG,
             )
 
-        # Verify password against bcrypt hash (with demo fallback password123)
-        if not verify_password(login_data.password, nagarsevak.password_hash) and login_data.password != "password123":
+        # Verify password strictly against stored bcrypt hash — no demo bypass
+        if not verify_password(login_data.password, nagarsevak.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid name or password.",
+                detail=_INVALID_CREDENTIALS_MSG,
             )
 
         # Reject inactive accounts
@@ -60,9 +56,6 @@ class NagarsevakService:
         # Issue JWT — subject is the Nagarsevak's database ID with explicit role
         token = create_access_token(subject=nagarsevak.id, role="nagarsevak")
 
-        # Return the ORM object directly; Pydantic reads @property accessors
-        # (ward_name, ward_number) via from_attributes=True.
-        # This returns the real account identity from the database.
         return {
             "access_token": token,
             "token_type": "bearer",
@@ -71,7 +64,6 @@ class NagarsevakService:
 
     @staticmethod
     def get_profile(nagarsevak: Nagarsevak) -> Nagarsevak:
-        # Return the ORM object — router uses response_model=NagarsevakProfile
         return nagarsevak
 
     @staticmethod
@@ -80,7 +72,32 @@ class NagarsevakService:
 
     @staticmethod
     def update_phone(db: Session, nagarsevak: Nagarsevak, phone_number: str) -> Nagarsevak:
-        return NagarsevakRepository.update_phone(db, nagarsevak, phone_number)
+        normalized = normalize_phone_number(phone_number)
+        if not normalized or len(normalized) < 10 or not normalized.isdigit():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid phone number format. Must contain at least 10 digits.",
+            )
+
+        # Uniqueness validation across other Nagarsevak accounts
+        existing = (
+            db.query(Nagarsevak)
+            .filter(
+                Nagarsevak.id != nagarsevak.id,
+                or_(
+                    Nagarsevak.phone_number == normalized,
+                    Nagarsevak.phone_number == f"+91{normalized}",
+                ),
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number is already registered to another account.",
+            )
+
+        return NagarsevakRepository.update_phone(db, nagarsevak, normalized)
 
     @staticmethod
     def change_password(
