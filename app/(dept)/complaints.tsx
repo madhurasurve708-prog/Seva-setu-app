@@ -30,12 +30,20 @@ const DepartmentComplaints = memo(function DepartmentComplaints() {
   }, [loadComplaints]);
 
   const mine = useMemo(
-    () => complaints.filter(c =>
-      c.assignedDepartment === profile?.department &&
-      !c.is_deleted &&
-      (status === 'All' || c.status === status) &&
-      `${c.title} ${c.ward} ${c.category}`.toLowerCase().includes(query.toLowerCase())
-    ),
+    () => complaints.filter((c) => {
+      const matchesDept =
+        !profile?.department ||
+        !c.assignedDepartment ||
+        c.assignedDepartment.toLowerCase().trim() === profile.department.toLowerCase().trim() ||
+        c.assignedDepartment.includes(profile.department) ||
+        profile.department.includes(c.assignedDepartment);
+      return (
+        matchesDept &&
+        !c.is_deleted &&
+        (status === 'All' || c.status === status) &&
+        `${c.title} ${c.ward} ${c.category}`.toLowerCase().includes(query.toLowerCase())
+      );
+    }),
     [complaints, profile, query, status],
   );
 

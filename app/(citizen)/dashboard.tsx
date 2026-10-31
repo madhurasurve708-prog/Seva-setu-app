@@ -1,4 +1,4 @@
-// app/(citizen)/dashboard.tsx
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import LanguageToggle from '@/components/common/LanguageToggle';
 import { ANNOUNCEMENTS, CATEGORIES, STATUS_COLORS } from '@/constants/citizen';
@@ -7,7 +7,6 @@ import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Linking,
@@ -40,8 +39,6 @@ const EMERGENCY_CONTACTS = [
   { label: 'Hospital', phone: '108', icon: 'hospital-box-outline' as const, colors: ['#E8F5E9', '#C8E6C9'] as const, iconColor: '#10B981' },
   { label: 'Municipality', phone: '02365-252018', icon: 'phone-classic' as const, colors: ['#EDE7F6', '#D1C4E9'] as const, iconColor: '#7C4DFF' },
 ];
-
-import React, { memo, useCallback } from 'react';
 
 const Dashboard = memo(function Dashboard() {
   const router = useRouter();

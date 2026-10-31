@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -153,14 +154,24 @@ export default function ComplaintDetailsScreen() {
   }
 
   const handleAddPhoto = async () => {
-    const samples = [
-      'https://picsum.photos/id/1018/600/400',
-      'https://picsum.photos/id/1019/600/400',
-      'https://picsum.photos/id/1020/600/400',
-    ];
-    const uri = samples[Math.floor(Math.random() * samples.length)];
-    await uploadComplaintImage(complaint.id, uri);
-    Alert.alert(t('successUpload'), t('successUploadMsg'));
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(t('permDenied') || 'Permission Denied', t('permDeniedMsg') || 'Please allow photo library access to upload images.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        await uploadComplaintImage(complaint.id, result.assets[0].uri);
+        Alert.alert(t('successUpload') || 'Uploaded', t('successUploadMsg') || 'Photo attached successfully.');
+      }
+    } catch (err) {
+      console.warn('Failed to pick/upload photo:', err);
+      Alert.alert(t('error') || 'Error', 'Failed to attach photo. Please try again.');
+    }
   };
 
   const handleStatus = async (

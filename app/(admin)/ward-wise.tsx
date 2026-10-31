@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -17,14 +17,6 @@ const WardWiseScreen = memo(function WardWiseScreen() {
   const { t } = useTranslation();
   const { complaints } = useOfficial();
   const { width } = useWindowDimensions();
-  const [showList, setShowList] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setShowList(true);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   const isDesktop = Platform.OS === 'web' && width > 768;
 
@@ -34,9 +26,10 @@ const WardWiseScreen = memo(function WardWiseScreen() {
       const resolved  = wc.filter((c) => c.status === 'Resolved').length;
       const pending   = wc.filter((c) => c.status === 'Pending').length;
       const emergency = wc.filter((c) => c.priority === 'Emergency').length;
-      const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;      return { ward, total: wc.length, resolved, pending, emergency, rate };
+      const rate      = wc.length > 0 ? Math.round((resolved / wc.length) * 100) : 0;
+      return { ward, total: wc.length, resolved, pending, emergency, rate };
     }),
-  [complaints, t]);
+  [complaints]);
 
   const totalAll    = useMemo(() => complaints.length, [complaints]);
   const resolvedAll = useMemo(() => complaints.filter((c) => c.status === 'Resolved').length, [complaints]);
@@ -78,7 +71,7 @@ const WardWiseScreen = memo(function WardWiseScreen() {
           {wardData.map((item, idx) => (
             <Animated.View key={item.ward} entering={FadeInDown.duration(360).delay(60 + idx * 45)} style={isDesktop && { width: '49%', marginBottom: 12 }}>
               <Pressable
-                onPress={() => router.push({ pathname: '/(admin)/complaints', params: { ward: item.ward } } as any)}
+                onPress={() => handleWardPress(item.ward)}
                 style={({ pressed }) => [styles.wardCard, pressed && styles.cardPressed]}
               >
                 {/* Ward header */}

@@ -1,4 +1,4 @@
-// app/(citizen)/profile.tsx
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import CustomTextInput from '@/components/common/CustomTextInput';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -8,7 +8,6 @@ import { useTranslation } from '@/providers/localization-provider';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
@@ -16,8 +15,6 @@ const splitName = (fullName: string) => {
   const parts = fullName.trim().split(/\s+/);
   return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
 };
-
-import React, { memo, useCallback } from 'react';
 
 const Profile = memo(function Profile() {
   const router = useRouter();

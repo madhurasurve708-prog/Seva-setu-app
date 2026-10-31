@@ -22,6 +22,21 @@ interface ComplaintCardProps {
   onEscalate?: () => void;
 }
 
+function getCategoryMeta(cat?: string) {
+  if (!cat) return CATEGORY_MAP.other;
+  const lower = cat.toLowerCase().trim();
+  if (lower === 'street light' || lower === 'street lights' || lower === 'streetlight' || lower === 'streetlights') {
+    return CATEGORY_MAP.streetlights;
+  }
+  if (lower === 'stray animals' || lower === 'animal' || lower === 'animals') {
+    return CATEGORY_MAP.animals;
+  }
+  if (lower in CATEGORY_MAP) {
+    return CATEGORY_MAP[lower as keyof typeof CATEGORY_MAP];
+  }
+  return CATEGORY_MAP.other;
+}
+
 function ComplaintCard({
   complaint,
   onView,
@@ -35,7 +50,7 @@ function ComplaintCard({
     transform: [{ scale: scale.value }],
   }));
 
-  const category = CATEGORY_MAP[complaint.category];
+  const category = getCategoryMeta(complaint.category);
 
   return (
     <Pressable

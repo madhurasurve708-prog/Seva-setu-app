@@ -1,9 +1,8 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
-import { useRouter } from 'expo-router';
 import {
     Alert, Pressable, ScrollView, StyleSheet,
     Text, TextInput, View,
@@ -105,16 +104,14 @@ const AdminAnnouncements = memo(function AdminAnnouncements() {
     const wardMatch = subTarget?.match(/(\d+)/);
     try {
       await publishAnnouncement({ title: title.trim(), description: message.trim(), priority: priority === 'Normal' ? 'Medium' : priority === 'Pinned' ? 'Low' : priority, target_type: targetTypes[audience] ?? 'everyone', ...(audience === 'ward-citizens' && wardMatch ? { target_ward_id: Number(wardMatch[1]) } : {}) });
-      setTitle(''); setMessage(''); setPreview(false);
-      Alert.alert(t('success'), t('announcementReadyTitle'));
+      Alert.alert(
+        t('success'),
+        `"${title}" · ${priorityLabel(t, priority)}\n${t('toLabel')} ${audienceLabel}\n\n${t('dispatchNote')}`,
+        [{ text: 'OK', onPress: () => { setTitle(''); setMessage(''); setPreview(false); } }],
+      );
     } catch (error) {
       Alert.alert(t('error'), error instanceof Error ? error.message : t('announcementReadyTitle'));
     }
-    Alert.alert(
-      t('announcementReadyTitle'),
-      `"${title}" · ${priorityLabel(t, priority)}\n${t('toLabel')} ${audienceLabel}\n\n${t('dispatchNote')}`,
-      [{ text: 'OK', onPress: () => { setTitle(''); setMessage(''); setPreview(false); } }],
-    );
   };
 
   return (

@@ -89,7 +89,7 @@ export function DepartmentScreen({
   tab,
   back,
   children,
-}: PropsWithChildren<{ title: string; tab?: string; back?: boolean }>) {
+}: PropsWithChildren<{ title: string; tab?: TabRoute | string; back?: boolean }>) {
   const router = useRouter() as any;
   const pathname = usePathname();
   const { profile, complaints, logout } = useDepartment();
@@ -98,9 +98,15 @@ export function DepartmentScreen({
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
 
-  const pendingCount = useMemo(() => complaints.filter(
-    (c) => c.assignedDepartment === profile?.department && c.status === 'Pending' && !c.is_deleted,
-  ).length, [complaints, profile?.department]);
+  const pendingCount = useMemo(() => complaints.filter((c) => {
+    const matchesDept =
+      !profile?.department ||
+      !c.assignedDepartment ||
+      c.assignedDepartment.toLowerCase().trim() === profile.department.toLowerCase().trim() ||
+      c.assignedDepartment.includes(profile.department) ||
+      profile.department.includes(c.assignedDepartment);
+    return matchesDept && c.status === 'Pending' && !c.is_deleted;
+  }).length, [complaints, profile?.department]);
 
   if (isDesktop) {
     return (

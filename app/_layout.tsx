@@ -37,8 +37,6 @@ export default function RootLayout() {
   if (!__DEV__) {
     console.log = () => {};
     console.info = () => {};
-    console.warn = () => {};
-    console.error = () => {};
   }
 
   return <NavigationThemeProvider value={theme}><LocalizationProvider><CitizenProvider><OfficialProvider><DepartmentProvider><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F8FAFC' } }}><Stack.Screen name="(auth)" options={{ animation: 'none' }} /><Stack.Screen name="(citizen)" /><Stack.Screen name="(official)" /><Stack.Screen name="(admin)" /><Stack.Screen name="(dept)" /></Stack><StatusBar style="dark" /></DepartmentProvider></OfficialProvider></CitizenProvider></LocalizationProvider></NavigationThemeProvider>;

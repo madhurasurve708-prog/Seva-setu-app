@@ -49,7 +49,6 @@ export default function BestWardsScreen() {
   }, [complaints, t]);
 
   const top3    = ranked.slice(0, 3);
-  const rest    = ranked.slice(3);
   const cityAvg = Math.round(ranked.reduce((s, w) => s + w.rate, 0) / ranked.length);
 
   return (

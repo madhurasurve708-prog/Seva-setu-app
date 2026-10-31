@@ -1,8 +1,7 @@
-// @ts-nocheck
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -10,18 +9,28 @@ import { COLORS } from '@/constants/theme';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
-const STATUS_LABEL = (t, status) => ({ Pending: t('pending'), 'In Progress': t('inProgress'), Resolved: t('resolved') }[status] ?? status);
-const PRIORITY_LABEL = (t, p) => ({ Emergency: t('priorityEmergency'), High: t('priorityHigh'), Medium: t('priorityMedium'), Low: t('priorityLow') }[p] ?? p);
-const wardDisplay = (t, ward) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
+const STATUS_LABEL = (t: (key: string) => string, status: string): string =>
+  ({ Pending: t('pending'), 'In Progress': t('inProgress'), Resolved: t('resolved') } as Record<string, string>)[status] ?? status;
 
-import React, { memo, useCallback } from 'react';
+const PRIORITY_LABEL = (t: (key: string) => string, p: string): string =>
+  ({ Emergency: t('priorityEmergency'), High: t('priorityHigh'), Medium: t('priorityMedium'), Low: t('priorityLow') } as Record<string, string>)[p] ?? p;
+
+const wardDisplay = (t: (key: string) => string, ward?: string): string =>
+  (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
 const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { t } = useTranslation();
   const { profile, complaints, updateStatus, addNote, fetchNotes, escalateComplaint } = useDepartment();
-  const complaint = complaints.find(c => c.id === id && c.assignedDepartment === profile?.department);
+  const complaint = complaints.find(c => {
+    if (c.id !== id) return false;
+    if (!profile?.department || !c.assignedDepartment) return true;
+    return (
+      c.assignedDepartment.toLowerCase().trim() === profile.department.toLowerCase().trim() ||
+      c.assignedDepartment.includes(profile.department) ||
+      profile.department.includes(c.assignedDepartment)
+    );
+  });
   const [note, setNote] = useState('');
   const [notes, setNotes] = useState<any[]>([]);
 
@@ -35,7 +44,7 @@ const DepartmentComplaintDetails = memo(function DepartmentComplaintDetails() {
           console.error("Failed to load timeline notes:", err);
         });
     }
-  }, [complaint?.id, fetchNotes]);
+  }, [complaint, fetchNotes]);
 
   const change = useCallback(async (status: 'Pending' | 'In Progress' | 'Resolved') => {
     if (!complaint) return;

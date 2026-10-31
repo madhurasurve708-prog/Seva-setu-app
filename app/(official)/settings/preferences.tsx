@@ -11,7 +11,6 @@ import { useTranslation } from '@/providers/localization-provider';
 const LANGUAGES = [
   { code: 'English', label: 'English' },
   { code: 'Marathi', label: 'मराठी (Marathi)' },
-  { code: 'Hindi',   label: 'हिन्दी (Hindi)' },
 ];
 
 export default function PreferencesScreen() {

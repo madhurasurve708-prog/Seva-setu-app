@@ -1,8 +1,7 @@
-// app/(citizen)/about.tsx
+import React, { memo, useEffect, useState, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useEffect, useState, useMemo } from 'react';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -45,8 +44,6 @@ const TEAM_MR: TeamMember[] = [
     photo: require('../../assets/images/apurva.webp'),
   },
 ];
-
-import React, { memo } from 'react';
 
 const About = memo(function About() {
   const [isHydrated, setIsHydrated] = useState(false);

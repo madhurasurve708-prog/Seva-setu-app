@@ -12,7 +12,7 @@ import { useDepartment } from '@/providers/department-provider';
 
 export default function DepartmentSecurityScreen() {
   const router = useRouter();
-  const { profile, changePassword, logout } = useDepartment();
+  const { changePassword, logout } = useDepartment();
   const { t } = useTranslation();
 
   const [next, setNext] = useState('');

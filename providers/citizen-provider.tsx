@@ -203,6 +203,7 @@ export function CitizenProvider({ children }: PropsWithChildren) {
             id: `SS-${Date.now().toString().slice(-6)}`,
             ward: profile.ward,
             locality: profile.locality,
+            location: draft.location || draft.title,
             submittedAt: new Date().toISOString(),
             status: 'Pending',
             assignedDepartment: draft.category === 'Garbage' ? 'Sanitation Department' : undefined,
@@ -217,13 +218,14 @@ export function CitizenProvider({ children }: PropsWithChildren) {
           category: draft.category,
           title: draft.title,
           description: draft.description,
-          location: draft.title,
+          location: draft.location || draft.title,
         });
         const complaint: CitizenComplaint = {
           ...draft,
           id: String(created.id),
           ward: profile.ward,
           locality: profile.locality,
+          location: draft.location || draft.title,
           submittedAt: created.created_at,
           status: created.status,
           assignedDepartment: draft.category === 'Garbage' ? 'Sanitation Department' : undefined,

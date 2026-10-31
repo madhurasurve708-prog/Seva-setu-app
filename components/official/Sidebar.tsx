@@ -171,7 +171,7 @@ export default function Sidebar({ visible, onClose, wardComplaintsCount, onLogou
         duration: 180,
       });
     }
-  }, [visible]);
+  }, [visible, translateX, backdropOpacity]);
 
   const panelStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

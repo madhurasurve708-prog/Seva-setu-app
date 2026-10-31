@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { GlassCard } from '@/components/common/GlassCard';
@@ -12,7 +11,6 @@ import { useTranslation } from '@/providers/localization-provider';
 
 export default function AnalyticsScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { complaints, profile } = useOfficial();
 
   const total      = complaints.length;

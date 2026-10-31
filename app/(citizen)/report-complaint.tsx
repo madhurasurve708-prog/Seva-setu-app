@@ -1,8 +1,7 @@
-// app/(citizen)/report-complaint.tsx
+import React, { memo, useCallback, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import { CitizenScreen } from '@/components/citizen/CitizenScreen';
 import { useCitizen } from '@/providers/citizen-provider';
@@ -28,8 +27,6 @@ const CATEGORIES: Category[] = [
   { label: 'Tree', icon: 'tree-outline', bg: '#E8F5E9', iconColor: '#2E86DE' },
   { label: 'Other', icon: 'map-marker-outline', bg: '#EDE7F6', iconColor: '#5E35B1' },
 ];
-
-import React, { memo, useCallback } from 'react';
 
 const ReportComplaint = memo(function ReportComplaint() {
   const router = useRouter();
@@ -68,8 +65,9 @@ const ReportComplaint = memo(function ReportComplaint() {
     try {
       const complaint = await submitComplaint({
         category,
-        title: location.trim(), // mapping location input to complaint title
+        title: location.trim(),
         description: description.trim(),
+        location: location.trim(),
         photoUri,
       });
       router.replace({

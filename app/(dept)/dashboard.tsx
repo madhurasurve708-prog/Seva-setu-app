@@ -1,6 +1,6 @@
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
 import {
     Pressable,
     ScrollView,
@@ -14,7 +14,6 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import HeroBanner from '@/components/official/HeroBanner';
 import { COLORS, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
-import { DEPT_META } from '@/data/department-routing';
 import { useDepartment } from '@/providers/department-provider';
 import { useTranslation } from '@/providers/localization-provider';
 
@@ -41,8 +40,6 @@ function wardDisplay(t: (key: string) => string, ward: string): string {
   return ward.replace(/^Ward\b/, t('ward2'));
 }
 
-import React, { memo, useCallback, useEffect } from 'react';
-
 const DepartmentDashboard = memo(function DepartmentDashboard() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -60,7 +57,15 @@ const DepartmentDashboard = memo(function DepartmentDashboard() {
 
   // All complaints assigned to this department
   const mine = useMemo(
-    () => complaints.filter((c) => c.assignedDepartment === profile?.department && !c.is_deleted),
+    () => complaints.filter((c) => {
+      const matchesDept =
+        !profile?.department ||
+        !c.assignedDepartment ||
+        c.assignedDepartment.toLowerCase().trim() === profile.department.toLowerCase().trim() ||
+        c.assignedDepartment.includes(profile.department) ||
+        profile.department.includes(c.assignedDepartment);
+      return matchesDept && !c.is_deleted;
+    }),
     [complaints, profile],
   );
 
@@ -85,7 +90,6 @@ const DepartmentDashboard = memo(function DepartmentDashboard() {
     ['escalated',   t('escalated'),         escalated,      5],
   ] as const, [t, visible.length, pending, active, resolved, highPrio, escalated]);
 
-  const meta = DEPT_META[profile?.department ?? ''];
   const resolutionRate = visible.length > 0 ? Math.round((resolved / visible.length) * 100) : 0;
 
   const recentComplaints = useMemo(() => visible

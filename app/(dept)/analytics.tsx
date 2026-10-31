@@ -1,3 +1,4 @@
+import React, { memo, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { DepartmentScreen } from '@/components/dept/department-screen';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -7,14 +8,20 @@ import { useTranslation } from '@/providers/localization-provider';
 
 const wardDisplay = (t: (key: string) => string, ward: string) => (ward ?? '').replace(/^Ward\b/, t('ward2'));
 
-import React, { memo, useMemo } from 'react';
-
 const DepartmentAnalytics = memo(function DepartmentAnalytics() {
   const { t } = useTranslation();
   const { profile, complaints } = useDepartment();
 
   const mine = useMemo(
-    () => complaints.filter(c => c.assignedDepartment === profile?.department && !c.is_deleted),
+    () => complaints.filter((c) => {
+      const matchesDept =
+        !profile?.department ||
+        !c.assignedDepartment ||
+        c.assignedDepartment.toLowerCase().trim() === profile.department.toLowerCase().trim() ||
+        c.assignedDepartment.includes(profile.department) ||
+        profile.department.includes(c.assignedDepartment);
+      return matchesDept && !c.is_deleted;
+    }),
     [complaints, profile],
   );
 

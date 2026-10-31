@@ -5,6 +5,14 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { AdminShell } from '@/components/admin/admin-shell';
 import { COLORS, SHADOWS } from '@/constants/theme';
+import {
+  DEPT_AROGYA,
+  DEPT_BANDHKAM,
+  DEPT_PANI,
+  DEPT_SWACHHATA,
+  DEPT_UDYANE,
+  DEPT_VIDYUT,
+} from '@/data/complaints';
 import { categories } from '@/data/categories';
 import { useOfficial } from '@/providers/official-provider';
 import { useTranslation } from '@/providers/localization-provider';
@@ -15,9 +23,13 @@ export default function ComplaintExplorer() {
   const { mode = 'ward' } = useLocalSearchParams<{ mode?: string }>();
   const { complaints } = useOfficial();
 
-  const DEPARTMENTS = [
-    t('deptWaterDept'), t('deptRoadDept'), t('deptElectricalDept'),
-    t('deptSanitationDept'), t('deptGardenDept'), t('deptAdministration'),
+  const DEPARTMENT_CONFIG = [
+    { id: DEPT_PANI, labelKey: 'deptWaterDept' },
+    { id: DEPT_BANDHKAM, labelKey: 'deptRoadDept' },
+    { id: DEPT_VIDYUT, labelKey: 'deptElectricalDept' },
+    { id: DEPT_SWACHHATA, labelKey: 'deptSanitationDept' },
+    { id: DEPT_UDYANE, labelKey: 'deptGardenDept' },
+    { id: DEPT_AROGYA, labelKey: 'deptAdministration' },
   ];
 
   const MODE_META: Record<string, { title: string; noun: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; bg: string }> = {
@@ -33,7 +45,11 @@ export default function ComplaintExplorer() {
           .filter((c) => c.id !== 'all')
           .map((c) => ({ label: t(c.id), value: c.id, count: complaints.filter((x) => x.category === c.id).length }))
       : mode === 'department'
-      ? DEPARTMENTS.map((d) => ({ label: d, value: d, count: complaints.filter((x) => x.assignedDepartment === d).length }))
+      ? DEPARTMENT_CONFIG.map((d) => ({
+          label: t(d.labelKey),
+          value: d.id,
+          count: complaints.filter((x) => x.assignedDepartment === d.id).length,
+        }))
       : Array.from({ length: 10 }, (_, i) => ({
           label: `${t('ward2')} ${i + 1}`,
           value: `Ward ${i + 1}`,

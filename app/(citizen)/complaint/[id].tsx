@@ -24,10 +24,16 @@ const ComplaintDetail = memo(function ComplaintDetail() {
   const [detailedComplaint, setDetailedComplaint] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const numericId = c?.id ? Number(c.id) : NaN;
+
   useEffect(() => {
     if (!c) return;
+    if (isNaN(numericId) || numericId <= 0) {
+      setLoading(false);
+      return;
+    }
     let active = true;
-    getCitizenComplaintDetail(Number(c.id))
+    getCitizenComplaintDetail(numericId)
       .then((data) => {
         if (active) {
           setDetailedComplaint(data);
@@ -35,7 +41,7 @@ const ComplaintDetail = memo(function ComplaintDetail() {
         }
       })
       .catch((err) => {
-        console.error('Failed to fetch complaint details:', err);
+        console.warn('Failed to fetch complaint details:', err);
         if (active) {
           setLoading(false);
         }
@@ -43,7 +49,7 @@ const ComplaintDetail = memo(function ComplaintDetail() {
     return () => {
       active = false;
     };
-  }, [c?.id]);
+  }, [c, numericId]);
 
   if (!c) {
     router.replace('/(citizen)/my-complaints');

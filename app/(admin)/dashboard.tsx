@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useMemo } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -64,15 +64,6 @@ const AdminDashboard = memo(function AdminDashboard() {
   const { t } = useTranslation();
   const { profile, complaints, announcements } = useOfficial();
   const { width } = useWindowDimensions();
-  const [showHeavyContent, setShowHeavyContent] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setShowHeavyContent(true);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
   const isDesktop = Platform.OS === 'web' && width > 768;
 
   const stats = useMemo(() => {
@@ -85,7 +76,7 @@ const AdminDashboard = memo(function AdminDashboard() {
     return { total, pending, inProgress, resolved, escalated, successRate };
   }, [complaints]);
 
-  const { total, pending, inProgress, resolved, escalated, successRate } = stats;
+  const { total, pending, resolved, escalated, successRate } = stats;
 
   const STAT_CARDS = useMemo(() => [
     { key: 'Pending',     label: t('pending'),     value: stats.pending,    color: '#F59E0B', icon: 'clock-alert-outline'  as const, grad: ['#FFF8ED','#FEF3C7'] as const },

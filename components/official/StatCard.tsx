@@ -58,7 +58,7 @@ export default function StatCard({
           },
         ]}
       >
-        <View className="flex-row items-center justify-between">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <Text
               style={{

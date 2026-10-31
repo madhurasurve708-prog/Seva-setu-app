@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,20 +13,32 @@ export default function LoadingBar() {
     progress.value = withTiming(1, {
       duration: 2200,
     });
-  }, []);
+  }, [progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
   }));
 
   return (
-    <View
-      className="w-64 h-1 bg-white/20 rounded-full overflow-hidden"
-    >
+    <View style={styles.track}>
       <Animated.View
-        className="h-full bg-green-500 rounded-full"
-        style={animatedStyle}
+        style={[styles.bar, animatedStyle]}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  track: {
+    width: 256,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 9999,
+    overflow: 'hidden',
+  },
+  bar: {
+    height: '100%',
+    backgroundColor: '#22C55E',
+    borderRadius: 9999,
+  },
+});

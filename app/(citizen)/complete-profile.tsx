@@ -15,12 +15,12 @@ import { COLORS, SHADOWS, TYPOGRAPHY } from '../../constants/theme';
 
 const CompleteProfile = memo(function CompleteProfile() {
   const router = useRouter();
-  const { saveProfile } = useCitizen();
+  const { profile, saveProfile } = useCitizen();
   const { t } = useTranslation();
 
-  const [name, setName] = useState('');
-  const [ward, setWard] = useState('');
-  const [locality, setLocality] = useState('');
+  const [name, setName] = useState(profile?.fullName || profile?.name || '');
+  const [ward, setWard] = useState(profile?.ward || '');
+  const [locality, setLocality] = useState(profile?.locality || '');
 
   const complete = useCallback(async () => {
     if (!name.trim() || !ward || !locality) return;
@@ -28,18 +28,18 @@ const CompleteProfile = memo(function CompleteProfile() {
     const firstName = parts[0] || '';
     const lastName = parts.slice(1).join(' ') || '';
     await saveProfile({
-      id: `cit_${Date.now()}`,
+      id: profile?.id || `cit_${Date.now()}`,
       firstName,
       lastName,
       fullName: name.trim(),
-      mobile: '',
+      mobile: profile?.mobile || '',
       ward,
       locality,
       name: name.trim(),
-      phone: '',
+      phone: profile?.phone || profile?.mobile || '',
     });
     router.replace('/(citizen)/dashboard');
-  }, [name, ward, locality, saveProfile, router]);
+  }, [name, ward, locality, profile, saveProfile, router]);
 
   const isFormValid = name.trim().length > 0 && ward && locality;
 

@@ -36,8 +36,10 @@ export function LocalizationProvider({ children }: PropsWithChildren) {
       language,
       setLanguage,
       t: (key: string, params?: Record<string, string | number>) => {
-        const transKey = key as keyof typeof en;
-        let str = (language === 'Marathi' ? mr[transKey] : en[transKey]) || en[transKey] || key;
+        if (!key) return '';
+        const mrVal = (mr as Record<string, string>)[key];
+        const enVal = (en as Record<string, string>)[key];
+        let str = (language === 'Marathi' ? (mrVal || enVal) : (enVal || mrVal)) || key || '';
         if (params) {
           Object.entries(params).forEach(([k, v]) => {
             str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));

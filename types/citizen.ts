@@ -22,6 +22,7 @@ export interface CitizenComplaint {
   category: string;
   ward: string;
   locality: string;
+  location?: string;
   status: ComplaintStatus;
   submittedAt: string;
   resolvedAt?: string;

@@ -19,10 +19,20 @@
  * for all other operations (profile, complaints, uploads, etc.)
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { appConfig } from '@/config/app-config';
+
+const DEV_PHONE_KEY = '@seva-setu/dev-phone';
 
 // Store the current user's phone number for backend authentication in dev mode
 let currentDevPhone: string | null = null;
+
+// Rehydrate stored dev phone on startup
+void AsyncStorage.getItem(DEV_PHONE_KEY).then((stored) => {
+  if (stored) {
+    currentDevPhone = stored;
+  }
+}).catch(() => {});
 
 /**
  * Get the current development user's phone number
@@ -45,6 +55,7 @@ export function getDevModeSecret(): string {
  */
 export function setDevPhone(phone: string): void {
   currentDevPhone = phone;
+  void AsyncStorage.setItem(DEV_PHONE_KEY, phone).catch(() => {});
 }
 
 /**
@@ -52,6 +63,7 @@ export function setDevPhone(phone: string): void {
  */
 export function clearDevPhone(): void {
   currentDevPhone = null;
+  void AsyncStorage.removeItem(DEV_PHONE_KEY).catch(() => {});
 }
 
 /**
