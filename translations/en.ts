@@ -1025,5 +1025,21 @@ export const en = {
   Tree: 'Tree',
   Other: 'Other',
   All: 'All',
+  // Missing UI Keys
+  pinned: 'Pinned',
+  updated: 'Updated',
+  enterNoteEscalate: 'Please enter the escalation reason in the note box first.',
+  departmentOfficer: 'Department Officer',
+  analyticsNav: 'Analytics',
+  emergency: 'Emergency',
+  high: 'High',
+  normal: 'Normal',
+  changePasswordSecurityNotice: 'To change your password, please contact the municipal administrator.',
+  logoutConfirmMessage: 'Are you sure you want to log out?',
+  logoutConfirmTitle: 'Log Out',
+  enterFullName: 'Enter full name',
+  phoneNumber: 'Phone Number',
+  enterPhoneNumber: 'Enter phone number',
+  enterEmail: 'Enter email address',
+  appearanceTitle: 'Appearance',
 };
-

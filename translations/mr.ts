@@ -1052,5 +1052,21 @@ export const mr: Record<string, string> = {
   Tree: "झाडे",
   Other: "इतर",
   All: "सर्व",
+  // Missing UI Keys
+  pinned: 'पिन केलेले',
+  updated: 'अद्यतनित केले',
+  enterNoteEscalate: 'कृपया प्रथम नोंद बॉक्समध्ये वाढवण्याचे कारण प्रविष्ट करा.',
+  departmentOfficer: 'विभाग अधिकारी',
+  analyticsNav: 'विश्लेषण',
+  emergency: 'तातडीचे',
+  high: 'उच्च',
+  normal: 'सामान्य',
+  changePasswordSecurityNotice: 'तुमचा पासवर्ड बदलण्यासाठी कृपया पालिका प्रशासकांशी संपर्क साधा.',
+  logoutConfirmMessage: 'तुम्हाला खात्री आहे की तुम्ही लॉग आउट करू इच्छिता?',
+  logoutConfirmTitle: 'लॉग आउट',
+  enterFullName: 'पूर्ण नाव प्रविष्ट करा',
+  phoneNumber: 'फोन नंबर',
+  enterPhoneNumber: 'फोन नंबर प्रविष्ट करा',
+  enterEmail: 'ईमेल पत्ता प्रविष्ट करा',
+  appearanceTitle: 'देखावा',
 };
-
