@@ -65,7 +65,7 @@ NAGARSEVAKS_DATA = [
     {"name": "Mamata Waradkar",           "phone_number": "8208454975", "ward_number": "1"},
     {"name": "Mandar Keni",              "phone_number": "9637778901", "ward_number": "1"},
     {"name": "Darshana Kasavkar",        "phone_number": "9405497503", "ward_number": "1"},
-    # Ward 2
+    # Ward 29
     {"name": "Lalit Chavan",             "phone_number": "9096728048", "ward_number": "2"},
     {"name": "Anita Girkar",             "phone_number": "9168206294", "ward_number": "2"},
     # Ward 3
